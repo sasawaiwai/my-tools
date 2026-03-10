@@ -1,0 +1,1090 @@
+/* グローバル設定 */
+:root {
+    --primary-color: #1e3a8a;
+    --primary-light: #312e81;
+    --secondary-color: #4f46e5;
+    --text-color: #ffffff;
+    --text-muted: #a1a1aa;
+    --bg-dark: #121212;
+    --bg-card: rgba(30, 30, 30, 0.6);
+    --border-color: rgba(80, 80, 80, 0.2);
+    --up-color: #34d399;
+    --down-color: #f43f5e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* ステータスバー */
+.status-bar {
+    height: 30px;
+    background-color: #000000;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* 広告コンテナ */
+.ad-container {
+    width: 100%;
+    padding: 8px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ad-top {
+    margin-top: 5px;
+    height: 30px;
+}
+
+/* 下部広告との間隔調整 */
+.ad-bottom {
+    margin-top: 5px;  /* 上部マージンを小さく */
+}
+
+.ad-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(40, 40, 40, 0.5);
+    border: 1px solid rgba(80, 80, 80, 0.3);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+/* インデックス情報 */
+.index-container {
+    margin: 10px 20px;
+    height: 30px;
+    background-color: rgba(30, 30, 30, 0.5);
+    border: 1px solid rgba(80, 80, 80, 0.5);
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 10px;
+    cursor: pointer; /* カーソルをポインターに変更 */
+    transition: background-color 0.2s ease, transform 0.1s ease; /* スムーズな変化のためのトランジション */
+}
+
+.index-container:hover {
+    background-color: rgba(40, 40, 40, 0.7); /* ホバー時の背景色変更 */
+}
+
+.index-container:active {
+    transform: scale(0.98); /* クリック時に少し縮小 */
+}
+
+.index-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.index-label {
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.index-value {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.index-value.up {
+    color: var(--up-color);
+}
+
+.index-value.down {
+    color: var(--down-color);
+}
+
+.index-chart {
+    position: relative;
+    width: 20px;
+    height: 10px;
+}
+
+.index-chart::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: currentColor;
+}
+
+.index-chart.up::before {
+    background: var(--up-color);
+}
+
+.index-chart.down::before {
+    background: var(--down-color);
+}
+
+.index-chart.up::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 3px 5px 3px;
+    border-color: transparent transparent var(--up-color) transparent;
+}
+
+.index-chart.down::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5px 3px 0 3px;
+    border-color: var(--down-color) transparent transparent transparent;
+}
+
+/* 格言コンテナ */
+.quote-container {
+    margin: 10px 20px;
+    min-height: 175px; /* 固定 → 最小高さに変更 */
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: height 0.3s ease; /* 高さ変更時のアニメーション */
+}
+
+.quote-container:hover, .quote-container:active {
+    transform: scale(0.98);
+}
+
+.quote-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-position: center;
+    background-size: cover;
+    opacity: 0.1; /* 0.04から増加 */
+    mix-blend-mode: overlay;
+}
+
+.quote-content-container {
+    position: relative;
+    width: calc(100% - 50px);
+    height: auto; /* 固定 → 自動に変更 */
+    min-height: calc(100% - 50px); /* 最小高さを設定 */
+    margin: 25px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.share-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    z-index: 10; /* 他の要素より上に表示 */
+}
+
+.share-btn:hover {
+    transform: scale(1.1);
+}
+
+.share-btn:active {
+    transform: scale(0.95);
+}
+
+/* 共有ボタンクリック時のフィードバック用 */
+.share-btn.active svg path {
+    stroke: #60a5fa;
+}
+
+/* 共有メニューのスタイリング - 改行修正版 */
+.share-menu {
+    background-color: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(80, 80, 80, 0.5);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    width: 200px; /* 幅を少し広げる: 180px → 200px */
+}
+
+.share-menu.show {
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.share-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap; /* 改行を防止 */
+}
+
+.share-option:last-child {
+    margin-bottom: 0;
+}
+
+.share-option:hover {
+    background-color: rgba(80, 80, 80, 0.5);
+}
+
+.share-option svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    flex-shrink: 0; /* SVGのサイズを固定 */
+}
+
+.share-option span {
+    font-size: 14px;
+    color: #e2e8f0;
+    white-space: nowrap; /* 改行を防止 */
+}
+
+/* 共有成功時のトースト通知 */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(16, 185, 129, 0.9);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.toast-notification.show {
+    opacity: 1;
+}
+
+.quote-text {
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    padding: 0 10px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    font-size: 18px;
+    max-height: none; /* 高さ制限を解除 */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.quote-divider {
+    width: 140px;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin-bottom: 15px;
+}
+
+.quote-source {
+    font-style: italic;
+    font-size: 12px;
+    color: #a5b4fc;
+}
+
+/* 日付コンテナ */
+.date-container {
+    margin: 10px 20px;
+    height: 70px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+    padding: 0 20px;
+}
+
+.date-line {
+    display: flex;
+    align-items: baseline;
+    gap: 1em;
+    width: 100%;
+    justify-content: center; /* 中央揃えを追加 */
+}
+
+.date-line .year {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: 'Georgia', serif;
+}
+
+.date-line .monthday {
+    font-size: 2rem;
+    color: var(--text-color);
+    font-weight: bold;
+    font-family: 'Georgia', serif;
+}
+
+.date-line .weekday {
+    font-size: 0.9rem;
+    color: #d4af37; /* ゴールドカラー */
+    font-family: 'Georgia', serif;
+}
+
+.date-weekday {
+    width: 50px;
+    height: 30px;
+    margin-left: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #d1d5db;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.date-display {
+    flex: 1;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Tipsエリア */
+.tips-container {
+    margin: 10px 20px;
+    min-height: 170px; /* 固定 → 最小高さに変更 */
+    max-height: none; /* 最大高さの制限を解除 */
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: height 0.3s ease; /* 高さ変更時のアニメーション */
+}
+
+.tips-header {
+    height: 40px;
+    background-color: rgba(50, 50, 50, 0.5);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.tips-toggle {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.tips-toggle.active {
+    transform: rotate(45deg);
+}
+
+.tips-content {
+    flex: 1;
+    overflow-y: visible;
+    padding: 8px 20px 14px;
+    max-height: none;
+}
+
+/* タブナビゲーション */
+.tips-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 12px;
+    gap: 2px;
+}
+
+.tips-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    padding: 6px 14px;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    letter-spacing: 0.5px;
+}
+
+.tips-tab.active {
+    color: #d4af37;
+    border-bottom-color: #d4af37;
+}
+
+.tips-tab:not(.active):hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* タブペイン */
+.tips-tab-pane {
+    padding-top: 2px;
+}
+
+/* クリック可能なアイテム */
+.tips-clickable {
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 4px 6px;
+    margin-left: -6px;
+    margin-right: -6px;
+    transition: background-color 0.15s ease;
+}
+
+.tips-clickable:hover {
+    background-color: rgba(212, 175, 55, 0.1);
+}
+
+.tips-clickable:active {
+    background-color: rgba(212, 175, 55, 0.2);
+}
+
+/* 情報なし */
+.tips-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 8px 0;
+}
+
+.tips-tag {
+    display: inline-block;
+    margin-right: 15px;
+    padding: 4px 15px;
+    border-radius: 11px;
+    font-size: 11px;
+    margin-bottom: 5px;
+    white-space: nowrap; /* 改行を防止 */
+    min-width: 65px; /* タグの最小幅を設定 */
+    text-align: center; /* テキストを中央揃え */
+}
+
+.tips-tag.history {
+    background-color: rgba(79, 70, 229, 0.2);
+    border: 1px solid rgba(79, 70, 229, 0.4);
+    color: #a5b4fc;
+}
+
+.tips-tag.anniversary {
+    background-color: rgba(244, 63, 94, 0.2);
+    border: 1px solid rgba(244, 63, 94, 0.4);
+    color: #fda4af;
+}
+
+.tips-tag.birthday {
+    background-color: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+}
+
+.tips-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.tips-text {
+    font-size: 13px;
+    color: #f1f5f9;
+    line-height: 22px;
+}
+
+.tips-divider {
+    width: 100%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 10px 0;
+}
+
+.scroll-indicator {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5px 10px 0 10px;
+    border-color: rgba(161, 161, 170, 0.3) transparent transparent transparent;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.scroll-indicator.visible {
+    opacity: 1;
+}
+
+/* 新しいナビゲーションコンテナ */
+.nav-container {
+    display: flex;
+    justify-content: center;
+    margin: 15px auto;
+    padding: 0 20px;
+}
+
+/* フローティングナビゲーション修正 */
+.floating-nav {
+    /* 以下の位置固定プロパティを削除 */
+    /* position: fixed; */
+    /* bottom: 80px; */
+    /* left: 50%; */
+    /* transform: translateX(-50%); */
+    
+    /* 以下は残す */
+    width: 120px;
+    height: 45px;
+    background-color: rgba(30, 30, 30, 0.8);
+    border-radius: 22.5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+    z-index: 10;
+}
+
+.nav-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    background-color: rgba(50, 50, 50, 0.5);
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background-color: rgba(70, 70, 70, 0.7);
+}
+
+.nav-btn.active {
+    background-color: var(--secondary-color);
+}
+
+/* モーダルウィンドウ */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    background-color: var(--bg-dark);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-close {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 130px); /* ヘッダーとフッターの高さを引く */
+}
+
+.modal-quote {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.modal-source {
+    font-style: italic;
+    font-size: 14px;
+    color: #a5b4fc;
+    margin-bottom: 20px;
+}
+
+.modal-explanation {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #e2e8f0;
+    margin-bottom: 20px;
+}
+
+.modal-examples {
+    background-color: rgba(50, 50, 50, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.modal-examples h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #d1d5db;
+}
+
+.modal-example-item {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+.modal-footer {
+    padding: 15px;
+    background-color: rgba(20, 20, 20, 0.7);
+}
+
+.modal-ad {
+    height: 80px;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.quote-container {
+    animation: none; /* または削除 */
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* レスポンシブ調整 */
+@media (max-width: 375px) {
+    .quote-text {
+        font-size: 16px;
+    }
+    
+    .date-display {
+        font-size: 20px;
+    }
+    
+    .modal-content {
+        width: 95%;
+    }
+}
+
+@media (min-width: 768px) {
+    body {
+        max-width: 500px;
+        margin: 0 auto;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+    }
+    
+    .modal-content {
+        width: 500px;
+    }
+}
+
+/* ローディングインジケーター */
+.loader {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: var(--secondary-color);
+    animation: spin 1s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.loader.active {
+    opacity: 1;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* インデックスコンテナにposition: relativeを追加 */
+.index-container {
+    /* 既存のスタイル... */
+    position: relative;
+}
+
+
+/* ヘッダーデザイン改善 */
+header {
+    padding: 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    border-bottom: none;
+    overflow: hidden;
+    position: relative;
+}
+
+/* ロゴスタイリング - テキストを画像のように扱う */
+header h1 {
+    font-size: 0; /* テキストを非表示に */
+    height: 40px;
+    margin: 0;
+    padding: 10px 0;
+    background-image: none; /* ← ここを変更 */
+    background-repeat: no-repeat;
+    background-position: center;
+    position: relative;
+    display: flex;         /* 追加 */
+    justify-content: center; /* 追加 */
+    align-items: center;    /* 追加 */
+}
+
+/* ナビゲーションをフッターに移動 */
+header nav {
+    display: none; /* ヘッダーのナビを非表示 */
+}
+
+/* フッターナビゲーション - スマホ表示対応版 */
+.footer-nav {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    padding-bottom: 10px;
+    width: 100%;
+}
+
+.footer-nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap; /* 重要: 折り返しを有効にする */
+    justify-content: center; /* 中央揃え */
+    padding: 0;
+    margin: 0;
+    gap: 12px 20px; /* 行間と列間の余白を調整 */
+    width: 100%; /* 幅を100%に設定 */
+    max-width: 500px; /* 最大幅を設定 */
+}
+
+.footer-nav li {
+    text-align: center; /* テキストを中央揃え */
+}
+
+.footer-nav a {
+    color: #a1a1aa;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+    display: block; /* ブロック要素として表示 */
+    padding: 3px 0; /* 上下の余白を追加 */
+}
+
+.footer-nav a:hover {
+    color: #ffffff;
+}
+/* 既存ヘッダーの高さ調整 */
+header {
+    height: 40px;
+}
+
+/* ステータスバーの調整 */
+.status-bar {
+    height: 20px; /* 少し小さく */
+}
+
+/* トップページのマージンを調整 */
+.ad-top {
+    margin-top: 2px;
+}
+
+/* フッターの調整 */
+footer {
+    padding: 15px 0;
+    background-color: rgba(18, 18, 18, 0.8);
+    margin-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* フッターリンク間の余白調整 */
+.footer-links {
+    margin-top: 10px;
+    display: flex;
+    gap: 15px;
+}
+
+/* ロゴスタイリング */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    height: 40px;
+    margin: 0;
+    padding: 5px 0;
+}
+
+.logo-image {
+    height: 100%;
+    width: auto;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* ヘッダー全体のスタイリング */
+header {
+    padding: 0;
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+    overflow: hidden;
+    position: relative;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ナビゲーションは非表示に */
+header nav {
+    display: none;
+}
+
+/* PWAインストールバナー */
+.install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(30, 58, 138, 0.95); /* テーマカラーに合わせる */
+  color: white;
+  padding: 12px 16px;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  animation: slide-up 0.3s ease-out;
+}
+
+.install-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.install-message p {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 15px;
+}
+
+.install-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.install-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#install-yes {
+  background-color: white;
+  color: #1e3a8a;
+}
+
+#install-yes:hover {
+  background-color: #f0f0f0;
+}
+
+#install-no {
+  background-color: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+#install-no:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* スマホ向けのフッターナビゲーション調整 */
+@media (max-width: 480px) {
+    .footer-nav ul {
+        display: grid; /* グリッドレイアウトを使用 */
+        grid-template-columns: 1fr 1fr; /* 2列のグリッド */
+        gap: 10px; /* グリッドのギャップ */
+        width: 90%; /* 幅を少し狭める */
+    }
+    
+    .footer-nav li {
+        width: 100%; /* 幅を100%に */
+    }
+}
+
+/* 画面サイズが小さいデバイス向け */
+@media (max-width: 600px) {
+  .install-message {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .install-buttons {
+    margin-top: 10px;
+    width: 100%;
+  }
+  
+  .install-buttons button {
+    flex: 1;
+  }
+}
+
+/* ==========================================
+   楽天アフィカード表示エリア
+   ========================================== */
+.rakuten-slot {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.rakuten-slot img {
+    max-width: 100%;
+    height: auto;
+}

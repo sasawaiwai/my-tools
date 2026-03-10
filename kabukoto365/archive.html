@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>格言アーカイブ | かぶこと365 - 毎日1つ、相場の知恵を学ぶ</title>
+    <meta name="description" content="「かぶこと365」の格言アーカイブです。バフェットやソロス、リバモアなど著名投資家の言葉から、相場の格言、アノマリーまで、366日分の投資の知恵を一覧でご覧いただけます。">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- OGP設定 -->
+    <meta property="og:title" content="格言アーカイブ | かぶこと365">
+    <meta property="og:description" content="「かぶこと365」の格言アーカイブです。366日分の投資格言・名言を一覧でご覧いただけます。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kabukoto.sasadokoro.online/archive.html">
+    <meta property="og:image" content="https://kabukoto.sasadokoro.online/images/ogp-image.jpg">
+    <!-- PWA設定 -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e3a8a">
+    <style>
+        .archive-container {
+            background-color: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(80, 80, 80, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 800px;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        
+        .archive-container h1 {
+            font-size: 1.8rem;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .archive-description {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #d1d5db;
+        }
+        
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+            padding: 1rem;
+            background-color: rgba(50, 50, 50, 0.5);
+            border-radius: 8px;
+        }
+        
+        .filter-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid rgba(80, 80, 80, 0.5);
+            background-color: rgba(30, 30, 30, 0.8);
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+        
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid rgba(80, 80, 80, 0.5);
+            background-color: rgba(30, 30, 30, 0.8);
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+        
+        .quotes-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .quote-item {
+            padding: 1.5rem;
+            background-color: rgba(50, 50, 50, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(80, 80, 80, 0.3);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        
+        .quote-item:hover {
+            transform: translateY(-3px);
+            background-color: rgba(50, 50, 50, 0.5);
+        }
+        
+        .quote-date {
+            font-size: 0.9rem;
+            color: #a5b4fc;
+            margin-bottom: 0.8rem;
+        }
+        
+        .quote-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #f1f5f9;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+        
+        .quote-author {
+            font-size: 0.9rem;
+            color: #d1d5db;
+            text-align: right;
+            font-style: italic;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            color: #a1a1aa;
+            font-style: italic;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+        
+        .page-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            background-color: rgba(50, 50, 50, 0.5);
+            color: #d1d5db;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border: 1px solid rgba(80, 80, 80, 0.3);
+        }
+        
+        .page-btn:hover {
+            background-color: rgba(70, 70, 70, 0.7);
+        }
+        
+        .page-btn.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        
+        .page-info {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #a1a1aa;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #4f46e5;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .archive-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .archive-container h1 {
+                font-size: 1.5rem;
+            }
+            
+            .quote-item {
+                padding: 1rem;
+            }
+            
+            .quote-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+<header>
+    <a href="index.html" class="logo-container">
+        <img src="images/logo.svg" alt="株の格言「かぶこと365」" class="logo-image">
+        <span class="visually-hidden">株の格言「かぶこと365」</span>
+    </a>
+    <nav>
+        <ul>
+            <li><a href="index.html">ホーム</a></li>
+            <li><a href="about.html">サイトについて</a></li>
+            <li><a href="archive.html">格言アーカイブ</a></li>
+        </ul>
+    </nav>
+</header>
+
+    <!-- ステータスバー -->
+    <div class="status-bar"></div>
+    
+    <!-- アーカイブコンテンツ -->
+    <main>
+        <div class="archive-container">
+            <h1>格言アーカイブ</h1>
+            <p class="archive-description">366日分の投資格言・相場の名言を一覧でご覧いただけます。<br>テキスト検索や発言者での絞り込みが可能です。</p>
+            
+            <div class="filter-container">
+                <input type="text" id="search-input" class="filter-input" placeholder="キーワードで検索...">
+                <select id="source-filter" class="filter-select">
+                    <option value="">すべての発言者</option>
+                    <!-- JavaScriptで動的に生成 -->
+                </select>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>データを読み込み中...</p>
+            </div>
+            
+            <div id="quotes-list" class="quotes-list">
+                <!-- JavaScriptで動的に生成 -->
+            </div>
+            
+            <div id="pagination" class="pagination">
+                <!-- JavaScriptで動的に生成 -->
+            </div>
+            <div id="page-info" class="page-info"></div>
+        </div>
+    </main>
+    
+    <!-- フッター -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2023-2025 かぶこと365 - 株の格言サイト</p>
+            <nav class="footer-nav">
+                <ul>
+                    <li><a href="about.html">サイトについて</a></li>
+                    <li><a href="archive.html">格言アーカイブ</a></li>
+                    <li><a href="privacy.html">プライバシーポリシー</a></li>
+                    <li><a href="contact.html">お問い合わせ</a></li>
+                </ul>
+            </nav>
+        </div>
+    </footer>
+    
+    <!-- JavaScript -->
+    <script src="js/quotes-data.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const quotesList = document.getElementById('quotes-list');
+            const pagination = document.getElementById('pagination');
+            const pageInfo = document.getElementById('page-info');
+            const searchInput = document.getElementById('search-input');
+            const sourceFilter = document.getElementById('source-filter');
+            const loading = document.getElementById('loading');
+            
+            // 格言データの処理
+            let allQuotes = [];
+            let filteredQuotes = [];
+            let currentPage = 1;
+            const quotesPerPage = 10;
+            
+            // 月/日形式の日付を取得する関数
+            function formatMonthDay(mmdd) {
+                const parts = mmdd.split('-');
+                return `${parts[0]}月${parts[1]}日`;
+            }
+            
+            // データの初期化
+            function initializeData() {
+                // quotesDataオブジェクトから配列に変換
+                for (const [dateKey, quoteData] of Object.entries(quotesData)) {
+                    allQuotes.push({
+                        date: dateKey,
+                        formattedDate: formatMonthDay(dateKey),
+                        quote: quoteData.quote,
+                        source: quoteData.source || '不明',
+                        explanation: quoteData.explanation || '',
+                        examples: quoteData.examples || []
+                    });
+                }
+                
+                // 日付でソート
+                allQuotes.sort((a, b) => {
+                    // MM-DD形式をソート用に変換（01-01 → 0101）
+                    const aSort = a.date.replace('-', '');
+                    const bSort = b.date.replace('-', '');
+                    return aSort.localeCompare(bSort);
+                });
+                
+                // 発言者リストを生成
+                const sources = [...new Set(allQuotes.map(q => q.source))];
+                sources.sort();
+                
+                sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source;
+                    option.textContent = source;
+                    sourceFilter.appendChild(option);
+                });
+                
+                // 初期表示
+                filteredQuotes = [...allQuotes];
+                renderQuotes();
+                loading.style.display = 'none';
+            }
+            
+            // 格言リストの表示
+            function renderQuotes() {
+                quotesList.innerHTML = '';
+                
+                if (filteredQuotes.length === 0) {
+                    quotesList.innerHTML = '<div class="no-results">該当する格言が見つかりませんでした</div>';
+                    pagination.innerHTML = '';
+                    pageInfo.textContent = '';
+                    return;
+                }
+                
+                // ページネーション計算
+                const totalPages = Math.ceil(filteredQuotes.length / quotesPerPage);
+                if (currentPage > totalPages) {
+                    currentPage = 1;
+                }
+                
+                const start = (currentPage - 1) * quotesPerPage;
+                const end = Math.min(start + quotesPerPage, filteredQuotes.length);
+                const paginated = filteredQuotes.slice(start, end);
+                
+                // リスト表示
+                paginated.forEach(quote => {
+                    const quoteElement = document.createElement('div');
+                    quoteElement.className = 'quote-item';
+                    quoteElement.innerHTML = `
+                        <div class="quote-date">${quote.formattedDate}</div>
+                        <div class="quote-text">${quote.quote}</div>
+                        <div class="quote-author">- ${quote.source}</div>
+                    `;
+                    quotesList.appendChild(quoteElement);
+                });
+                
+                // ページネーションボタン生成
+                renderPagination(totalPages);
+                
+                // 表示情報
+                pageInfo.textContent = `${filteredQuotes.length}件中 ${start + 1}〜${end}件を表示`;
+            }
+            
+            // ページネーションの表示
+            function renderPagination(totalPages) {
+                pagination.innerHTML = '';
+                
+                if (totalPages <= 1) {
+                    return;
+                }
+                
+                // 前へボタン
+                if (currentPage > 1) {
+                    const prevBtn = document.createElement('div');
+                    prevBtn.className = 'page-btn';
+                    prevBtn.textContent = '前へ';
+                    prevBtn.addEventListener('click', () => {
+                        currentPage--;
+                        renderQuotes();
+                        window.scrollTo(0, 0);
+                    });
+                    pagination.appendChild(prevBtn);
+                }
+                
+                // ページ番号ボタン
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageBtn = document.createElement('div');
+                    pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => {
+                        currentPage = i;
+                        renderQuotes();
+                        window.scrollTo(0, 0);
+                    });
+                    pagination.appendChild(pageBtn);
+                }
+                
+                // 次へボタン
+                if (currentPage < totalPages) {
+                    const nextBtn = document.createElement('div');
+                    nextBtn.className = 'page-btn';
+                    nextBtn.textContent = '次へ';
+                    nextBtn.addEventListener('click', () => {
+                        currentPage++;
+                        renderQuotes();
+                        window.scrollTo(0, 0);
+                    });
+                    pagination.appendChild(nextBtn);
+                }
+            }
+            
+            // 検索フィルター
+            function filterQuotes() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const selectedSource = sourceFilter.value;
+                
+                filteredQuotes = allQuotes.filter(quote => {
+                    // 検索語でフィルター
+                    const matchesSearch = searchTerm === '' || 
+                        quote.quote.toLowerCase().includes(searchTerm) || 
+                        quote.source.toLowerCase().includes(searchTerm) ||
+                        quote.explanation.toLowerCase().includes(searchTerm);
+                    
+                    // 発言者でフィルター
+                    const matchesSource = selectedSource === '' || quote.source === selectedSource;
+                    
+                    return matchesSearch && matchesSource;
+                });
+                
+                currentPage = 1;
+                renderQuotes();
+            }
+            
+            // 検索とフィルターのイベントリスナー
+            searchInput.addEventListener('input', filterQuotes);
+            sourceFilter.addEventListener('change', filterQuotes);
+            
+            // データの初期化と表示
+            initializeData();
+        });
+    </script>
+</body>
+</html>

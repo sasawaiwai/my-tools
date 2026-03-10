@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://kabukoto.sasadokoro.online/sitemap.xml
+
+# 以下のディレクトリはクロールさせない場合の例
+# Disallow: /private/
+# Disallow: /admin/
