@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="120" viewBox="0 0 480 120">
+  <!-- 角丸白背景（シンボル） -->
+  <rect x="0" y="0" width="120" height="120" rx="20" fill="white"/>
+
+  <!-- ローソク足（アニメ付き） -->
+  <!-- 左 -->
+  <line x1="30" y1="30" x2="30" y2="90" stroke="black" stroke-width="4" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.2s" dur="0.3s" fill="freeze"/>
+  </line>
+  <rect x="26" y="50" width="8" height="20" fill="black" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.2s" dur="0.3s" fill="freeze"/>
+  </rect>
+
+  <!-- 中央 -->
+  <line x1="60" y1="20" x2="60" y2="100" stroke="black" stroke-width="4" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.5s" dur="0.3s" fill="freeze"/>
+  </line>
+  <rect x="56" y="40" width="8" height="30" fill="black" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.5s" dur="0.3s" fill="freeze"/>
+  </rect>
+
+  <!-- 右 -->
+  <line x1="90" y1="40" x2="90" y2="80" stroke="black" stroke-width="4" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.8s" dur="0.3s" fill="freeze"/>
+  </line>
+  <rect x="86" y="55" width="8" height="20" fill="black" opacity="0">
+    <animate attributeName="opacity" from="0" to="1" begin="0.8s" dur="0.3s" fill="freeze"/>
+  </rect>
+
+  <!-- テキスト（フェード＋スライドイン） -->
+  <text x="140" y="78" font-family="Arial, Helvetica, sans-serif"
+        font-size="48" fill="white" letter-spacing="2" opacity="0">
+    Kabukoto365
+    <animate attributeName="opacity" from="0" to="1" begin="1.2s" dur="0.6s" fill="freeze"/>
+    <animate attributeName="x" from="160" to="140" begin="1.2s" dur="0.6s" fill="freeze"/>
+  </text>
+</svg>
