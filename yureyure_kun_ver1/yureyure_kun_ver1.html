@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日本語 表記揺れ候補抽出ツール</title>
+    <script src="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/build/kuromoji.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans CJK JP", sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: #f5f5f5;
+            color: #333;
+            overflow: hidden;
+        }
+        
+        /* 左右ペイン共通スタイル */
+        .left-pane, .right-pane {
+            height: 100vh;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        /* 左ペイン */
+        .left-pane {
+            width: 60%;
+            border-right: 1px solid #ddd;
+            background-color: #f5f5f5;
+        }
+        
+        /* 右ペイン */
+        .right-pane {
+            width: 40%;
+            background-color: #fafafa;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+        .description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        .file-input-section {
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .file-input-section label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        .file-input-section input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            font-size: 0.9rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        textarea {
+            width: 100%;
+            height: 10vh;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            resize: vertical;
+            font-family: inherit;
+            margin-bottom: 12px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        button {
+            margin-bottom: 12px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-bottom: 12px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        #status.loading {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        #status.ready {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        #status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        #result-section {
+            margin-top: 0;
+        }
+        .result-summary {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: #e8f4f8;
+            border-radius: 6px;
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background-color: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        tr.group-start {
+            border-top: 2px solid #3498db;
+        }
+        /* 否定形レイヤーの行にはオレンジの左ボーダーを追加 */
+        tr.neg-type {
+            border-left: 4px solid #e67e22;
+        }
+        tr.neg-type td:first-child {
+            padding-left: 8px;
+        }
+        /* 送り仮名系の行には紫の背景を追加 */
+        tr.okurigana-type {
+            background-color: #f5eef8;
+        }
+        tr.okurigana-type:hover {
+            background-color: #ebdef0;
+        }
+        /* 和語数詞系の行には緑の背景を追加 */
+        tr.wago-type {
+            background-color: #eafaf1;
+        }
+        tr.wago-type:hover {
+            background-color: #d5f5e3;
+        }
+        .type-badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .type-badge.strict {
+            background-color: #3498db;
+            color: white;
+        }
+        .type-badge.neg {
+            background-color: #e67e22;
+            color: white;
+        }
+        .type-badge.okurigana {
+            background-color: #9b59b6;
+            color: white;
+        }
+        .type-badge.wago {
+            background-color: #27ae60;
+            color: white;
+        }
+        /* 種別列のスタイル */
+        .variation-label {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+        .variation-label.okurigana {
+            background-color: #9b59b6;
+            color: white;
+        }
+        .variation-label.wago {
+            background-color: #27ae60;
+            color: white;
+        }
+        .variation-label.default {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .no-result {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            background-color: white;
+            border-radius: 6px;
+        }
+        .privacy-note {
+            margin-top: 20px;
+            padding: 10px;
+            font-size: 0.8rem;
+            color: #666;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .legend {
+            margin-top: 12px;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .highlighted-text-view {
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 12px;
+            background-color: #ffffff;
+            margin-bottom: 16px;
+            font-family: inherit;
+            line-height: 1.7;
+            font-size: 14px;
+            border-radius: 6px;
+            height: 35vh;
+            overflow-y: auto;
+        }
+
+        .hl-variant {
+            background-color: #fff3cd;
+            border-bottom: 1px dotted #e0a800;
+        }
+
+        .hl-selected {
+            background-color: #ffd1dc;
+            border-bottom: 1px dotted #c0007a;
+        }
+
+        /* 辞書折りたたみUI用のスタイル */
+        details.dictionary {
+            margin-top: 1.5em;
+            font-size: 14px;
+        }
+
+        details.dictionary summary {
+            cursor: pointer;
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f7f7f7;
+            display: inline-block;
+            font-weight: normal;
+            color: #555;
+            transition: background-color 0.2s;
+        }
+
+        details.dictionary summary:hover {
+            background: #ececec;
+        }
+
+        details.dictionary[open] summary {
+            background: #eee;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        details.dictionary summary::marker {
+            display: none;
+        }
+
+        details.dictionary summary::after {
+            content: " ▼";
+            font-size: 0.8em;
+        }
+
+        details.dictionary[open] summary::after {
+            content: " ▲";
+        }
+
+        details.dictionary .dictionary-content {
+            border: 1px solid #ccc;
+            border-top: none;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+            padding: 10px 12px;
+            background: #fdfdfd;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        details.dictionary .dictionary-content p {
+            margin: 4px 0;
+            line-height: 1.6;
+        }
+
+        /* クリック可能な行のホバー効果 */
+        tbody tr[data-groupkey]:hover {
+            background-color: #e3f2fd !important;
+        }
+
+        /* 出現箇所行 */
+        .occ-row {
+            background-color: #f0f8ff;
+        }
+        
+        .occ-row td {
+            padding: 0 !important;
+        }
+        
+        .occ-container {
+            padding: 0;
+            background-color: #ffffff;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .occurrence-item:hover {
+            background-color: #e3f2fd !important;
+            border-left-color: #2980b9 !important;
+        }
+
+        /* 説明ボックス共通スタイル */
+        .info-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            background-color: #eaf4fb;
+            border: 1px solid #b8ddf0;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #4a6a7c;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .info-box::before {
+            content: "ℹ";
+            flex-shrink: 0;
+            font-size: 1rem;
+            color: #3498db;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <!-- 左ペイン -->
+    <div class="left-pane">
+        <h1>日本語 表記揺れ候補抽出ツール</h1>
+        <p class="description">
+            日本語テキストから、同じ意味だが異なる表記が混在している候補を自動検出します。<br>
+            和語数詞(「一つ」「1つ」など)、否定形(「ない」「無い」)、送り仮名の揺れ(「飲む」「呑む」など)を検出できます。
+        </p>
+
+        <div class="privacy-note">
+            ※ 入力されたテキストはすべてブラウザ内で処理され、外部に送信されることはありません。
+        </div>
+        
+        <!-- ファイル読み込みセクション -->
+        <div class="file-input-section">
+            <label for="file-input">ファイルを読み込む(.txt, .docx)</label>
+            <input type="file" id="file-input" accept=".txt,.docx">
+        </div>
+
+        <!-- 入力テキストエリア -->
+        <textarea id="input-text" placeholder="ここに解析対象のテキストを入力するか、「ファイルを読み込む」ボタンを押してテキストを読み込んでください。"></textarea>
+
+        <!-- 解析実行ボタン -->
+        <button id="analyze-btn" disabled>解析実行</button>
+
+        <!-- ステータス表示 -->
+        <div id="status" class="loading">形態素解析エンジンを読み込み中...</div>
+
+        <!-- ハイライト表示エリア -->
+        <div class="highlighted-text-view" id="highlighted-text">
+  ここに解析後のテキストが表示されます。
+</div>
+
+
+    </div>
+
+    <!-- 右ペイン -->
+    <div class="right-pane">
+        <!-- TSVダウンロードボタン -->
+        <div style="padding: 8px 0 4px;">
+            <button id="export-tsv-btn" disabled style="font-size: 0.9rem; padding: 8px 18px; background-color: #27ae60; margin-bottom: 0;">
+                TSVダウンロード
+            </button>
+            <p class="info-box">解析結果を、スプレッドシートなどで使えるtsvファイル形式でダウンロードできます。</p>
+        </div>
+
+        <!-- 解析結果表示エリア -->
+        <div id="result-section"><p class="info-box">「解析実行」ボタンを押すと、この下に表記揺れ候補が表示されます。</p></div>
+
+        <!-- 和語数詞辞書の内容を折りたたみで表示 -->
+        <details class="dictionary">
+            <summary>登録されている和語数詞の辞書を確認</summary>
+            <div class="dictionary-content" id="registered-wago">
+                <!-- ここに JavaScript で辞書の内容が挿入されます -->
+            </div>
+        </details>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
