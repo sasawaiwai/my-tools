@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>原稿校正補助ツール - 頻出表現検出｜頻出くん</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  background: #f7f7f7;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #dddddd;
+  overflow: hidden;
+}
+
+header {
+  background: #ffffff;
+  color: #222222;
+  padding: 20px 30px;
+  text-align: center;
+  border-bottom: 2px solid #333333;
+}
+
+header h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+header p {
+  font-size: 13px;
+  color: #666666;
+}
+
+.main {
+  display: flex;
+  min-height: 600px;
+}
+
+.left-panel {
+  flex: 1;
+  padding: 20px;
+  border-right: 1px solid #dddddd;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: #fafafa;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  background: #ffffff;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #222222;
+  border-bottom: 2px solid #333333;
+  padding-bottom: 6px;
+}
+
+#inputText {
+  width: 100%;
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  font-size: 14px;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.8;
+  background: #ffffff;
+}
+
+#inputText:focus {
+  outline: none;
+  border-color: #999999;
+}
+
+/* スクロール計測用ミラーdiv（非表示） */
+#scrollMirror {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.dropzone {
+  border: 2px dashed #cccccc;
+  border-radius: 3px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 15px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dropzone:hover {
+  border-color: #999999;
+  background: #f5f5f5;
+}
+
+.dropzone.dragover {
+  border-color: #666666;
+  background: #f0f0f0;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin: 5px;
+}
+
+.btn-primary {
+  background: #333333;
+  color: white;
+  border: 1px solid #333333;
+}
+
+.btn-primary:hover {
+  background: #222222;
+  border-color: #222222;
+}
+
+.btn-primary:disabled {
+  background: #999999;
+  border-color: #999999;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #f5f5f5;
+  color: #333333;
+  border: 1px solid #dddddd;
+}
+
+.btn-secondary:hover {
+  background: #e8e8e8;
+  border-color: #cccccc;
+}
+
+.controls {
+  margin: 15px 0;
+  padding: 15px;
+  background: #fafafa;
+  border-radius: 3px;
+  border: 1px solid #eeeeee;
+}
+
+.control-group {
+  margin-bottom: 12px;
+}
+
+.control-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #444444;
+}
+
+.control-group input[type="range"] {
+  width: 100%;
+}
+
+.control-group input[type="text"],
+.control-group input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+.control-group input[type="text"]:focus,
+.control-group input[type="number"]:focus {
+  outline: none;
+  border-color: #999999;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-group label {
+  font-weight: normal;
+  color: #444444;
+}
+
+.radio-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: normal;
+  color: #444444;
+}
+
+.result-item {
+  background: white;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.result-item:hover {
+  background: #f5f5f5;
+  border-color: #cccccc;
+}
+
+.result-item.active {
+  background: #f0f0f0;
+  border-color: #999999;
+  border-width: 2px;
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.result-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222222;
+}
+
+.result-count {
+  background: #333333;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.result-source {
+  font-size: 11px;
+  color: #999999;
+}
+
+.concordance {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fafafa;
+  border-left: 3px solid #333333;
+  border-radius: 3px;
+}
+
+.concordance-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #444444;
+}
+
+.concordance-item {
+  padding: 8px;
+  margin: 5px 0;
+  background: white;
+  border-radius: 3px;
+  border: 1px solid #eeeeee;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.6;
+  transition: all 0.2s;
+}
+
+.concordance-item:hover {
+  background: #f5f5f5;
+  border-color: #dddddd;
+}
+
+.concordance-item mark {
+  background: #e5e5e5;
+  color: #000000;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.stopword-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.stopword-tag {
+  background: #f0f0f0;
+  padding: 5px 10px;
+  border-radius: 15px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dddddd;
+}
+
+.stopword-tag .remove {
+  cursor: pointer;
+  color: #999999;
+  font-weight: bold;
+}
+
+.stopword-tag .remove:hover {
+  color: #333333;
+}
+
+.highlight {
+  background: #e5e5e5;
+  color: #000000;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+.dict-list {
+  margin-top: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+  padding: 8px;
+  background: white;
+}
+
+.dict-item {
+  padding: 5px 8px;
+  background: #fafafa;
+  margin: 4px 0;
+  border-radius: 3px;
+  border: 1px solid #eeeeee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.dict-item .remove {
+  cursor: pointer;
+  color: #999999;
+  font-weight: bold;
+}
+
+.dict-item .remove:hover {
+  color: #333333;
+}
+
+.stats {
+  font-size: 12px;
+  color: #666666;
+  margin: 10px 0;
+  padding: 10px;
+  background: #fafafa;
+  border-radius: 3px;
+  border: 1px solid #eeeeee;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #999999;
+}
+
+.empty-state svg {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 15px;
+  opacity: 0.3;
+}
+
+.nearby-filter-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nearby-filter-group input[type="number"] {
+  width: 80px;
+}
+
+/* 再分析ボタンとステータス表示 */
+.reanalyze-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #f5f5f5;
+  border: 1px solid #dddddd;
+  border-radius: 3px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  background: #666666;
+  color: white;
+  border-radius: 15px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+#reanalyzeStatus {
+  display: none;
+  font-size: 13px;
+  color: #444444;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>原稿校正補助ツール｜頻出くん</h1>
+    <p>頻出表現（手癖）を検出して可視化 | 完全ローカル動作・データ外部送信なし</p>
+  </header>
+  
+  <div class="main">
+    <!-- 左パネル：入力 -->
+    <div class="left-panel">
+      <div class="section-title">📄 原稿入力</div>
+      
+      <div class="dropzone" id="dropzone">
+        📁 .txt / .docx ファイルをドロップ または クリックして選択
+      </div>
+      
+      <textarea id="inputText" placeholder="ここに原稿をコピペしてください...
+
+"></textarea>
+      
+      <!-- スクロール計測用ミラーdiv（非表示） -->
+      <div id="scrollMirror"></div>
+      
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button class="btn btn-primary" onclick="analyzeText()">🔍 分析開始</button>
+        <button class="btn btn-secondary" onclick="clearAll()">🗑️ クリア</button>
+      </div>
+      
+      <!-- ローディングメッセージ -->
+      <div id="loadingMessage" style="display:none; margin-top:10px; padding:10px; background:#f0f0f0; border:1px solid #ccc; border-radius:3px; color:#333; font-size:14px; text-align:center;">
+        ⏳ ただいま解析中です。お待ちください...
+      </div>
+    </div>
+    
+    <!-- 右パネル：結果 -->
+    <div class="right-panel">
+      <div class="section-title">⚙️ 設定</div>
+      
+      <!-- 再分析ボタンとステータス -->
+      <div class="reanalyze-container">
+        <button class="btn btn-primary" id="reanalyzeBtn" onclick="reanalyze()">🔁 設定を反映して再分析</button>
+        <span id="reanalyzeStatus" class="status-badge">未反映（再分析が必要）</span>
+      </div>
+      
+      <div class="controls">
+        <div class="control-group">
+          <label>検出モード</label>
+          <div class="radio-group">
+            <label><input type="radio" name="mode" value="both" checked> 両方</label>
+            <label><input type="radio" name="mode" value="auto"> 自動のみ</label>
+            <label><input type="radio" name="mode" value="dict"> 辞書のみ</label>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>最低出現回数: <span id="minCountValue">2</span>回</label>
+          <input type="range" id="minCount" min="1" max="10" value="2" oninput="updateFilters()">
+        </div>
+        
+        <div class="control-group">
+          <label>文字数範囲: <span id="ngramMinValue">2</span>〜<span id="ngramMaxValue">6</span>文字</label>
+          <input type="range" id="ngramMin" min="1" max="6" value="2" oninput="updateFilters()">
+          <input type="range" id="ngramMax" min="1" max="10" value="6" oninput="updateFilters()">
+        </div>
+        
+        <!-- 表示件数スライダーを削除（校正・編集用途のため、検出された表現はすべて表示する） -->
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="excludeQuotes">
+          <label for="excludeQuotes">「」内を除外</label>
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="excludeParens">
+          <label for="excludeParens">（）内を除外</label>
+        </div>
+        
+        <div class="checkbox-group">
+          <input type="checkbox" id="nearbyFilterEnabled">
+          <label for="nearbyFilterEnabled">近接のみ（N行以内に重複がある表現に絞る）</label>
+        </div>
+        
+        <div class="control-group nearby-filter-group">
+          <label>近接行数:</label>
+          <input type="number" id="nearbyLines" min="1" max="200" value="10" oninput="updateFilters()">
+          <span>行以内</span>
+        </div>
+      </div>
+      
+      <div class="controls">
+        <div class="control-group">
+          <label>ユーザー辞書（チェックしたい表現）</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="dictInput" placeholder="例：あっさり、感情的に" onkeypress="if(event.key==='Enter')addDict()">
+            <button class="btn btn-secondary" onclick="addDict()">追加</button>
+          </div>
+          <div class="dict-list" id="dictList"></div>
+        </div>
+        
+        <div class="control-group">
+          <label>除外語（ストップワード）</label>
+          <div style="display: flex; gap: 5px;">
+            <input type="text" id="stopwordInput" placeholder="例：これ、それ、ます" onkeypress="if(event.key==='Enter')addStopword()">
+            <button class="btn btn-secondary" onclick="addStopword()">追加</button>
+          </div>
+          <div class="stopword-list" id="stopwordList"></div>
+        </div>
+        
+        <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="clearStorage()">💾 保存データをリセット</button>
+      </div>
+      
+      <div class="section-title" style="margin-top: 20px;">📊 検出結果</div>
+      <div class="stats" id="stats"></div>
+      <div id="results"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// グローバル変数
+let originalText = '';
+let processedText = '';
+let results = [];
+let userDict = [];
+let stopwords = new Set();
+let currentHighlight = null;
+let lineStartIndices = [];
+let needsReanalyze = false; // 再分析が必要かどうかのフラグ
+
+// 初期化
+window.addEventListener('DOMContentLoaded', () => {
+  loadStorage();
+  setupDropzone();
+  updateDictDisplay();
+  updateStopwordDisplay();
+  updateReanalyzeStatus();
+  
+  // ラジオボタンにイベント追加
+  document.querySelectorAll('input[name="mode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      markNeedsReanalyze();
+    });
+  });
+  
+  // チェックボックスにイベント追加
+  document.getElementById('excludeQuotes').addEventListener('change', () => {
+    markNeedsReanalyze();
+  });
+  document.getElementById('excludeParens').addEventListener('change', () => {
+    markNeedsReanalyze();
+  });
+  document.getElementById('nearbyFilterEnabled').addEventListener('change', () => {
+    markNeedsReanalyze();
+  });
+});
+
+// docx読み込み処理
+async function readDocx(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } catch (error) {
+    console.error('docx読み込みエラー:', error);
+    alert('docxの読み込みに失敗しました');
+    return null;
+  }
+}
+
+// ドロップゾーン設定
+function setupDropzone() {
+  const dropzone = document.getElementById('dropzone');
+  const inputText = document.getElementById('inputText');
+  
+  dropzone.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.docx';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.name.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          inputText.value = event.target.result;
+        };
+        reader.readAsText(file, 'UTF-8');
+      } else if (file.name.endsWith('.docx')) {
+        const text = await readDocx(file);
+        if (text) {
+          inputText.value = text;
+        }
+      }
+    };
+    input.click();
+  });
+  
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('dragover');
+  });
+  
+  dropzone.addEventListener('dragleave', () => {
+    dropzone.classList.remove('dragover');
+  });
+  
+  dropzone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    
+    if (file.name.endsWith('.txt')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        inputText.value = event.target.result;
+      };
+      reader.readAsText(file, 'UTF-8');
+    } else if (file.name.endsWith('.docx')) {
+      const text = await readDocx(file);
+      if (text) {
+        inputText.value = text;
+      }
+    }
+  });
+}
+
+// 再分析が必要とマークする
+function markNeedsReanalyze() {
+  if (!originalText) return; // まだ分析してない場合はスキップ
+  needsReanalyze = true;
+  updateReanalyzeStatus();
+}
+
+// 再分析ステータス表示を更新
+function updateReanalyzeStatus() {
+  const statusEl = document.getElementById('reanalyzeStatus');
+  const btnEl = document.getElementById('reanalyzeBtn');
+  
+  if (!statusEl || !btnEl) return;
+  
+  if (needsReanalyze && originalText) {
+    statusEl.style.display = 'inline-block';
+    btnEl.disabled = false;
+  } else {
+    statusEl.style.display = 'none';
+    btnEl.disabled = false;
+  }
+}
+
+// ローディング表示
+function showLoading() {
+  const loadingEl = document.getElementById('loadingMessage');
+  const analyzeBtn = document.querySelector('button[onclick="analyzeText()"]');
+  const reanalyzeBtn = document.getElementById('reanalyzeBtn');
+  
+  if (loadingEl) loadingEl.style.display = 'block';
+  if (analyzeBtn) analyzeBtn.disabled = true;
+  if (reanalyzeBtn) reanalyzeBtn.disabled = true;
+}
+
+// ローディング非表示
+function hideLoading() {
+  const loadingEl = document.getElementById('loadingMessage');
+  const analyzeBtn = document.querySelector('button[onclick="analyzeText()"]');
+  const reanalyzeBtn = document.getElementById('reanalyzeBtn');
+  
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (analyzeBtn) analyzeBtn.disabled = false;
+  if (reanalyzeBtn) reanalyzeBtn.disabled = false;
+}
+
+// 再分析実行
+async function reanalyze() {
+  if (!originalText || !originalText.trim()) {
+    alert('原稿を入力してから分析を実行してください');
+    return;
+  }
+  await analyzeText();
+}
+
+// テキスト正規化
+function normalizeText(text) {
+  return text
+    .replace(/\s+/g, ' ') // 連続空白を1つに
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角→半角
+    .trim();
+}
+
+// 除外区間を削除
+function removeExcludedSections(text) {
+  let result = text;
+  
+  if (document.getElementById('excludeQuotes').checked) {
+    result = result.replace(/「[^」]*」/g, '');
+  }
+  
+  if (document.getElementById('excludeParens').checked) {
+    result = result.replace(/（[^）]*）/g, '').replace(/\([^)]*\)/g, '');
+  }
+  
+  return result;
+}
+
+// 行頭インデックス配列を構築（高速化）
+function buildLineStartIndices(text) {
+  const indices = [0];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') {
+      indices.push(i + 1);
+    }
+  }
+  return indices;
+}
+
+// 位置から行番号を取得（二分探索）
+function lineOfPos(lineStarts, pos) {
+  let left = 0;
+  let right = lineStarts.length - 1;
+  
+  while (left < right) {
+    const mid = Math.floor((left + right + 1) / 2);
+    if (lineStarts[mid] <= pos) {
+      left = mid;
+    } else {
+      right = mid - 1;
+    }
+  }
+  
+  return left;
+}
+
+// フレーズの全出現位置を取得
+function getMatchPositions(text, phrase) {
+  const positions = [];
+  const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+  let match;
+  
+  while ((match = regex.exec(text)) !== null) {
+    positions.push(match.index);
+  }
+  
+  return positions;
+}
+
+// N行以内に近接重複があるか判定
+function hasNearbyDuplicates(text, phrase, lineStarts, N) {
+  const positions = getMatchPositions(text, phrase);
+  
+  if (positions.length < 2) return false;
+  
+  const lines = positions.map(pos => lineOfPos(lineStarts, pos));
+  
+  for (let i = 1; i < lines.length; i++) {
+    if (lines[i] - lines[i - 1] <= N) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// N-gram抽出
+function extractNgrams(text, minN, maxN) {
+  const ngrams = new Map();
+  
+  for (let n = minN; n <= maxN; n++) {
+    for (let i = 0; i <= text.length - n; i++) {
+      const gram = text.substring(i, i + n);
+      
+      // ノイズ除外
+      if (!isValidNgram(gram)) continue;
+      
+      ngrams.set(gram, (ngrams.get(gram) || 0) + 1);
+    }
+  }
+  
+  return ngrams;
+}
+
+// N-gramの妥当性チェック（改善版）
+function isValidNgram(gram) {
+  // 【基本チェック】1文字以下は除外
+  if (gram.length < 2) return false;
+  
+  // 【基本チェック】空白を含む場合は除外
+  if (/\s/.test(gram)) return false;
+  
+  // 【基本チェック】記号・数字のみで構成される場合は除外
+  // 例：「!!」「123」「、。」など
+  if (/^[0-9!-\/:-@\[-`{-~、。！？「」（）]+$/.test(gram)) return false;
+  
+  // 【改善1】先頭が句読点・記号の場合は除外
+  // 理由：文の境界をまたいで発生した無意味な断片を除外
+  // 例：「、い」「。そ」「。る」など
+  // これにより文末と次の文頭が結合した意味のない組み合わせを排除
+  if (/^[、。！？,.!?]/.test(gram)) return false;
+  
+  // 【改善2】末尾が句読点・記号の場合は除外
+  // 理由：文の境界をまたいで発生した無意味な断片を除外
+  // 例：「る。」「た、」「だ。」など
+  // これにより文末記号を含む意味のない組み合わせを排除
+  // 注意：「だった」「ていた」「している」などは末尾が記号ではないため除外されない
+  if (/[、。！？,.!?]$/.test(gram)) return false;
+  
+  return true;
+}
+
+// ユーザー辞書で検索
+function findDictMatches(text) {
+  const matches = new Map();
+  
+  userDict.forEach(phrase => {
+    const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    const count = (text.match(regex) || []).length;
+    if (count > 0) {
+      matches.set(phrase, count);
+    }
+  });
+  
+  return matches;
+}
+
+// 分析実行
+async function analyzeText() {
+  const inputText = document.getElementById('inputText').value;
+  if (!inputText.trim()) {
+    alert('原稿を入力してください');
+    return;
+  }
+  
+  showLoading();
+  await new Promise(resolve => setTimeout(resolve, 10));
+  
+  try {
+    originalText = inputText;
+    processedText = removeExcludedSections(normalizeText(inputText));
+    
+    // 行頭インデックスを計算
+    lineStartIndices = buildLineStartIndices(originalText);
+    
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const minCount = parseInt(document.getElementById('minCount').value);
+    const ngramMin = parseInt(document.getElementById('ngramMin').value);
+    const ngramMax = parseInt(document.getElementById('ngramMax').value);
+    
+    // 【表示件数制限を撤廃】
+    // 校正・編集用途のため、検出された表現は件数に関わらずすべて表示する
+    // 「拾ったのに表示されない」状態を避け、網羅性を最優先する
+    
+    const nearbyEnabled = document.getElementById('nearbyFilterEnabled').checked;
+    const nearbyLines = parseInt(document.getElementById('nearbyLines').value);
+    
+    let allMatches = new Map();
+    
+    // 自動抽出
+    if (mode === 'auto' || mode === 'both') {
+      const ngrams = extractNgrams(processedText, ngramMin, ngramMax);
+      ngrams.forEach((count, gram) => {
+        if (count >= minCount && !stopwords.has(gram)) {
+          // 近接フィルタ
+          if (nearbyEnabled) {
+            if (hasNearbyDuplicates(originalText, gram, lineStartIndices, nearbyLines)) {
+              allMatches.set(gram, { count, source: '自動' });
+            }
+          } else {
+            allMatches.set(gram, { count, source: '自動' });
+          }
+        }
+      });
+    }
+    
+    // 辞書
+    if (mode === 'dict' || mode === 'both') {
+      const dictMatches = findDictMatches(processedText);
+      dictMatches.forEach((count, phrase) => {
+        if (count >= minCount) {
+          // 近接フィルタ
+          if (nearbyEnabled) {
+            if (hasNearbyDuplicates(originalText, phrase, lineStartIndices, nearbyLines)) {
+              allMatches.set(phrase, { count, source: '辞書' });
+            }
+          } else {
+            allMatches.set(phrase, { count, source: '辞書' });
+          }
+        }
+      });
+    }
+    
+    // 重複整理（包含関係）
+    // 【暫定的に無効化】短い語が長いN-gramに包含されることで削除されるのを防ぐ
+    // 「とにかく重複していれば拾う」思想のため、包含関係による削除は行わない
+    // allMatches = deduplicateMatches(allMatches);
+    
+    // 【ソート処理】
+    // 出現回数の多い順、同数なら文字数の長い順でソート
+    // 【重要】.slice()による上限処理は行わず、検出された表現はすべて results に含める
+    results = Array.from(allMatches.entries())
+      .map(([text, data]) => ({ text, count: data.count, source: data.source }))
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return b.text.length - a.text.length;
+      });
+    // 注意：従来の .slice(0, maxResults) を削除
+    // 理由：検出ロジックと表示結果を完全に一致させ、網羅性を確保するため
+    
+    displayResults();
+    
+    // 分析完了後、再分析フラグをクリア
+    needsReanalyze = false;
+    updateReanalyzeStatus();
+  } finally {
+    hideLoading();
+  }
+}
+
+// 重複除去（長い方を優先）
+function deduplicateMatches(matches) {
+  const sorted = Array.from(matches.entries()).sort((a, b) => b[0].length - a[0].length);
+  const result = new Map();
+  
+  sorted.forEach(([text, data]) => {
+    let isDuplicate = false;
+    
+    for (const [existing] of result) {
+      if (existing.includes(text) && existing !== text) {
+        isDuplicate = true;
+        break;
+      }
+    }
+    
+    if (!isDuplicate) {
+      result.set(text, data);
+    }
+  });
+  
+  return result;
+}
+
+// 結果表示
+function displayResults() {
+  const resultsDiv = document.getElementById('results');
+  const statsDiv = document.getElementById('stats');
+  
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div class="empty-state">検出結果なし</div>';
+    statsDiv.innerHTML = '検出された表現: 0件';
+    return;
+  }
+  
+  statsDiv.innerHTML = `検出された表現: ${results.length}件 | 原稿文字数: ${originalText.length}文字`;
+  
+  resultsDiv.innerHTML = results.map((item, index) => `
+    <div class="result-item" onclick="showConcordance(${index})">
+      <div class="result-header">
+        <span class="result-text">${escapeHtml(item.text)}</span>
+        <span class="result-count">${item.count}回</span>
+      </div>
+      <div class="result-source">出典: ${item.source}</div>
+    </div>
+  `).join('');
+}
+
+// 用例表示（コンコーダンス）
+function showConcordance(index) {
+  const item = results[index];
+  const resultsDiv = document.getElementById('results');
+  
+  // アクティブ状態更新
+  resultsDiv.querySelectorAll('.result-item').forEach((el, i) => {
+    el.classList.toggle('active', i === index);
+  });
+  
+  // 用例取得
+  const concordances = getConcordances(item.text, 30);
+  
+  // 用例HTML生成（eventを渡すように修正）
+  const concordanceHtml = `
+    <div class="concordance">
+      <div class="concordance-title">📌 用例一覧（前後30文字、クリックでジャンプ）</div>
+      ${concordances.map((conc, i) => `
+        <div class="concordance-item" onclick="jumpToPosition(${conc.position}, ${item.text.length}, event)">
+          ${conc.before}<mark>${escapeHtml(item.text)}</mark>${conc.after}
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  // 既存の用例を削除して新規追加
+  const existingConcordance = resultsDiv.querySelectorAll('.result-item')[index].querySelector('.concordance');
+  if (existingConcordance) {
+    existingConcordance.remove();
+  } else {
+    resultsDiv.querySelectorAll('.result-item')[index].insertAdjacentHTML('beforeend', concordanceHtml);
+  }
+  
+  // 本文ハイライト
+  highlightInText(item.text);
+}
+
+// 用例取得
+function getConcordances(phrase, contextLength) {
+  const concordances = [];
+  const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+  let match;
+  
+  while ((match = regex.exec(originalText)) !== null) {
+    const position = match.index;
+    const before = originalText.substring(Math.max(0, position - contextLength), position);
+    const after = originalText.substring(position + phrase.length, Math.min(originalText.length, position + phrase.length + contextLength));
+    
+    concordances.push({ position, before: escapeHtml(before), after: escapeHtml(after) });
+  }
+  
+  return concordances;
+}
+
+// 本文ハイライト
+function highlightInText(phrase) {
+  const inputText = document.getElementById('inputText');
+  
+  // ハイライトをクリア（元のテキストに戻す）
+  if (currentHighlight) {
+    inputText.value = originalText;
+  }
+  
+  currentHighlight = phrase;
+  
+  // 最初の出現位置にジャンプ
+  const firstMatch = originalText.indexOf(phrase);
+  if (firstMatch !== -1) {
+    jumpToPosition(firstMatch, phrase.length);
+  }
+}
+
+// 位置へジャンプ（改善版：ミラーdivを使った正確なスクロール）
+function jumpToPosition(position, length, event) {
+  // イベントバブリング防止
+  if (event) {
+    event.stopPropagation();
+  }
+  
+  const inputText = document.getElementById('inputText');
+  const scrollMirror = document.getElementById('scrollMirror');
+  
+  // 選択範囲でハイライト
+  inputText.focus();
+  inputText.setSelectionRange(position, position + length);
+  
+  // ミラーdivを使ってスクロール位置を正確に計算
+  scrollMirror.textContent = originalText.substring(0, position);
+  
+  // ミラーの高さを取得
+  const mirrorHeight = scrollMirror.scrollHeight;
+  
+  // 目標位置を中央付近に表示するための補正
+  const targetScrollTop = mirrorHeight - inputText.clientHeight * 0.4;
+  
+  // スクロール実行
+  inputText.scrollTop = Math.max(0, targetScrollTop);
+}
+
+// フィルタ更新（自動再分析を削除、代わりに未反映マークを付ける）
+function updateFilters() {
+  document.getElementById('minCountValue').textContent = document.getElementById('minCount').value;
+  document.getElementById('ngramMinValue').textContent = document.getElementById('ngramMin').value;
+  document.getElementById('ngramMaxValue').textContent = document.getElementById('ngramMax').value;
+  // 表示件数の更新処理を削除（表示件数制限を撤廃したため）
+  
+  // 自動再分析せず、未反映マークを付ける
+  markNeedsReanalyze();
+}
+
+// ユーザー辞書追加（自動再分析を削除）
+function addDict() {
+  const input = document.getElementById('dictInput');
+  const phrase = input.value.trim();
+  
+  if (phrase && !userDict.includes(phrase)) {
+    userDict.push(phrase);
+    saveStorage();
+    updateDictDisplay();
+    input.value = '';
+    
+    // 自動再分析せず、未反映マークを付ける
+    markNeedsReanalyze();
+  }
+}
+
+// ユーザー辞書削除（自動再分析を削除）
+function removeDict(phrase) {
+  userDict = userDict.filter(p => p !== phrase);
+  saveStorage();
+  updateDictDisplay();
+  
+  // 自動再分析せず、未反映マークを付ける
+  markNeedsReanalyze();
+}
+
+// ユーザー辞書表示
+function updateDictDisplay() {
+  const listDiv = document.getElementById('dictList');
+  
+  if (userDict.length === 0) {
+    listDiv.innerHTML = '<div style="color: #999; font-size: 12px; padding: 5px;">辞書は空です</div>';
+    return;
+  }
+  
+  listDiv.innerHTML = userDict.map(phrase => `
+    <div class="dict-item">
+      <span>${escapeHtml(phrase)}</span>
+      <span class="remove" onclick="removeDict('${escapeHtml(phrase)}')">×</span>
+    </div>
+  `).join('');
+}
+
+// ストップワード追加（自動再分析を削除）
+function addStopword() {
+  const input = document.getElementById('stopwordInput');
+  const word = input.value.trim();
+  
+  if (word && !stopwords.has(word)) {
+    stopwords.add(word);
+    saveStorage();
+    updateStopwordDisplay();
+    input.value = '';
+    
+    // 自動再分析せず、未反映マークを付ける
+    markNeedsReanalyze();
+  }
+}
+
+// ストップワード削除（自動再分析を削除）
+function removeStopword(word) {
+  stopwords.delete(word);
+  saveStorage();
+  updateStopwordDisplay();
+  
+  // 自動再分析せず、未反映マークを付ける
+  markNeedsReanalyze();
+}
+
+// ストップワード表示
+function updateStopwordDisplay() {
+  const listDiv = document.getElementById('stopwordList');
+  
+  if (stopwords.size === 0) {
+    listDiv.innerHTML = '<div style="color: #999; font-size: 12px;">除外語なし</div>';
+    return;
+  }
+  
+  listDiv.innerHTML = Array.from(stopwords).map(word => `
+    <div class="stopword-tag">
+      <span>${escapeHtml(word)}</span>
+      <span class="remove" onclick="removeStopword('${escapeHtml(word)}')">×</span>
+    </div>
+  `).join('');
+}
+
+// ローカルストレージ保存
+function saveStorage() {
+  localStorage.setItem('userDict', JSON.stringify(userDict));
+  localStorage.setItem('stopwords', JSON.stringify(Array.from(stopwords)));
+}
+
+// ローカルストレージ読込
+function loadStorage() {
+  const savedDict = localStorage.getItem('userDict');
+  const savedStopwords = localStorage.getItem('stopwords');
+  
+  if (savedDict) userDict = JSON.parse(savedDict);
+  if (savedStopwords) stopwords = new Set(JSON.parse(savedStopwords));
+}
+
+// ストレージクリア
+function clearStorage() {
+  if (confirm('保存されたユーザー辞書と除外語をすべて削除しますか？')) {
+    localStorage.removeItem('userDict');
+    localStorage.removeItem('stopwords');
+    userDict = [];
+    stopwords = new Set();
+    updateDictDisplay();
+    updateStopwordDisplay();
+  }
+}
+
+// 全クリア
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('results').innerHTML = '<div class="empty-state">分析結果がここに表示されます</div>';
+  document.getElementById('stats').innerHTML = '';
+  originalText = '';
+  processedText = '';
+  results = [];
+  currentHighlight = null;
+  lineStartIndices = [];
+  needsReanalyze = false;
+  updateReanalyzeStatus();
+}
+
+// HTMLエスケープ
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+
+<footer style="
+  text-align:right;
+  font-size:11px;
+  color:#aaa;
+  margin-top:30px;
+  padding:10px 20px;
+">
+  頻出くん ver1 ｜ © ササドコロ / 笹塚
+</footer>
+
+// このツールが執筆の助けになりますように。
+
+</body>
+</html>
