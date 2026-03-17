@@ -64,6 +64,15 @@ h1 {
   margin-bottom: 8px;
 }
 
+.card-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  border: 1px solid #eee;
+}
+
 .card-desc {
   font-size: 0.85rem;
   color: #666;
@@ -77,10 +86,12 @@ h1 {
   <p class="subtitle">便利ツール集</p>
   <div class="cards">
     <a class="card" href="/hinshutsu_kun_ver1/">
+      <img class="card-thumb" src="/hinshutsu_kun_ver1/hinshutu.png" alt="頻出くん">
       <div class="card-title">頻出くん</div>
       <div class="card-desc">原稿校正補助ツール。文章中の頻出表現を検出します。</div>
     </a>
     <a class="card" href="/yureyure_kun_ver1/yureyure_kun_ver1.html">
+      <img class="card-thumb" src="/yureyure_kun_ver1/yureyure.png" alt="ゆれゆれくん">
       <div class="card-title">ゆれゆれくん</div>
       <div class="card-desc">日本語の表記揺れ候補を抽出するツールです。</div>
     </a>
