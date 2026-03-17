@@ -1,1 +1,90 @@
-<h1>テスト</h1>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>my-tools</title>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  background: #f7f7f7;
+  padding: 40px 20px;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.6rem;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 24px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  display: block;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #bbb;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.card-desc {
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>my-tools</h1>
+  <p class="subtitle">便利ツール集</p>
+  <div class="cards">
+    <a class="card" href="/hinshutsu_kun_ver1/">
+      <div class="card-title">頻出くん</div>
+      <div class="card-desc">原稿校正補助ツール。文章中の頻出表現を検出します。</div>
+    </a>
+    <a class="card" href="/yureyure_kun_ver1/yureyure_kun_ver1.html">
+      <div class="card-title">ゆれゆれくん</div>
+      <div class="card-desc">日本語の表記揺れ候補を抽出するツールです。</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>
