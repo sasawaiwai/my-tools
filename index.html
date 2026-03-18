@@ -79,23 +79,61 @@ h1 {
   color: #666;
   line-height: 1.6;
 }
+
+.section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.card-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  background: #eef2ff;
+  color: #4f6ef7;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-bottom: 10px;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <h1>my-tools</h1>
   <p class="subtitle">便利ツール集</p>
-  <div class="cards">
-    <a class="card" href="/hinshutsu_kun_ver1/">
-      <img class="card-thumb" src="/hinshutsu_kun_ver1/hinshutu.png" alt="頻出くん">
-      <div class="card-title">頻出くん</div>
-      <div class="card-desc">原稿校正補助ツール。文章中の頻出表現を検出します。</div>
-    </a>
-    <a class="card" href="/yureyure_kun_ver1/yureyure_kun_ver1.html">
-      <img class="card-thumb" src="/yureyure_kun_ver1/yureyure.png" alt="ゆれゆれくん">
-      <div class="card-title">揺れゆれ君</div>
-      <div class="card-desc">原稿校正補助ツール。文章中の表記揺れ候補を抽出します。</div>
-    </a>
+
+  <div class="section">
+    <div class="section-title">文章校正ツール</div>
+    <div class="cards">
+      <a class="card" href="/hinshutsu_kun_ver1/">
+        <img class="card-thumb" src="/hinshutsu_kun_ver1/hinshutu.png" alt="頻出くん">
+        <div class="card-title">頻出くん</div>
+        <div class="card-desc">原稿校正補助ツール。文章中の頻出表現を検出します。</div>
+      </a>
+      <a class="card" href="/yureyure_kun_ver1/yureyure_kun_ver1.html">
+        <img class="card-thumb" src="/yureyure_kun_ver1/yureyure.png" alt="ゆれゆれくん">
+        <div class="card-title">揺れゆれ君</div>
+        <div class="card-desc">原稿校正補助ツール。文章中の表記揺れ候補を抽出します。</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">ココフォリア用ツール</div>
+    <div class="cards">
+      <a class="card" href="https://github.com/sasawaiwai/my-tools/tree/main/ccfolia-notify" target="_blank" rel="noopener">
+        <div class="card-badge">Chrome拡張</div>
+        <div class="card-title">ココフォリア チャット通知</div>
+        <div class="card-desc">チャットに新しい発言が届いたとき、通知音でお知らせするChrome拡張機能です。タブ・音・音量を設定できます。</div>
+      </a>
+    </div>
   </div>
 </div>
 </body>
