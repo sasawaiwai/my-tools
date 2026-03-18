@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ココフォリア通知設定</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      width: 270px;
+      padding: 14px;
+      background: #1a1a2e;
+      color: #e0e0e0;
+    }
+
+    h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 14px;
+      color: #a0c4ff;
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+    }
+
+    .row { margin-bottom: 12px; }
+
+    .row label {
+      display: block;
+      margin-bottom: 4px;
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 5px 8px;
+      background: #2d2d4e;
+      border: 1px solid #444;
+      border-radius: 4px;
+      color: #e0e0e0;
+      font-size: 13px;
+    }
+
+    .sound-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .sound-row select { flex: 1; }
+
+    .btn-test {
+      padding: 5px 10px;
+      background: #3d5a80;
+      border: none;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .btn-test:hover { background: #4d6a90; }
+
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .volume-row input[type="range"] { flex: 1; }
+    .volume-val {
+      min-width: 36px;
+      text-align: right;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .checkbox-row label {
+      margin: 0;
+      cursor: pointer;
+      color: #ccc;
+      font-size: 13px;
+    }
+    input[type="checkbox"] { cursor: pointer; }
+
+    .separator {
+      border: none;
+      border-top: 1px solid #2a2a40;
+      margin: 12px 0;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #7bc67e;
+      text-align: center;
+      min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔔 ココフォリア チャット通知</h2>
+
+  <div class="row">
+    <div class="checkbox-row">
+      <input type="checkbox" id="enabled">
+      <label for="enabled">通知を有効にする</label>
+    </div>
+  </div>
+
+  <hr class="separator">
+
+  <div class="row">
+    <label for="tabFilter">通知対象タブ</label>
+    <select id="tabFilter">
+      <option value="main-only">メインのみ</option>
+      <option value="main-and-chat">メイン＋雑談</option>
+      <option value="all">全タブ</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <label>通知音</label>
+    <div class="sound-row">
+      <select id="sound">
+        <option value="beep1">ピッ（短音）</option>
+        <option value="beep2">ピピッ（二連音）</option>
+        <option value="beep3">ピ〜（上昇音）</option>
+        <option value="chime">チャイム</option>
+      </select>
+      <button class="btn-test" id="testSound">試聴</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <label>音量</label>
+    <div class="volume-row">
+      <input type="range" id="volume" min="0" max="100" value="70">
+      <span class="volume-val" id="volumeVal">70%</span>
+    </div>
+  </div>
+
+  <hr class="separator">
+
+  <div class="row">
+    <div class="checkbox-row">
+      <input type="checkbox" id="ignoreSelf">
+      <label for="ignoreSelf">自分の発言は通知しない</label>
+    </div>
+  </div>
+
+  <div class="row" id="selfNameRow" style="display:none;">
+    <label for="selfName">自分のキャラクター名</label>
+    <input type="text" id="selfName" placeholder="例: 探偵アリス">
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
