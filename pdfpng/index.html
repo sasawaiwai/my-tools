@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF → PNG 変換 | 原稿はここを出ません</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f5f3ef;
+    --surface:  #ffffff;
+    --border:   #dedad3;
+    --accent:   #b8862a;
+    --accent2:  #5f7a42;
+    --text:     #1e1c19;
+    --muted:    #9a9590;
+    --danger:   #c0574a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+  .tagline {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+    line-height: 1.4;
+  }
+  .privacy-badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 4px 10px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── メイン ── */
+  main {
+    flex: 1;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── ドロップゾーン ── */
+  .drop-zone {
+    border: 1.5px dashed var(--border);
+    padding: 64px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(0,0,0,.018) 20px,
+      rgba(0,0,0,.018) 21px
+    );
+  }
+  .drop-zone:hover,
+  .drop-zone.over {
+    border-color: var(--accent);
+    background: rgba(212,168,67,.04);
+  }
+  .drop-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: .6;
+  }
+  .drop-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .drop-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .drop-sub strong { color: var(--accent2); }
+  #file-input { display: none; }
+
+  /* ── オプション ── */
+  .options {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .opt-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .dpi-group {
+    display: flex;
+    gap: 6px;
+  }
+  .dpi-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .dpi-btn:hover { border-color: var(--accent); color: var(--text); }
+  .dpi-btn.active {
+    border-color: var(--accent);
+    background: rgba(212,168,67,.12);
+    color: var(--accent);
+  }
+
+  .convert-btn {
+    margin-left: auto;
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    padding: 10px 28px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity .15s, transform .1s;
+  }
+  .convert-btn:hover { opacity: .85; }
+  .convert-btn:active { transform: scale(.98); }
+  .convert-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── ファイル情報 ── */
+  .file-info {
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .file-info.hidden { display: none; }
+  .file-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-meta {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    transition: color .15s;
+  }
+  .clear-btn:hover { color: var(--danger); }
+
+  /* ── プログレス ── */
+  .progress-wrap {
+    display: none;
+    margin-top: 32px;
+  }
+  .progress-wrap.show { display: block; }
+  .progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .progress-bar-bg {
+    height: 3px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    width: 0%;
+    transition: width .2s ease;
+  }
+  .progress-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ── プレビューグリッド ── */
+  .preview-section {
+    display: none;
+    margin-top: 48px;
+  }
+  .preview-section.show { display: block; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    background: rgba(143,160,110,.1);
+    border: 1px solid rgba(143,160,110,.3);
+    padding: 2px 8px;
+  }
+  .dl-all-btn {
+    margin-left: auto;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 20px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all .15s;
+  }
+  .dl-all-btn:hover { background: rgba(212,168,67,.1); }
+  .dl-all-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  .thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .thumb-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s, transform .1s;
+    position: relative;
+  }
+  .thumb-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .thumb-img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 3/4;
+    object-fit: contain;
+    background: #f0ede8;
+  }
+  .thumb-footer {
+    padding: 6px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .thumb-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .thumb-dl {
+    font-size: 11px;
+    color: var(--accent);
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .thumb-card:hover .thumb-dl { opacity: 1; }
+
+  /* ── フッター ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .footer-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-note::before {
+    content: '🔒';
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PDF<span>→PNG</span></div>
+  <div class="tagline">原稿ページ画像化ツール</div>
+  <div class="privacy-badge">NO UPLOAD · LOCAL ONLY</div>
+</header>
+
+<main>
+
+  <!-- ドロップゾーン -->
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".pdf">
+    <div class="drop-icon">📄</div>
+    <div class="drop-title">PDFをここにドロップ</div>
+    <div class="drop-sub">
+      またはクリックしてファイルを選択<br>
+      <strong>ファイルはサーバーに送信されません。すべてブラウザ内で処理します。</strong>
+    </div>
+  </div>
+
+  <!-- ファイル情報 -->
+  <div class="file-info hidden" id="file-info">
+    <div class="file-name" id="file-name-text">—</div>
+    <div class="file-meta" id="file-meta-text">—</div>
+    <button class="clear-btn" id="clear-btn" title="クリア">✕</button>
+  </div>
+
+  <!-- オプション -->
+  <div class="options">
+    <span class="opt-label">解像度</span>
+    <div class="dpi-group">
+      <button class="dpi-btn" data-dpi="72">72 dpi</button>
+      <button class="dpi-btn active" data-dpi="120">120 dpi</button>
+      <button class="dpi-btn" data-dpi="150">150 dpi</button>
+      <button class="dpi-btn" data-dpi="200">200 dpi</button>
+      <button class="dpi-btn" data-dpi="300">300 dpi</button>
+    </div>
+    <button class="convert-btn" id="convert-btn" disabled>変換開始</button>
+  </div>
+
+  <!-- プログレス -->
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-header">
+      <span>変換中</span>
+      <span id="progress-pct">0%</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <div class="progress-detail" id="progress-detail">準備中…</div>
+  </div>
+
+  <!-- プレビュー -->
+  <div class="preview-section" id="preview-section">
+    <div class="section-header">
+      <div class="section-title">変換結果</div>
+      <div class="count-badge" id="count-badge">0 pages</div>
+      <button class="dl-all-btn" id="dl-all-btn" disabled>全ページ ZIP でダウンロード</button>
+    </div>
+    <div class="thumb-grid" id="thumb-grid"></div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-note">アップロード不要・サーバー処理なし・PDFはブラウザ内だけで処理されます</div>
+  <div>PDF.js + JSZip</div>
+</footer>
+
+<!-- ライブラリ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── 状態 ──
+let currentFile = null;
+let currentDpi   = 120;
+let pageBlobs    = [];   // { blob, filename }[]
+
+// ── DOM ──
+const dropZone     = document.getElementById('drop-zone');
+const fileInput    = document.getElementById('file-input');
+const fileInfo     = document.getElementById('file-info');
+const fileNameText = document.getElementById('file-name-text');
+const fileMetaText = document.getElementById('file-meta-text');
+const clearBtn     = document.getElementById('clear-btn');
+const convertBtn   = document.getElementById('convert-btn');
+const progressWrap = document.getElementById('progress-wrap');
+const progressFill = document.getElementById('progress-fill');
+const progressPct  = document.getElementById('progress-pct');
+const progressDet  = document.getElementById('progress-detail');
+const previewSec   = document.getElementById('preview-section');
+const countBadge   = document.getElementById('count-badge');
+const dlAllBtn     = document.getElementById('dl-all-btn');
+const thumbGrid    = document.getElementById('thumb-grid');
+
+// ── DPIボタン ──
+document.querySelectorAll('.dpi-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dpi-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentDpi = parseInt(btn.dataset.dpi);
+  });
+});
+
+// ── ドロップ&ファイル選択 ──
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) setFile(fileInput.files[0]);
+});
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('over');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type === 'application/pdf') setFile(f);
+});
+
+function setFile(file) {
+  currentFile = file;
+  pageBlobs   = [];
+  fileNameText.textContent = file.name;
+  fileMetaText.textContent = formatSize(file.size);
+  fileInfo.classList.remove('hidden');
+  convertBtn.disabled = false;
+  progressWrap.classList.remove('show');
+  previewSec.classList.remove('show');
+  thumbGrid.innerHTML = '';
+}
+
+clearBtn.addEventListener('click', () => {
+  thumbUrls.forEach(u => URL.revokeObjectURL(u));
+  thumbUrls = [];
+  currentFile = null;
+  pageBlobs   = [];
+  fileInput.value = '';
+  fileInfo.classList.add('hidden');
+  convertBtn.disabled = true;
+  progressWrap.classList.remove('show');
+  previewSec.classList.remove('show');
+  thumbGrid.innerHTML = '';
+});
+
+// ── 変換 ──
+convertBtn.addEventListener('click', async () => {
+  if (!currentFile) return;
+  await convertPdf();
+});
+
+// サムネイル用ObjectURLを管理（メモリリーク防止）
+let thumbUrls = [];
+
+async function convertPdf() {
+  // 前回のサムネイルURLを解放
+  thumbUrls.forEach(u => URL.revokeObjectURL(u));
+  thumbUrls = [];
+
+  // エラー時の赤いプログレスバーをリセット
+  progressFill.style.background = '';
+
+  pageBlobs = [];
+  thumbGrid.innerHTML = '';
+  dlAllBtn.disabled = true;
+  progressWrap.classList.add('show');
+  previewSec.classList.add('show');
+  convertBtn.disabled = true;
+
+  try {
+    const arrayBuffer = await currentFile.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const total = pdf.numPages;
+    countBadge.textContent = `${total} pages`;
+
+    const scale = currentDpi / 72;
+
+    for (let i = 1; i <= total; i++) {
+      const pct = Math.round((i - 1) / total * 100);
+      setProgress(pct, `ページ ${i} / ${total} を変換中…`);
+
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale });
+      const canvas  = document.createElement('canvas');
+      canvas.width  = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport }).promise;
+
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const fname = `page_${String(i).padStart(3,'0')}.png`;
+      pageBlobs.push({ blob, filename: fname });
+
+      // サムネイル追加
+      const imgUrl = URL.createObjectURL(blob);
+      thumbUrls.push(imgUrl);
+      addThumb(imgUrl, fname, i);
+    }
+
+    setProgress(100, `完了！ ${total} ページを変換しました`);
+    dlAllBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    const msg = err?.message?.includes('password')
+      ? 'パスワード付きPDFは変換できません'
+      : `変換に失敗しました: ${err?.message ?? '不明なエラー'}`;
+    setProgress(0, msg);
+    progressFill.style.background = 'var(--danger)';
+    previewSec.classList.remove('show');
+  } finally {
+    convertBtn.disabled = false;
+  }
+}
+
+function setProgress(pct, detail) {
+  progressFill.style.width = pct + '%';
+  progressPct.textContent  = pct + '%';
+  progressDet.textContent  = detail;
+}
+
+function addThumb(src, filename, num) {
+  const card = document.createElement('div');
+  card.className = 'thumb-card';
+  card.innerHTML = `
+    <img class="thumb-img" src="${src}" alt="page ${num}">
+    <div class="thumb-footer">
+      <span class="thumb-num">p.${num}</span>
+      <span class="thumb-dl">↓ PNG</span>
+    </div>
+  `;
+  card.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = filename;
+    a.click();
+  });
+  thumbGrid.appendChild(card);
+}
+
+// ── 全ページZIPダウンロード ──
+dlAllBtn.addEventListener('click', async () => {
+  if (!pageBlobs.length) return;
+  dlAllBtn.disabled = true;
+  dlAllBtn.textContent = 'ZIP作成中…';
+
+  const zip = new JSZip();
+  for (const { blob, filename } of pageBlobs) {
+    zip.file(filename, blob);
+  }
+  const zipBlob = await zip.generateAsync({ type: 'blob' }, meta => {
+    dlAllBtn.textContent = `ZIP作成中… ${meta.percent.toFixed(0)}%`;
+  });
+
+  const base = currentFile.name.replace(/\.pdf$/i, '');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(zipBlob);
+  a.download = `${base}_pages.zip`;
+  a.click();
+
+  dlAllBtn.disabled = false;
+  dlAllBtn.textContent = '全ページ ZIP でダウンロード';
+});
+
+// ── ユーティリティ ──
+function formatSize(bytes) {
+  if (bytes < 1024)       return bytes + ' B';
+  if (bytes < 1024**2)    return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024**2).toFixed(1) + ' MB';
+}
+</script>
+</body>
+</html>
