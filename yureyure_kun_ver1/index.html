@@ -210,6 +210,14 @@
             background-color: #27ae60;
             color: white;
         }
+        .type-badge.bracket {
+            background-color: #16a085;
+            color: white;
+        }
+        .type-badge.fwhw {
+            background-color: #2980b9;
+            color: white;
+        }
         /* 種別列のスタイル */
         .variation-label {
             font-size: 0.8rem;
@@ -228,6 +236,28 @@
         .variation-label.default {
             background-color: #95a5a6;
             color: white;
+        }
+        .variation-label.bracket {
+            background-color: #16a085;
+            color: white;
+        }
+        .variation-label.fwhw {
+            background-color: #2980b9;
+            color: white;
+        }
+        /* 全角半角ブラケット行 */
+        tr.bracket-type {
+            background-color: #e8f8f5;
+        }
+        tr.bracket-type:hover {
+            background-color: #d1f2eb;
+        }
+        /* 全角半角英数字行 */
+        tr.fwhw-type {
+            background-color: #eaf2fb;
+        }
+        tr.fwhw-type:hover {
+            background-color: #d6eaf8;
         }
         .no-result {
             padding: 20px;
@@ -395,7 +425,7 @@
         <h1>日本語 表記揺れ候補抽出ツール</h1>
         <p class="description">
             日本語テキストから、同じ意味だが異なる表記が混在している候補を自動検出します。<br>
-            和語数詞(「一つ」「1つ」など)、否定形(「ない」「無い」)、送り仮名の揺れ(「飲む」「呑む」など)を検出できます。
+            和語数詞(「一つ」「1つ」など)、否定形(「ない」「無い」)、送り仮名の揺れ(「飲む」「呑む」など)、全角・半角ブラケット(「｛PC1｝」「{PC1}」)、全角・半角英数字(「ＫＰ」「KP」)を検出できます。
         </p>
 
         <div class="privacy-note">
@@ -458,7 +488,7 @@
             📦 <strong style="color:#888;">BOOTHではDL版も公開中です。</strong>
             <a href="https://booth.pm/en/items/8076011" target="_blank" rel="noopener" style="color:#e05555; text-decoration:underline;">リンクはこちら</a>
           </p>
-          <p>揺れゆれ君 ver2.0 ｜ © ササドコロ / 笹塚</p>
+          <p>揺れゆれ君 ver3.0 ｜ © ササドコロ / 笹塚</p>
         </footer>
     </div>
 
