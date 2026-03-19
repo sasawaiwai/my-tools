@@ -6,24 +6,56 @@ let lastSelectedEl = null; // 直前に選択したハイライト要素
 const CONTEXT_CHARS = 25;
 
 /**
- * kuromoji の形態素解析エンジンを初期化
+ * kuromoji の形態素解析エンジンを初期化（CDNフォールバック付き）
  */
 function initTokenizer() {
     const statusEl = document.getElementById('status');
     const button = document.getElementById('analyze-btn');
 
-    kuromoji.builder({ dicPath: 'https://unpkg.com/kuromoji@0.1.2/dict/' })
-        .build((err, built) => {
-            if (err) {
-                statusEl.textContent = 'エラー: 形態素解析エンジンの読み込みに失敗しました';
-                statusEl.className = 'error';
-                return;
-            }
-            tokenizer = built;
-            button.disabled = false;
-            statusEl.textContent = '準備完了(解析可能)';
-            statusEl.className = 'ready';
-        });
+    const cdnList = [
+        'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/',
+        'https://unpkg.com/kuromoji@0.1.2/dict/',
+    ];
+    let currentIndex = 0;
+
+    function tryLoad() {
+        if (currentIndex >= cdnList.length) {
+            statusEl.textContent = '形態素解析エンジンがうまく読み込めませんでした。時間をおいて再読み込みしてください。';
+            statusEl.className = 'error';
+            return;
+        }
+
+        const dicPath = cdnList[currentIndex];
+        statusEl.textContent = '形態素解析エンジンを読み込み中...';
+
+        let done = false;
+        const timer = setTimeout(() => {
+            if (done) return;
+            done = true;
+            currentIndex++;
+            tryLoad();
+        }, 15000);
+
+        kuromoji.builder({ dicPath })
+            .build((err, built) => {
+                if (done) return;
+                done = true;
+                clearTimeout(timer);
+
+                if (err) {
+                    currentIndex++;
+                    tryLoad();
+                    return;
+                }
+
+                tokenizer = built;
+                button.disabled = false;
+                statusEl.textContent = '準備完了(解析可能)';
+                statusEl.className = 'ready';
+            });
+    }
+
+    tryLoad();
 }
 
 // ========================================
