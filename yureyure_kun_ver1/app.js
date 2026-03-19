@@ -12,7 +12,7 @@ function initTokenizer() {
     const statusEl = document.getElementById('status');
     const button = document.getElementById('analyze-btn');
 
-    kuromoji.builder({ dicPath: 'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/' })
+    kuromoji.builder({ dicPath: 'https://unpkg.com/kuromoji@0.1.2/dict/' })
         .build((err, built) => {
             if (err) {
                 statusEl.textContent = 'エラー: 形態素解析エンジンの読み込みに失敗しました';
