@@ -13,6 +13,7 @@ function initTokenizer() {
     const button = document.getElementById('analyze-btn');
 
     const cdnList = [
+        './dict/',
         'https://cdn.jsdelivr.net/npm/kuromoji@0.1.2/dict/',
         'https://unpkg.com/kuromoji@0.1.2/dict/',
     ];
