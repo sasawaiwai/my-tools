@@ -579,6 +579,7 @@ let CANVAS_W = 744;
 let CANVAS_H = 1052;
 
 const OVERLAY_SIZE = 1200;  // オーバーレイ用オフスクリーンcanvasのサイズ
+const PRISM_SIZE   = 2400;  // プリズム専用（縦長キャンバスでも端が切れないよう大きめに確保）
 
 const state = {
   bg: { type: 'white_paper', brightness: 1.0 },
@@ -787,16 +788,18 @@ function addGrainNoise(ctx, w, h, intensity) {
 // =============================================
 function getOverlayCanvas(type) {
   if (overlayCache[type]) return overlayCache[type];
+  // プリズムだけ大きめのCanvasを使う（他は OVERLAY_SIZE）
+  const size = (type === 'prism') ? PRISM_SIZE : OVERLAY_SIZE;
   const oc   = document.createElement('canvas');
-  oc.width   = OVERLAY_SIZE;
-  oc.height  = OVERLAY_SIZE;
+  oc.width   = size;
+  oc.height  = size;
   const octx = oc.getContext('2d');
   switch (type) {
-    case 'window_soft': generateWindowSoft(octx, OVERLAY_SIZE); break;
-    case 'window_hard': generateWindowHard(octx, OVERLAY_SIZE); break;
-    case 'blind':       generateBlind     (octx, OVERLAY_SIZE); break;
-    case 'plant':       generatePlant     (octx, OVERLAY_SIZE); break;
-    case 'prism':       generatePrism     (octx, OVERLAY_SIZE); break;
+    case 'window_soft': generateWindowSoft(octx, size); break;
+    case 'window_hard': generateWindowHard(octx, size); break;
+    case 'blind':       generateBlind     (octx, size); break;
+    case 'plant':       generatePlant     (octx, size); break;
+    case 'prism':       generatePrism     (octx, size); break;
     default: return null;  // 不明なタイプは null を返す（外部PNGなど）
   }
   overlayCache[type] = oc;
@@ -868,11 +871,13 @@ function generatePlant(ctx, s) {
   ctx.restore();
 }
 function generatePrism(ctx, s) {
+  // s = PRISM_SIZE (2400) なので帯幅の比率を OVERLAY_SIZE (1200) 時の半分にして
+  // 画面上の見た目を同じに保ちつつ、上下の伸びを2倍にする
   ctx.clearRect(0, 0, s, s);
   ctx.save();
   ctx.translate(s/2, s/2);
   ctx.rotate(-0.48);
-  const g = ctx.createLinearGradient(-s*0.14, 0, s*0.14, 0);
+  const g = ctx.createLinearGradient(-s*0.07, 0, s*0.07, 0);
   g.addColorStop(0.00, 'rgba(255,  0,  0,0.0)');
   g.addColorStop(0.08, 'rgba(255, 60,  0,0.85)');
   g.addColorStop(0.22, 'rgba(255,210,  0,0.92)');
@@ -882,14 +887,14 @@ function generatePrism(ctx, s) {
   g.addColorStop(0.85, 'rgba(255,  0,180,0.80)');
   g.addColorStop(1.00, 'rgba(255,  0, 80,0.0)');
   ctx.fillStyle = g;
-  ctx.fillRect(-s*0.14, -s, s*0.28, s*2);
-  const g2 = ctx.createLinearGradient(-s*0.04, 0, s*0.04, 0);
+  ctx.fillRect(-s*0.07, -s, s*0.14, s*2);
+  const g2 = ctx.createLinearGradient(-s*0.02, 0, s*0.02, 0);
   g2.addColorStop(0,   'rgba(240,248,255,0)');
   g2.addColorStop(0.5, 'rgba(240,248,255,0.75)');
   g2.addColorStop(1,   'rgba(240,248,255,0)');
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = g2;
-  ctx.fillRect(-s*0.04, -s, s*0.08, s*2);
+  ctx.fillRect(-s*0.02, -s, s*0.04, s*2);
   ctx.restore();
 }
 
