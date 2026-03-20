@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>縦書きPDF → 横書きテキスト変換ツール</title>
+  <style>
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    .container {
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .file-input-area {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed #ccc;
+      border-radius: 4px;
+      text-align: center;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 30px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover:not(:disabled) {
+      background-color: #45a049;
+    }
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    #status {
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 4px;
+      min-height: 20px;
+    }
+    #status.info {
+      background-color: #e3f2fd;
+      color: #1976d2;
+    }
+    #status.error {
+      background-color: #ffebee;
+      color: #c62828;
+    }
+    #status.success {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+    }
+    textarea {
+      width: 100%;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .button-group {
+      margin: 15px 0;
+      display: flex;
+      gap: 10px;
+    }
+    .description {
+      color: #666;
+      font-size: 14px;
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📄 縦書きPDF → 横書きテキスト変換ツール</h1>
+    
+    <p class="description">
+      縦書きレイアウトのPDFから内部テキストを抽出し、横書き順に並べ替えます。<br>
+      ※テキスト情報を持つPDFのみ対応。スキャン画像のみのPDFには未対応です。<br>
+      ※縦書き由来の句読点・括弧（︒︑﹁﹂）を横書き用（。、「」）に自動変換します。
+    </p>
+
+    <div class="file-input-area">
+      <label for="pdfFile">PDFファイルを選択:</label><br>
+      <input type="file" id="pdfFile" accept=".pdf">
+    </div>
+
+    <div class="button-group">
+      <button id="extractBtn" disabled>テキスト抽出</button>
+      <button id="copyBtn" style="background-color: #2196F3;" disabled>結果をコピー</button>
+    </div>
+
+    <div id="status"></div>
+
+    <textarea id="result" rows="20" placeholder="抽出されたテキストがここに表示されます..."></textarea>
+  </div>
+
+  <footer style="
+    text-align:center;
+    font-size:12px;
+    color:#aaa;
+    margin-top:30px;
+    padding:16px 20px;
+    border-top:1px solid #eee;
+  ">
+    <p>縦書きPDF→横書きテキスト変換ツール ｜ © ササドコロ / 笹塚 ｜ <a href="/" style="color:#aaa;">ツール一覧</a></p>
+  </footer>
+
+  <!-- PDF.js ライブラリをCDNから読み込み -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  
+  <script>
+    // PDF.js のワーカー設定
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // DOM要素の取得
+    const pdfFileInput = document.getElementById('pdfFile');
+    const extractBtn = document.getElementById('extractBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const statusDiv = document.getElementById('status');
+    const resultTextarea = document.getElementById('result');
+
+    let selectedFile = null;
+
+    // ファイル選択時の処理
+    pdfFileInput.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      if (selectedFile) {
+        extractBtn.disabled = false;
+        showStatus(`${selectedFile.name} を選択しました`, 'info');
+      } else {
+        extractBtn.disabled = true;
+        showStatus('', '');
+      }
+    });
+
+    // テキスト抽出ボタンのクリック処理
+    extractBtn.addEventListener('click', async () => {
+      if (!selectedFile) {
+        showStatus('PDFファイルを選択してください', 'error');
+        return;
+      }
+
+      // ボタンを無効化して処理開始
+      extractBtn.disabled = true;
+      copyBtn.disabled = true;
+      resultTextarea.value = '';
+      showStatus('処理中...', 'info');
+
+      try {
+        // FileReaderでPDFを読み込み
+        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
+        
+        // PDF.jsでPDFを解析
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        
+        showStatus(`全${numPages}ページを処理中...`, 'info');
+
+        let allText = '';
+
+        // 全ページを順番に処理
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          
+          // 縦書き対応: 座標でソート + 句読点正規化
+          const sortedText = extractVerticalText(textContent.items);
+          
+          // ページ区切りを追加
+          allText += `===== Page ${pageNum} =====\n`;
+          allText += sortedText + '\n\n';
+
+          // 進捗表示
+          showStatus(`処理中... (${pageNum}/${numPages})`, 'info');
+        }
+
+        // 結果を表示
+        resultTextarea.value = allText.trim();
+        copyBtn.disabled = false;
+        showStatus(`✓ 抽出完了 (全${numPages}ページ)`, 'success');
+
+      } catch (error) {
+        console.error('PDF処理エラー:', error);
+        const msg = error?.message?.toLowerCase().includes('password')
+          ? 'パスワード付きPDFは対応していません'
+          : `エラーが発生しました: ${error.message}`;
+        showStatus(msg, 'error');
+      } finally {
+        extractBtn.disabled = false;
+      }
+    });
+
+    // コピーボタンのクリック処理
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(resultTextarea.value);
+        showStatus('✓ クリップボードにコピーしました', 'success');
+      } catch (e) {
+        // fallback
+        resultTextarea.select();
+        document.execCommand('copy');
+        showStatus('✓ クリップボードにコピーしました', 'success');
+      }
+    });
+
+    /**
+     * ファイルをArrayBufferとして読み込む
+     */
+    function readFileAsArrayBuffer(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error('ファイル読み込みエラー'));
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    /**
+     * 縦書きテキストを横書き順に並べ替える
+     * 
+     * 縦書きレイアウトの基本:
+     * - 列は右から左へ並ぶ (x座標の降順)
+     * - 各列内では上から下へ文字が並ぶ (y座標の降順 ※PDF座標系ではy軸が下→上)
+     * 
+     * @param {Array} items - PDF.jsのgetTextContent()で取得したitemsの配列
+     * @returns {string} - 並べ替えたテキスト
+     */
+    function extractVerticalText(items) {
+      // 各アイテムに座標情報を付与
+      const itemsWithCoords = items.map(item => {
+        // transform配列から座標を取得
+        // transform[4] = x座標, transform[5] = y座標
+        const x = item.transform[4];
+        const y = item.transform[5];
+        return {
+          str: item.str,
+          x: x,
+          y: y
+        };
+      });
+
+      // 縦書き順にソート
+      // 1. x座標で降順ソート (右側が先)
+      // 2. x座標が近い場合はy座標で降順ソート (上側が先)
+      itemsWithCoords.sort((a, b) => {
+        const xDiff = b.x - a.x; // 降順 (大きい方が先)
+        
+        // x座標が近い場合(差が5以下)は同じ列とみなす
+        if (Math.abs(xDiff) < 5) {
+          return b.y - a.y; // y座標降順 (大きい方が先 = 上が先)
+        }
+        
+        return xDiff;
+      });
+
+      // ソートした順に文字列を連結
+      const rawText = itemsWithCoords.map(item => item.str).join('');
+      
+      // 縦書き由来の句読点・括弧を横書き用に正規化
+      const normalizedText = normalizeVerticalPunctuation(rawText);
+      
+      return normalizedText;
+    }
+
+    /**
+     * 縦書き由来の句読点・括弧を横書き用に変換する
+     * 
+     * @param {string} text - 変換前のテキスト
+     * @returns {string} - 変換後のテキスト
+     */
+    function normalizeVerticalPunctuation(text) {
+      return text
+        .replace(/︒/g, '。')  // 縦書き句点 → 横書き句点
+        .replace(/︑/g, '、')  // 縦書き読点 → 横書き読点
+        .replace(/﹁/g, '「')  // 縦書き開き括弧 → 横書き開き括弧
+        .replace(/﹂/g, '」'); // 縦書き閉じ括弧 → 横書き閉じ括弧
+    }
+
+    /**
+     * ステータスメッセージを表示
+     */
+    function showStatus(message, type) {
+      statusDiv.textContent = message;
+      statusDiv.className = type;
+    }
+  </script>
+</body>
+</html>
