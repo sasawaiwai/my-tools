@@ -435,6 +435,12 @@
                  oninput="updateShadowRotation(this.value)">
           <span class="control-value" id="shadow-rotation-val">0°</span>
         </div>
+        <div class="control-row">
+          <span class="control-label">ぼかし</span>
+          <input type="range" id="shadow-blur" min="0" max="80" step="2" value="0"
+                 oninput="updateShadowBlur(this.value)">
+          <span class="control-value" id="shadow-blur-val">0</span>
+        </div>
       </div>
     </div>
 
@@ -468,6 +474,12 @@
           <input type="range" class="light-range" id="light-rotation" min="-180" max="180" step="1" value="0"
                  oninput="updateLightRotation(this.value)">
           <span class="control-value" id="light-rotation-val">0°</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">ぼかし</span>
+          <input type="range" class="light-range" id="light-blur" min="0" max="80" step="2" value="0"
+                 oninput="updateLightBlur(this.value)">
+          <span class="control-value" id="light-blur-val">0</span>
         </div>
       </div>
     </div>
@@ -595,13 +607,13 @@ const state = {
   shadow: {
     type: 'window_soft',
     x: CANVAS_W / 2, y: CANVAS_H / 2,
-    scale: 1.0, rotation: 0, opacity: 0.65, enabled: true
+    scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true
   },
 
   light: {
     type: 'prism',
     x: CANVAS_W / 2, y: CANVAS_H * 0.85,
-    scale: 1.0, rotation: 0, opacity: 0.75, enabled: false
+    scale: 1.0, rotation: 0, opacity: 0.75, blur: 0, enabled: false
   },
 
   drag: { active: false, target: 'shadow', startX: 0, startY: 0, origX: 0, origY: 0 },
@@ -973,6 +985,7 @@ function drawOverlayLayer(ctx, layer, layerType) {
   ctx.save();
   ctx.globalAlpha = layer.opacity;
   if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+  if (layer.blur > 0) ctx.filter = `blur(${layer.blur}px)`;
   ctx.translate(layer.x, layer.y);
   ctx.rotate(layer.rotation * Math.PI / 180);
   ctx.scale(layer.scale, layer.scale);
@@ -1082,6 +1095,7 @@ function toggleShadowOverlay() {
 function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
 function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
 function updateShadowRotation(v) { state.shadow.rotation = parseInt(v);   document.getElementById('shadow-rotation-val').textContent = v + '°'; drawAll(); }
+function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   document.getElementById('shadow-blur-val').textContent     = v; drawAll(); }
 
 function setLight(type) {
   state.light.type = type;
@@ -1099,6 +1113,7 @@ function toggleLightOverlay() {
 function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
 function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
 function updateLightRotation(v) { state.light.rotation = parseInt(v);   document.getElementById('light-rotation-val').textContent = v + '°'; drawAll(); }
+function updateLightBlur(v)     { state.light.blur     = parseInt(v);   document.getElementById('light-blur-val').textContent     = v; drawAll(); }
 
 function updateMainScale(v)    { state.main.scale    = parseFloat(v); document.getElementById('main-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
 function updateMainRotation(v) { state.main.rotation = parseInt(v);   document.getElementById('main-rotation-val').textContent = v + '°'; drawAll(); }
@@ -1128,17 +1143,19 @@ function resetAll() {
   state.bg     = { type: 'white_paper', brightness: 1.0 };
   state.main   = { img: null, x: CANVAS_W/2, y: CANVAS_H/2, scale: 0.7, rotation: 0,
                    dropShadow: true, shadowOpacity: 0.35, shadowBlur: 20 };
-  state.shadow = { type: 'window_soft', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, enabled: true };
-  state.light  = { type: 'prism', x: CANVAS_W/2, y: CANVAS_H*0.85, scale: 1.0, rotation: 0, opacity: 0.75, enabled: false };
+  state.shadow = { type: 'window_soft', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true };
+  state.light  = { type: 'prism', x: CANVAS_W/2, y: CANVAS_H*0.85, scale: 1.0, rotation: 0, opacity: 0.75, blur: 0, enabled: false };
 
   const sliders = {
     'bg-brightness':       [1.0,  'bg-brightness-val',       v => v.toFixed(2)],
     'shadow-opacity':      [0.65, 'shadow-opacity-val',      v => v.toFixed(2)],
     'shadow-scale':        [1.0,  'shadow-scale-val',        v => v.toFixed(2)],
     'shadow-rotation':     [0,    'shadow-rotation-val',     v => v + '°'],
+    'shadow-blur':         [0,    'shadow-blur-val',         v => v],
     'light-opacity':       [0.75, 'light-opacity-val',       v => v.toFixed(2)],
     'light-scale':         [1.0,  'light-scale-val',         v => v.toFixed(2)],
     'light-rotation':      [0,    'light-rotation-val',      v => v + '°'],
+    'light-blur':          [0,    'light-blur-val',          v => v],
     'main-scale':          [0.7,  'main-scale-val',          v => v.toFixed(2)],
     'main-rotation':       [0,    'main-rotation-val',       v => v + '°'],
     'drop-shadow-opacity': [0.35, 'drop-shadow-opacity-val', v => v.toFixed(2)],
