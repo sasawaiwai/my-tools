@@ -578,8 +578,9 @@ let currentSizeId = 'book_cover';
 let CANVAS_W = 744;
 let CANVAS_H = 1052;
 
-const OVERLAY_SIZE = 1200;  // オーバーレイ用オフスクリーンcanvasのサイズ
-const PRISM_SIZE   = 2400;  // プリズム専用（縦長キャンバスでも端が切れないよう大きめに確保）
+const OVERLAY_SIZE = 1200;  // オーバーレイ用オフスクリーンcanvasのサイズ（参照用）
+const SHADOW_SIZE  = 2400;  // 影専用（縦長キャンバスでも端が切れないよう2倍に確保）
+const PRISM_SIZE   = 2400;  // プリズム専用（同上）
 
 const state = {
   bg: { type: 'white_paper', brightness: 1.0 },
@@ -788,8 +789,10 @@ function addGrainNoise(ctx, w, h, intensity) {
 // =============================================
 function getOverlayCanvas(type) {
   if (overlayCache[type]) return overlayCache[type];
-  // プリズムだけ大きめのCanvasを使う（他は OVERLAY_SIZE）
-  const size = (type === 'prism') ? PRISM_SIZE : OVERLAY_SIZE;
+  // 影・プリズムは大きめのCanvasを使う（縦長キャンバスでも端が切れないよう）
+  const size = (type === 'prism') ? PRISM_SIZE
+             : (type === 'window_soft' || type === 'window_hard' || type === 'blind' || type === 'plant') ? SHADOW_SIZE
+             : OVERLAY_SIZE;
   const oc   = document.createElement('canvas');
   oc.width   = size;
   oc.height  = size;
@@ -807,10 +810,11 @@ function getOverlayCanvas(type) {
 }
 
 function generateWindowSoft(ctx, s) {
-  const fw = s * 0.034;
+  // s = SHADOW_SIZE (2400) なのでバー幅比率を OVERLAY_SIZE (1200) 時の半分にして見た目を維持
+  const fw = s * 0.017;
   ctx.clearRect(0, 0, s, s);
   ctx.save();
-  ctx.shadowBlur  = 22;
+  ctx.shadowBlur  = 44;  // s が2倍なのでblurも2倍
   ctx.shadowColor = 'rgba(55,65,75,0.55)';
   ctx.fillStyle   = 'rgba(72,82,92,0.92)';
   ctx.fillRect(0,        0,       s,  fw);
@@ -823,7 +827,8 @@ function generateWindowSoft(ctx, s) {
   ctx.restore();
 }
 function generateWindowHard(ctx, s) {
-  const fw = s * 0.028;
+  // s = SHADOW_SIZE (2400) なのでバー幅比率を OVERLAY_SIZE (1200) 時の半分にして見た目を維持
+  const fw = s * 0.014;
   ctx.clearRect(0, 0, s, s);
   ctx.fillStyle = 'rgba(52,60,68,0.95)';
   ctx.fillRect(0,        0,       s,  fw);
@@ -836,28 +841,31 @@ function generateWindowHard(ctx, s) {
   ctx.fillRect(0, s*0.70 - fw/2,  s,  fw);
 }
 function generateBlind(ctx, s) {
+  // s = SHADOW_SIZE (2400) なのでスラット幅・間隔比率を半分にして見た目を維持
   ctx.clearRect(0, 0, s, s);
   ctx.save();
   ctx.translate(s/2, s/2);
   ctx.rotate(-28 * Math.PI / 180);
   ctx.fillStyle = 'rgba(48,58,66,0.95)';
-  const sw = s * 0.055, gap = s * 0.075, span = s * 1.8;
+  const sw = s * 0.0275, gap = s * 0.0375, span = s * 1.8;
   for (let x = -span; x < span; x += sw + gap) ctx.fillRect(x, -span, sw, span*2);
   ctx.restore();
 }
 function generatePlant(ctx, s) {
+  // s = SHADOW_SIZE (2400) なので葉の rx/ry 比率を半分にして見た目を維持
+  // cx/cy（位置）は比率のまま変えない（s に比例するので相対位置は変わらない）
   ctx.clearRect(0, 0, s, s);
   ctx.save();
-  ctx.shadowBlur  = 14;
+  ctx.shadowBlur  = 28;  // s が2倍なのでblurも2倍
   ctx.shadowColor = 'rgba(28,42,32,0.4)';
   ctx.fillStyle   = 'rgba(38,52,40,0.92)';
   const leaves = [
-    [0.28,0.18,0.13,0.23,-0.35],[0.62,0.12,0.11,0.21,0.50],
-    [0.14,0.42,0.09,0.19,-0.85],[0.72,0.38,0.14,0.25,0.20],
-    [0.42,0.48,0.10,0.17,-0.10],[0.55,0.62,0.12,0.22,0.65],
-    [0.20,0.68,0.09,0.16,-0.50],[0.80,0.68,0.11,0.19,0.30],
-    [0.46,0.82,0.13,0.11,0.12], [0.33,0.32,0.03,0.26,0.18],
-    [0.60,0.52,0.025,0.22,-0.22],
+    [0.28,0.18,0.065,0.115,-0.35],[0.62,0.12,0.055,0.105,0.50],
+    [0.14,0.42,0.045,0.095,-0.85],[0.72,0.38,0.070,0.125,0.20],
+    [0.42,0.48,0.050,0.085,-0.10],[0.55,0.62,0.060,0.110,0.65],
+    [0.20,0.68,0.045,0.080,-0.50],[0.80,0.68,0.055,0.095,0.30],
+    [0.46,0.82,0.065,0.055,0.12], [0.33,0.32,0.015,0.130,0.18],
+    [0.60,0.52,0.013,0.110,-0.22],
   ];
   leaves.forEach(([cx,cy,rx,ry,rot]) => {
     ctx.save();
