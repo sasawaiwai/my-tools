@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MP4 → APNG | ココフォリア用コンバーター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+<style>
+:root {
+  --bg:      #f5f3ef;
+  --surface: #ffffff;
+  --border:  #dedad3;
+  --accent:  #b8862a;
+  --accent2: #5f7a42;
+  --text:    #1e1c19;
+  --muted:   #9a9590;
+  --danger:  #c0574a;
+  --accent-bg: rgba(184,134,42,.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  font-size:13px;min-height:100vh;display:flex;flex-direction:column;
+}
+
+/* ── HEADER ── */
+header{
+  border-bottom:1px solid var(--border);padding:20px 32px;
+  display:flex;align-items:baseline;gap:16px;background:var(--surface);
+}
+.logo{font-size:20px;font-weight:900;letter-spacing:-0.02em;color:var(--accent)}
+.logo span{color:var(--text)}
+.tagline{
+  font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;
+  border-left:1px solid var(--border);padding-left:16px;line-height:1.4;
+}
+.privacy-badge{
+  margin-left:auto;font-family:'JetBrains Mono',monospace;
+  font-size:10px;color:var(--accent2);border:1px solid var(--accent2);
+  padding:4px 10px;letter-spacing:.06em;
+}
+
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:340px 1fr;flex:1}
+.sidebar{
+  border-right:1px solid var(--border);padding:24px;
+  display:flex;flex-direction:column;gap:20px;overflow-y:auto;
+}
+.main{padding:24px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto}
+
+/* ── SECTION TITLE ── */
+.sec-title{
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:12px;
+}
+.sec-title.collapsible{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between}
+.sec-title.collapsible:hover{color:var(--text)}
+.sec-arrow{font-size:10px;color:var(--accent)}
+
+/* ── DROPZONE ── */
+.drop{
+  border:1.5px dashed var(--border);padding:36px 20px;text-align:center;
+  cursor:pointer;transition:border-color .2s,background .2s;
+  position:relative;overflow:hidden;
+}
+.drop::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(0,0,0,.018) 20px,rgba(0,0,0,.018) 21px);
+}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-bg)}
+.drop input{display:none}
+.drop .di{font-size:32px;margin-bottom:10px;opacity:.6;display:block}
+.drop .dl{font-size:16px;font-weight:700;margin-bottom:6px}
+.drop .ds{font-size:12px;color:var(--muted);line-height:1.6}
+.drop .ds strong{color:var(--accent2)}
+
+/* ── FILE INFO ── */
+.file-info{background:var(--surface);border:1px solid var(--border);padding:10px 14px;display:none}
+.file-info.show{display:block}
+.fi-row{display:flex;justify-content:space-between;padding:2px 0;font-size:12px}
+.fi-key{color:var(--muted)}
+.fi-val{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:11px}
+
+/* ── PRESET ── */
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.preset{
+  background:var(--surface);border:1px solid var(--border);
+  padding:10px 8px;text-align:center;cursor:pointer;transition:border-color .12s,background .12s;
+}
+.preset:hover{border-color:var(--accent)}
+.preset.active{border-color:var(--accent);background:var(--accent-bg)}
+.preset .pname{font-size:12px;font-weight:700;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.preset .pdesc{font-size:10px;color:var(--muted);line-height:1.5}
+.preset[data-p="hq"]   .pname{color:#4a7fc1}
+.preset[data-p="bal"]  .pname{color:var(--accent2)}
+.preset[data-p="lite"] .pname{color:var(--accent)}
+
+/* ── LABEL / INPUT ── */
+label.lbl{
+  display:block;font-size:11px;color:var(--muted);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;
+}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ctrl-grid.full{grid-template-columns:1fr}
+input[type=number],select{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:13px;padding:7px 10px;outline:none;transition:border-color .12s;
+}
+input[type=number]:focus,select:focus{border-color:var(--accent)}
+
+/* ── RANGE ── */
+.range-wrap{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+input[type=range]{
+  flex:1;height:28px;-webkit-appearance:none;
+  background:transparent;border:none;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--border)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;
+  background:var(--accent);border-radius:50%;margin-top:-5.5px;
+}
+.rval{
+  min-width:40px;text-align:right;color:var(--accent);
+  font-weight:600;font-size:13px;font-family:'JetBrains Mono',monospace;
+}
+
+/* ── TOGGLE ── */
+.toggle-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  padding:10px 14px;cursor:pointer;transition:border-color .12s;
+}
+.toggle-row:hover{border-color:var(--accent)}
+.toggle-row.on{border-color:var(--accent);background:var(--accent-bg)}
+.toggle-ico{
+  width:32px;height:18px;background:var(--border);border-radius:9px;
+  position:relative;transition:background .15s;flex-shrink:0;
+}
+.toggle-ico::after{
+  content:'';position:absolute;left:3px;top:3px;
+  width:12px;height:12px;background:var(--muted);border-radius:50%;
+  transition:left .15s,background .15s;
+}
+.toggle-row.on .toggle-ico{background:rgba(184,134,42,.3)}
+.toggle-row.on .toggle-ico::after{left:17px;background:var(--accent)}
+.toggle-label{font-size:12px;font-weight:700;flex:1}
+.toggle-sub{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── ESTIMATE ── */
+.est-box{background:var(--surface);border:1px solid var(--border);padding:10px 14px;font-size:12px;display:none}
+.est-box.show{display:block}
+.est-row{display:flex;justify-content:space-between;padding:2px 0}
+.est-key{color:var(--muted)}
+.est-val{font-family:'JetBrains Mono',monospace;color:var(--accent2);font-weight:600}
+.est-val.warn{color:var(--accent)}
+.est-val.danger{color:var(--danger)}
+
+/* ── WARN ── */
+.warn-box{
+  background:rgba(192,87,74,.06);border:1px solid rgba(192,87,74,.25);
+  padding:9px 12px;font-size:12px;color:var(--danger);display:none;
+}
+.warn-box.show{display:block}
+
+/* ── BUTTONS ── */
+.btn{
+  width:100%;padding:11px;border:none;
+  font-family:'Zen Kaku Gothic New',sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.04em;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity .12s,transform .08s;
+}
+.btn:hover:not(:disabled){opacity:.84}
+.btn:active:not(:disabled){transform:scale(.99)}
+.btn:disabled{opacity:.32;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#0e0e0e}
+.btn-secondary{background:none;border:1px solid var(--accent);color:var(--accent)}
+.btn-secondary:hover:not(:disabled){background:var(--accent-bg);opacity:1}
+
+/* ── PREVIEW VIDEO ── */
+.prev-area{
+  background:var(--surface);border:1px solid var(--border);
+  min-height:160px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+video{max-width:100%;max-height:380px;display:block}
+.prev-ph{text-align:center;color:var(--muted);font-size:13px}
+.prev-ph .phi{font-size:32px;opacity:.25;display:block;margin-bottom:10px}
+
+/* ── PROGRESS ── */
+.prog-sec{display:none}
+.prog-sec.show{display:block}
+.prog-hd{
+  display:flex;justify-content:space-between;font-size:11px;color:var(--muted);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;
+}
+.prog-pct{font-family:'JetBrains Mono',monospace;color:var(--text)}
+.prog-bar{height:3px;background:var(--border);overflow:hidden;margin-bottom:8px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .1s;width:0%}
+.log{
+  background:var(--surface);border:1px solid var(--border);
+  padding:10px 12px;font-size:11px;max-height:90px;overflow-y:auto;
+  font-family:'JetBrains Mono',monospace;color:var(--muted);line-height:1.6;
+}
+.ll{margin-bottom:1px}
+.ll.ok{color:var(--accent2)}
+.ll.err{color:var(--danger)}
+.ll.inf{color:var(--accent)}
+
+/* ── RESULT ── */
+.res-sec{display:none}
+.res-sec.show{display:block}
+.res-prev{
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;padding:16px;min-height:120px;
+}
+.res-prev img{max-width:100%;max-height:360px}
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.meta-card{background:var(--surface);border:1px solid var(--border);padding:10px 12px}
+.meta-card .ml{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.meta-card .mv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--accent)}
+
+canvas{display:none}
+
+footer{
+  border-top:1px solid var(--border);padding:14px 32px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:var(--muted);letter-spacing:.04em;
+}
+.footer-note{display:flex;align-items:center;gap:8px}
+.footer-note::before{content:'🔒';font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MP4<span>→APNG</span></div>
+  <div class="tagline">アニメーション変換ツール</div>
+  <div class="privacy-badge">NO UPLOAD · LOCAL ONLY</div>
+</header>
+
+<div class="app">
+<aside class="sidebar">
+
+  <div>
+    <div class="sec-title">ファイル選択</div>
+    <div class="drop" id="drop">
+      <input type="file" accept="video/*" id="fileInput">
+      <span class="di">🎬</span>
+      <div class="dl">MP4をここにドロップ</div>
+      <div class="ds">またはクリックして選択<br><strong>ファイルはサーバーに送信されません</strong></div>
+    </div>
+  </div>
+
+  <div class="file-info" id="vidInfo">
+    <div class="fi-row"><span class="fi-key">ファイル名</span><span class="fi-val" id="iName">—</span></div>
+    <div class="fi-row"><span class="fi-key">長さ</span><span class="fi-val" id="iDur">—</span></div>
+    <div class="fi-row"><span class="fi-key">解像度</span><span class="fi-val" id="iDim">—</span></div>
+    <div class="fi-row"><span class="fi-key">元サイズ</span><span class="fi-val" id="iSize">—</span></div>
+  </div>
+
+  <div>
+    <div class="sec-title">プリセット</div>
+    <div class="presets">
+      <div class="preset" data-p="hq">
+        <div class="pname">高画質</div>
+        <div class="pdesc">15fps / 100%<br>圧縮弱</div>
+      </div>
+      <div class="preset active" data-p="bal">
+        <div class="pname">バランス</div>
+        <div class="pdesc">10fps / 50%<br>圧縮中</div>
+      </div>
+      <div class="preset" data-p="lite">
+        <div class="pname">軽量</div>
+        <div class="pdesc">8fps / 25%<br>圧縮強+減色</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="sec-title collapsible" id="detailToggle">
+      詳細設定（微調整）<span class="sec-arrow" id="detailArrow">▼</span>
+    </div>
+    <div id="detailBody">
+      <div class="ctrl-grid">
+        <div>
+          <label class="lbl">開始（秒）</label>
+          <input type="number" id="startTime" value="0" min="0" step="0.1">
+        </div>
+        <div>
+          <label class="lbl">終了（秒）</label>
+          <input type="number" id="endTime" value="5" min="0.1" step="0.1">
+        </div>
+      </div>
+      <label class="lbl">FPS</label>
+      <div class="range-wrap">
+        <input type="range" id="fpsR" min="1" max="30" value="10">
+        <span class="rval" id="fpsV">10</span>
+      </div>
+      <label class="lbl">スケール（解像度）</label>
+      <div class="range-wrap">
+        <input type="range" id="scaleR" min="10" max="100" step="5" value="50">
+        <span class="rval" id="scaleV">50%</span>
+      </div>
+      <label class="lbl">圧縮レベル（高いほど小さく・遅い）</label>
+      <div class="range-wrap">
+        <input type="range" id="compR" min="1" max="9" value="6">
+        <span class="rval" id="compV">6</span>
+      </div>
+      <div class="ctrl-grid full" style="margin-top:2px">
+        <div>
+          <label class="lbl">ループ回数（0=無限）</label>
+          <input type="number" id="loopCount" value="0" min="0" max="999">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="sec-title">減色オプション</div>
+    <div class="toggle-row" id="colorToggle">
+      <div class="toggle-ico"></div>
+      <div>
+        <div class="toggle-label">色数削減（減色）</div>
+        <div class="toggle-sub">ファイルサイズ大幅削減・画質はやや低下</div>
+      </div>
+    </div>
+    <div id="colorOpts" style="margin-top:10px;display:none">
+      <label class="lbl">色数</label>
+      <select id="colorCount">
+        <option value="256">256色（推奨）</option>
+        <option value="128">128色</option>
+        <option value="64">64色（超軽量）</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="est-box" id="estBox">
+    <div class="sec-title" style="margin-bottom:8px">変換推定</div>
+    <div class="est-row"><span class="est-key">フレーム数</span><span class="est-val" id="estF">—</span></div>
+    <div class="est-row"><span class="est-key">出力解像度</span><span class="est-val" id="estDim">—</span></div>
+    <div class="est-row"><span class="est-key">概算サイズ</span><span class="est-val" id="estSz">—</span></div>
+  </div>
+
+  <div class="warn-box" id="warnBox"></div>
+
+  <button class="btn btn-primary" id="convertBtn" disabled>変換開始</button>
+  <button class="btn btn-secondary" id="dlBtn" style="display:none">⬇ APNGをダウンロード</button>
+
+</aside>
+
+<main class="main">
+
+  <div>
+    <div class="sec-title">入力プレビュー</div>
+    <div class="prev-area" id="prevArea">
+      <div class="prev-ph">
+        <span class="phi">▶</span>
+        MP4をロードするとここにプレビューが表示されます
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-sec" id="progSec">
+    <div class="prog-hd">
+      <span id="progLbl">変換中</span>
+      <span class="prog-pct" id="progPct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="log" id="logBox"></div>
+  </div>
+
+  <div class="res-sec" id="resSec">
+    <div class="sec-title">変換結果</div>
+    <div class="res-prev">
+      <img id="resImg" src="" alt="APNG">
+    </div>
+    <div class="meta-grid">
+      <div class="meta-card"><div class="ml">フレーム数</div><div class="mv" id="mFrames">—</div></div>
+      <div class="meta-card"><div class="ml">解像度</div><div class="mv" id="mDims">—</div></div>
+      <div class="meta-card"><div class="ml">ファイルサイズ</div><div class="mv" id="mSize">—</div></div>
+      <div class="meta-card"><div class="ml">処理時間</div><div class="mv" id="mTime">—</div></div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<footer>
+  <div class="footer-note">アップロード不要・サーバー処理なし・動画はブラウザ内だけで処理されます</div>
+  <div>MP4 → APNG 変換</div>
+</footer>
+
+<canvas id="cvs"></canvas>
+
+<script>
+let videoFile=null,videoEl=null,apngBlob=null,useColor=false;
+const $=id=>document.getElementById(id);
+
+// ── APNG ENCODER ──
+function crc32(buf){
+  let c=0xFFFFFFFF;
+  const table=crc32.t||(crc32.t=(()=>{
+    const t=new Uint32Array(256);
+    for(let i=0;i<256;i++){let v=i;for(let j=0;j<8;j++)v=v&1?(0xEDB88320^(v>>>1)):(v>>>1);t[i]=v}
+    return t;
+  })());
+  for(let i=0;i<buf.length;i++)c=table[(c^buf[i])&0xFF]^(c>>>8);
+  return(c^0xFFFFFFFF)>>>0;
+}
+function u32(n){const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n,false);return b}
+function chunk(type,data){
+  const tb=new TextEncoder().encode(type);
+  const db=data instanceof Uint8Array?data:new Uint8Array(data.buffer,data.byteOffset,data.byteLength);
+  const combined=new Uint8Array(tb.length+db.length);
+  combined.set(tb);combined.set(db,tb.length);
+  const out=new Uint8Array(4+4+db.length+4);
+  out.set(u32(db.length),0);out.set(tb,4);out.set(db,8);out.set(u32(crc32(combined)),8+db.length);
+  return out;
+}
+function concat(...arrays){
+  const total=arrays.reduce((a,b)=>a+b.length,0);
+  const out=new Uint8Array(total);let off=0;
+  for(const a of arrays){out.set(a,off);off+=a.length}return out;
+}
+function buildAPNG(frames,loops,compLevel){
+  const sig=new Uint8Array([137,80,78,71,13,10,26,10]);
+  const{w,h}=frames[0];
+  const ihdrData=new Uint8Array(13);
+  const idv=new DataView(ihdrData.buffer);
+  idv.setUint32(0,w,false);idv.setUint32(4,h,false);
+  ihdrData[8]=8;ihdrData[9]=6;
+  const actl=new Uint8Array(8);
+  const adv=new DataView(actl.buffer);
+  adv.setUint32(0,frames.length,false);adv.setUint32(4,loops,false);
+  const parts=[sig,chunk('IHDR',ihdrData),chunk('acTL',actl)];
+  let seqNum=0;
+  for(let i=0;i<frames.length;i++){
+    const fr=frames[i];
+    const fctl=new Uint8Array(26);
+    const fdv=new DataView(fctl.buffer);
+    fdv.setUint32(0,seqNum++,false);fdv.setUint32(4,w,false);fdv.setUint32(8,h,false);
+    fdv.setUint32(12,0,false);fdv.setUint32(16,0,false);
+    fdv.setUint16(20,Math.round(fr.delay),false);fdv.setUint16(22,1000,false);
+    fctl[24]=1;fctl[25]=0;
+    parts.push(chunk('fcTL',fctl));
+    const raw=new Uint8Array((w*4+1)*h);
+    for(let y=0;y<h;y++){raw[y*(w*4+1)]=0;raw.set(fr.rgba.slice(y*w*4,(y+1)*w*4),y*(w*4+1)+1)}
+    const compressed=pako.deflate(raw,{level:compLevel});
+    if(i===0){
+      parts.push(chunk('IDAT',compressed));
+    }else{
+      const fd=new Uint8Array(4+compressed.length);
+      new DataView(fd.buffer).setUint32(0,seqNum++,false);
+      fd.set(compressed,4);parts.push(chunk('fdAT',fd));
+    }
+  }
+  parts.push(chunk('IEND',new Uint8Array(0)));
+  return concat(...parts);
+}
+
+// ── COLOR QUANTIZATION ──
+function quantizeFrame(rgba,w,h,numColors){
+  const pixels=[];
+  for(let i=0;i<w*h;i++)pixels.push([rgba[i*4],rgba[i*4+1],rgba[i*4+2],rgba[i*4+3]]);
+  const palette=buildPalette(pixels,numColors);
+  const out=new Uint8Array(w*h*4);
+  for(let i=0;i<pixels.length;i++){
+    const p=pixels[i];
+    if(p[3]<10){out[i*4+3]=0;continue}
+    let best=-1,bestD=Infinity;
+    for(let j=0;j<palette.length;j++){
+      const q=palette[j];
+      const d=(p[0]-q[0])**2+(p[1]-q[1])**2+(p[2]-q[2])**2;
+      if(d<bestD){bestD=d;best=j}
+    }
+    out[i*4]=palette[best][0];out[i*4+1]=palette[best][1];
+    out[i*4+2]=palette[best][2];out[i*4+3]=p[3];
+  }
+  return out;
+}
+function buildPalette(pixels,n){
+  function cut(bucket){
+    if(!bucket.length)return[[128,128,128,255]];
+    const ranges=[0,1,2].map(c=>{let mn=255,mx=0;for(const p of bucket){if(p[c]<mn)mn=p[c];if(p[c]>mx)mx=p[c]}return mx-mn});
+    const axis=ranges.indexOf(Math.max(...ranges));
+    bucket.sort((a,b)=>a[axis]-b[axis]);
+    const mid=Math.floor(bucket.length/2);
+    return[bucket.slice(0,mid),bucket.slice(mid)];
+  }
+  const step=Math.max(1,Math.floor(pixels.length/4000));
+  let buckets=[pixels.filter((_,i)=>i%step===0)];
+  while(buckets.length<n){
+    const largest=buckets.reduce((a,b)=>b.length>a.length?b:a);
+    const[a,b]=cut(largest);
+    buckets=buckets.filter(x=>x!==largest);
+    if(a.length)buckets.push(a);if(b.length)buckets.push(b);
+    if(!a.length||!b.length)break;
+  }
+  return buckets.map(bkt=>{
+    let r=0,g=0,b2=0,a=0;
+    for(const p of bkt){r+=p[0];g+=p[1];b2+=p[2];a+=p[3]}
+    const l=bkt.length;
+    return[Math.round(r/l),Math.round(g/l),Math.round(b2/l),Math.round(a/l)];
+  });
+}
+
+// ── HELPERS ──
+function log(msg,cls=''){
+  const box=$('logBox');
+  const d=document.createElement('div');
+  d.className='ll '+cls;d.textContent='> '+msg;
+  box.appendChild(d);box.scrollTop=box.scrollHeight;
+}
+function setProgress(pct,label){
+  $('progFill').style.width=pct+'%';
+  $('progPct').textContent=Math.round(pct)+'%';
+  if(label)$('progLbl').textContent=label;
+}
+function fmtSec(s){return s<60?s.toFixed(1)+'s':`${Math.floor(s/60)}m${Math.floor(s%60)}s`}
+function fmtBytes(b){return b>1048576?`${(b/1048576).toFixed(1)}MB`:b>1024?`${(b/1024).toFixed(0)}KB`:`${b}B`}
+function fmtTime(ms){return ms<1000?`${ms}ms`:`${(ms/1000).toFixed(1)}s`}
+
+// ── PRESETS ──
+const PRESETS={hq:{fps:15,scale:100,comp:3,color:false},bal:{fps:10,scale:50,comp:6,color:false},lite:{fps:8,scale:25,comp:9,color:true,numColors:256}};
+function applyPreset(p){
+  const cfg=PRESETS[p];
+  $('fpsR').value=cfg.fps;$('fpsV').textContent=cfg.fps;
+  $('scaleR').value=cfg.scale;$('scaleV').textContent=cfg.scale+'%';
+  $('compR').value=cfg.comp;$('compV').textContent=cfg.comp;
+  setColorToggle(cfg.color);
+  if(cfg.color&&cfg.numColors)$('colorCount').value=String(cfg.numColors);
+  updateEstimate();
+}
+function setColorToggle(on){
+  useColor=on;$('colorToggle').classList.toggle('on',on);
+  $('colorOpts').style.display=on?'block':'none';
+}
+document.querySelectorAll('.preset').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.querySelectorAll('.preset').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');applyPreset(el.dataset.p);
+  });
+});
+$('fpsR').addEventListener('input',()=>{$('fpsV').textContent=$('fpsR').value;clearPreset();updateEstimate()});
+$('scaleR').addEventListener('input',()=>{$('scaleV').textContent=$('scaleR').value+'%';clearPreset();updateEstimate()});
+$('compR').addEventListener('input',()=>{$('compV').textContent=$('compR').value;clearPreset()});
+[$('startTime'),$('endTime')].forEach(el=>el.addEventListener('input',updateEstimate));
+function clearPreset(){document.querySelectorAll('.preset').forEach(x=>x.classList.remove('active'))}
+$('colorToggle').addEventListener('click',()=>{setColorToggle(!useColor);clearPreset()});
+
+// ── DRAG & DROP ──
+const drop=$('drop');
+drop.addEventListener('click',()=>$('fileInput').click());
+drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over')});
+drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+drop.addEventListener('drop',e=>{
+  e.preventDefault();drop.classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('video/'))loadVideo(f);
+});
+$('fileInput').addEventListener('change',e=>{if(e.target.files[0])loadVideo(e.target.files[0])});
+
+// ── LOAD VIDEO ──
+function loadVideo(file){
+  videoFile=file;apngBlob=null;
+  $('dlBtn').style.display='none';
+  $('resSec').classList.remove('show');$('progSec').classList.remove('show');
+  const url=URL.createObjectURL(file);
+  if(videoEl)videoEl.remove();
+  videoEl=document.createElement('video');
+  videoEl.src=url;videoEl.controls=true;videoEl.muted=true;
+  videoEl.style.cssText='max-width:100%;max-height:380px;display:block';
+  $('prevArea').innerHTML='';$('prevArea').appendChild(videoEl);
+  videoEl.addEventListener('loadedmetadata',()=>{
+    const dur=videoEl.duration;
+    $('iName').textContent=file.name.length>20?file.name.slice(0,18)+'…':file.name;
+    $('iDur').textContent=fmtSec(dur);
+    $('iDim').textContent=`${videoEl.videoWidth}×${videoEl.videoHeight}`;
+    $('iSize').textContent=fmtBytes(file.size);
+    $('vidInfo').classList.add('show');
+    $('endTime').value=dur.toFixed(1);$('endTime').max=dur;$('startTime').max=dur;
+    $('convertBtn').disabled=false;$('estBox').classList.add('show');
+    updateEstimate();
+  });
+}
+
+// ── ESTIMATE ──
+function updateEstimate(){
+  if(!videoEl||!videoEl.duration)return;
+  const fps=parseInt($('fpsR').value);
+  const dur=Math.max(0.1,parseFloat($('endTime').value)-parseFloat($('startTime').value));
+  const scale=parseInt($('scaleR').value)/100;
+  const frames=Math.ceil(dur*fps);
+  const w=Math.round((videoEl.videoWidth||320)*scale);
+  const h=Math.round((videoEl.videoHeight||240)*scale);
+  const estBytes=frames*w*h*4*(useColor?0.12:0.25);
+  $('estF').textContent=frames;$('estDim').textContent=`${w}×${h}`;
+  const szEl=$('estSz');szEl.textContent=fmtBytes(estBytes);szEl.className='est-val';
+  if(estBytes>10*1024*1024)szEl.classList.add('danger');
+  else if(estBytes>4*1024*1024)szEl.classList.add('warn');
+  const warnEl=$('warnBox');
+  if(frames>300){warnEl.textContent=`⚠️ フレーム数が ${frames} と多めです。処理に時間がかかる場合があります。`;warnEl.classList.add('show')}
+  else warnEl.classList.remove('show');
+}
+
+// ── CONVERT ──
+$('convertBtn').addEventListener('click',async()=>{if(videoEl)await convertToAPNG()});
+async function convertToAPNG(){
+  const fps=parseInt($('fpsR').value),scale=parseInt($('scaleR').value)/100;
+  const comp=parseInt($('compR').value),loops=parseInt($('loopCount').value)||0;
+  const startSec=parseFloat($('startTime').value)||0,endSec=parseFloat($('endTime').value)||5;
+  const numColors=parseInt($('colorCount').value)||256,doColor=useColor;
+  const duration=Math.max(0.1,endSec-startSec);
+  const totalFrames=Math.ceil(duration*fps),frameDelay=1000/fps;
+  const cvs=$('cvs'),ctx=cvs.getContext('2d');
+  const outW=Math.round((videoEl.videoWidth||320)*scale);
+  const outH=Math.round((videoEl.videoHeight||240)*scale);
+  cvs.width=outW;cvs.height=outH;
+  $('progSec').classList.add('show');$('resSec').classList.remove('show');
+  $('dlBtn').style.display='none';$('convertBtn').disabled=true;
+  $('logBox').innerHTML='';apngBlob=null;
+  log(`変換開始: ${totalFrames}フレーム, ${outW}×${outH}, FPS:${fps}`,'inf');
+  log(`設定: 圧縮Lv${comp}, 減色:${doColor?numColors+'色':'なし'}`);
+  const frames=[];const t0=performance.now();
+  for(let i=0;i<totalFrames;i++){
+    const ts=startSec+(i/fps);
+    setProgress((i/totalFrames)*85,`フレーム取得中... ${i+1}/${totalFrames}`);
+    await seekVideo(videoEl,ts);
+    ctx.drawImage(videoEl,0,0,outW,outH);
+    let rgba=ctx.getImageData(0,0,outW,outH).data;
+    if(doColor)rgba=quantizeFrame(rgba,outW,outH,numColors);
+    frames.push({rgba:new Uint8Array(rgba),w:outW,h:outH,delay:frameDelay});
+    if(i%5===0)await sleep(0);
+  }
+  log('フレーム取得完了。エンコード中...','inf');
+  setProgress(88,'APNGエンコード中...');await sleep(16);
+  const apngBytes=buildAPNG(frames,loops,comp);
+  const elapsed=performance.now()-t0;
+  log(`完了！ ${fmtBytes(apngBytes.length)} / ${fmtTime(elapsed)}`,'ok');
+  setProgress(100,'完了');
+  apngBlob=new Blob([apngBytes],{type:'image/apng'});
+  const blobURL=URL.createObjectURL(apngBlob);
+  $('resImg').src=blobURL;
+  $('mFrames').textContent=totalFrames;$('mDims').textContent=`${outW}×${outH}`;
+  $('mSize').textContent=fmtBytes(apngBytes.length);$('mTime').textContent=fmtTime(elapsed);
+  $('resSec').classList.add('show');$('dlBtn').style.display='flex';$('convertBtn').disabled=false;
+}
+function seekVideo(v,t){
+  return new Promise(res=>{
+    let done=false;
+    const finish=()=>{if(done)return;done=true;res()};
+
+    // requestVideoFrameCallback が使えるブラウザ（Chrome等）はそちらを優先（フレーム精度が高い）
+    if(typeof v.requestVideoFrameCallback==='function'){
+      const onSeeked=()=>{
+        v.removeEventListener('seeked',onSeeked);
+        clearTimeout(timeout);
+        v.requestVideoFrameCallback(finish);
+      };
+      v.addEventListener('seeked',onSeeked);
+      // seeked が発火しない場合に備えたタイムアウト（2秒）
+      const timeout=setTimeout(()=>{
+        v.removeEventListener('seeked',onSeeked);
+        v.requestVideoFrameCallback(finish);
+      },2000);
+      v.currentTime=t;
+      return;
+    }
+
+    // フォールバック: seeked + rAF x4 + タイムアウト
+    const onSeeked=()=>{
+      v.removeEventListener('seeked',onSeeked);
+      clearTimeout(timeout);
+      // rAF を4回挟んでデコードを待つ
+      requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(finish))));
+    };
+    v.addEventListener('seeked',onSeeked);
+    // seeked が発火しない場合（currentTime変化なし等）のタイムアウト（2秒）
+    const timeout=setTimeout(()=>{
+      v.removeEventListener('seeked',onSeeked);
+      finish();
+    },2000);
+    v.currentTime=t;
+  });
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ── DETAIL COLLAPSE ──
+(()=>{
+  const toggle=$('detailToggle'),body=$('detailBody'),arrow=$('detailArrow');
+  let open=false;
+  body.style.cssText='overflow:hidden;max-height:0;transition:max-height .25s ease,opacity .2s;opacity:0';
+  toggle.addEventListener('click',()=>{
+    open=!open;
+    body.style.maxHeight=open?body.scrollHeight+'px':'0';
+    body.style.opacity=open?'1':'0';
+    arrow.textContent=open?'▲':'▼';
+  });
+})();
+
+// ── DOWNLOAD ──
+$('dlBtn').addEventListener('click',()=>{
+  if(!apngBlob)return;
+  const base=(videoFile?.name||'output').replace(/\.[^.]+$/,'');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(apngBlob);a.download=base+'_apng.png';a.click();
+});
+</script>
+</body>
+</html>
