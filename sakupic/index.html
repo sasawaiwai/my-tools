@@ -219,12 +219,14 @@
       overflow: hidden;
     }
     .bg-option:hover { transform: scale(1.05); }
-    .bg-option.selected { border-color: var(--accent); }
+    /* 各背景色の定義は .selected より先に書く（詳細度が同じため順序が重要） */
     .bg-option[data-bg="white_paper"] { background: #f8f7f4; border-color: #e0ddd8; }
     .bg-option[data-bg="gray_wall"]   { background: linear-gradient(135deg,#c9c6c1,#aeaba6); }
     .bg-option[data-bg="warm_cream"]  { background: #eddfc8; }
     .bg-option[data-bg="pale_blue"]   { background: #cad7e2; }
     .bg-option[data-bg="dark_table"]  { background: #2b211c; }
+    /* .selected は data-bg の後に書くことで、選択ボーダーが確実に上書きされる */
+    .bg-option.selected { border-color: var(--accent); }
     .bg-option.selected::after {
       content: '✓';
       position: absolute;
@@ -369,7 +371,8 @@
         <div class="upload-text">クリックして選択</div>
         <div class="upload-sub">PNG・JPG・WebP（透過PNG対応）</div>
       </div>
-      <input type="file" id="file-input" accept="image/*" style="display:none">
+      <!-- onclick で value をクリアすることで、同じファイルを再選択しても change イベントが発火する -->
+      <input type="file" id="file-input" accept="image/*" style="display:none" onclick="this.value=null">
     </div>
 
     <!-- ③ 背景 -->
@@ -737,22 +740,34 @@ function drawBgPaleBlue(ctx, w, h, br) {
   ctx.fillRect(0, 0, w, h);
   addGrainNoise(ctx, w, h, 0.015);
 }
+// ダークテーブル背景のキャッシュ（木目の乱数を毎回再生成しないようにする）
+let darkTableCache = { canvas: null, w: 0, h: 0, br: -1 };
+
 function drawBgDarkTable(ctx, w, h, br) {
-  const v = c => Math.min(255, Math.round(c * br));
-  ctx.fillStyle = `rgb(${v(44)},${v(34)},${v(28)})`;
-  ctx.fillRect(0, 0, w, h);
-  ctx.save();
-  for (let i = 0; i < 14; i++) {
-    const y  = (h / 13) * i;
-    const op = (0.12 + Math.random() * 0.15) * Math.min(br, 1.0);
-    ctx.strokeStyle = `rgba(80,60,48,${op})`;
-    ctx.lineWidth   = Math.random() * 1.8 + 0.4;
-    ctx.beginPath();
-    ctx.moveTo(0, y + Math.random() * 14 - 7);
-    ctx.bezierCurveTo(w*0.3, y+Math.random()*16-8, w*0.7, y+Math.random()*16-8, w, y+Math.random()*14-7);
-    ctx.stroke();
+  // w・h・br が変わったときだけ再生成する
+  if (!darkTableCache.canvas || darkTableCache.w !== w || darkTableCache.h !== h || darkTableCache.br !== br) {
+    const oc   = document.createElement('canvas');
+    oc.width   = w;
+    oc.height  = h;
+    const octx = oc.getContext('2d');
+    const v    = c => Math.min(255, Math.round(c * br));
+    octx.fillStyle = `rgb(${v(44)},${v(34)},${v(28)})`;
+    octx.fillRect(0, 0, w, h);
+    octx.save();
+    for (let i = 0; i < 14; i++) {
+      const y  = (h / 13) * i;
+      const op = (0.12 + Math.random() * 0.15) * Math.min(br, 1.0);
+      octx.strokeStyle = `rgba(80,60,48,${op})`;
+      octx.lineWidth   = Math.random() * 1.8 + 0.4;
+      octx.beginPath();
+      octx.moveTo(0, y + Math.random() * 14 - 7);
+      octx.bezierCurveTo(w*0.3, y+Math.random()*16-8, w*0.7, y+Math.random()*16-8, w, y+Math.random()*14-7);
+      octx.stroke();
+    }
+    octx.restore();
+    darkTableCache = { canvas: oc, w, h, br };
   }
-  ctx.restore();
+  ctx.drawImage(darkTableCache.canvas, 0, 0);
 }
 
 function addGrainNoise(ctx, w, h, intensity) {
@@ -1103,8 +1118,6 @@ function resetAll() {
   state.shadow = { type: 'window_soft', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, enabled: true };
   state.light  = { type: 'prism', x: CANVAS_W/2, y: CANVAS_H*0.85, scale: 1.0, rotation: 0, opacity: 0.75, enabled: false };
 
-  document.getElementById('file-input').value = '';
-
   const sliders = {
     'bg-brightness':       [1.0,  'bg-brightness-val',       v => v.toFixed(2)],
     'shadow-opacity':      [0.65, 'shadow-opacity-val',      v => v.toFixed(2)],
@@ -1206,8 +1219,7 @@ async function loadFromFolder(folder, layerKey) {
 // 初期化
 // =============================================
 buildSizePresetUI();
-applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（座標リセットなし）
-drawAll();
+applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
 loadExternalPNGs();
 
