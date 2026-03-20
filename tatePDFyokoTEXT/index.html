@@ -1,311 +1,496 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>縦書きPDF → 横書きテキスト変換ツール</title>
-  <style>
-    body {
-      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-    }
-    h1 {
-      color: #333;
-      border-bottom: 3px solid #4CAF50;
-      padding-bottom: 10px;
-    }
-    .container {
-      background-color: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .file-input-area {
-      margin: 20px 0;
-      padding: 20px;
-      border: 2px dashed #ccc;
-      border-radius: 4px;
-      text-align: center;
-    }
-    input[type="file"] {
-      margin: 10px 0;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 12px 30px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
-    }
-    button:hover:not(:disabled) {
-      background-color: #45a049;
-    }
-    button:disabled {
-      background-color: #cccccc;
-      cursor: not-allowed;
-    }
-    #status {
-      margin: 15px 0;
-      padding: 10px;
-      border-radius: 4px;
-      min-height: 20px;
-    }
-    #status.info {
-      background-color: #e3f2fd;
-      color: #1976d2;
-    }
-    #status.error {
-      background-color: #ffebee;
-      color: #c62828;
-    }
-    #status.success {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-    }
-    textarea {
-      width: 100%;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.6;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-    .button-group {
-      margin: 15px 0;
-      display: flex;
-      gap: 10px;
-    }
-    .description {
-      color: #666;
-      font-size: 14px;
-      margin: 10px 0;
-      line-height: 1.6;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>縦書きPDF → 横書きテキスト変換 | 原稿はここを出ません</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f5f3ef;
+    --surface:  #ffffff;
+    --border:   #dedad3;
+    --accent:   #b8862a;
+    --accent2:  #5f7a42;
+    --text:     #1e1c19;
+    --muted:    #9a9590;
+    --danger:   #c0574a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+  .tagline {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-left: 1px solid var(--border);
+    padding-left: 16px;
+    line-height: 1.4;
+  }
+  .privacy-badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 4px 10px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── メイン ── */
+  main {
+    flex: 1;
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ── ドロップゾーン ── */
+  .drop-zone {
+    border: 1.5px dashed var(--border);
+    padding: 64px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .drop-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(0,0,0,.018) 20px,
+      rgba(0,0,0,.018) 21px
+    );
+  }
+  .drop-zone:hover,
+  .drop-zone.over {
+    border-color: var(--accent);
+    background: rgba(212,168,67,.04);
+  }
+  .drop-icon {
+    font-size: 40px;
+    margin-bottom: 16px;
+    opacity: .6;
+  }
+  .drop-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .drop-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .drop-sub strong { color: var(--accent2); }
+  #file-input { display: none; }
+
+  /* ── ファイル情報 ── */
+  .file-info {
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .file-info.hidden { display: none; }
+  .file-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-meta {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    transition: color .15s;
+  }
+  .clear-btn:hover { color: var(--danger); }
+
+  /* ── アクションボタン ── */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    align-items: center;
+  }
+  .extract-btn {
+    background: var(--accent);
+    color: #0e0e0e;
+    border: none;
+    padding: 10px 28px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity .15s, transform .1s;
+  }
+  .extract-btn:hover { opacity: .85; }
+  .extract-btn:active { transform: scale(.98); }
+  .extract-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    padding: 10px 20px;
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all .15s;
+  }
+  .copy-btn:hover { background: rgba(95,122,66,.1); }
+  .copy-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* ── ステータス ── */
+  .status-wrap {
+    display: none;
+    margin-top: 24px;
+  }
+  .status-wrap.show { display: block; }
+  .status-bar {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--border);
+    color: var(--muted);
+  }
+  .status-bar.info    { border-color: var(--accent);  color: var(--text); }
+  .status-bar.success { border-color: var(--accent2); color: var(--accent2); }
+  .status-bar.error   { border-color: var(--danger);  color: var(--danger); }
+
+  /* ── 結果エリア ── */
+  .result-section {
+    display: none;
+    margin-top: 40px;
+  }
+  .result-section.show { display: block; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent2);
+    background: rgba(143,160,110,.1);
+    border: 1px solid rgba(143,160,110,.3);
+    padding: 2px 8px;
+  }
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    resize: vertical;
+    color: var(--text);
+    min-height: 400px;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  /* ── フッター ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+  .footer-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .footer-note::before {
+    content: '🔒';
+    font-size: 12px;
+  }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--text); }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>📄 縦書きPDF → 横書きテキスト変換ツール</h1>
-    
-    <p class="description">
-      縦書きレイアウトのPDFから内部テキストを抽出し、横書き順に並べ替えます。<br>
-      ※テキスト情報を持つPDFのみ対応。スキャン画像のみのPDFには未対応です。<br>
-      ※縦書き由来の句読点・括弧（︒︑﹁﹂）を横書き用（。、「」）に自動変換します。
-    </p>
 
-    <div class="file-input-area">
-      <label for="pdfFile">PDFファイルを選択:</label><br>
-      <input type="file" id="pdfFile" accept=".pdf">
+<header>
+  <div class="logo">縦書きPDF<span>→横書きTEXT</span></div>
+  <div class="tagline">縦書きレイアウトのテキストを抽出</div>
+  <div class="privacy-badge">NO UPLOAD · LOCAL ONLY</div>
+</header>
+
+<main>
+
+  <!-- ドロップゾーン -->
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".pdf">
+    <div class="drop-icon">📄</div>
+    <div class="drop-title">PDFをここにドロップ</div>
+    <div class="drop-sub">
+      またはクリックしてファイルを選択<br>
+      <strong>ファイルはサーバーに送信されません。すべてブラウザ内で処理します。</strong><br>
+      ※テキスト情報を持つPDFのみ対応。スキャン画像のみのPDFには未対応です。
     </div>
-
-    <div class="button-group">
-      <button id="extractBtn" disabled>テキスト抽出</button>
-      <button id="copyBtn" style="background-color: #2196F3;" disabled>結果をコピー</button>
-    </div>
-
-    <div id="status"></div>
-
-    <textarea id="result" rows="20" placeholder="抽出されたテキストがここに表示されます..."></textarea>
   </div>
 
-  <footer style="
-    text-align:center;
-    font-size:12px;
-    color:#aaa;
-    margin-top:30px;
-    padding:16px 20px;
-    border-top:1px solid #eee;
-  ">
-    <p>縦書きPDF→横書きテキスト変換ツール ｜ © ササドコロ / 笹塚 ｜ <a href="/" style="color:#aaa;">ツール一覧</a></p>
-  </footer>
+  <!-- ファイル情報 -->
+  <div class="file-info hidden" id="file-info">
+    <div class="file-name" id="file-name-text">—</div>
+    <div class="file-meta" id="file-meta-text">—</div>
+    <button class="clear-btn" id="clear-btn" title="クリア">✕</button>
+  </div>
 
-  <!-- PDF.js ライブラリをCDNから読み込み -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  
-  <script>
-    // PDF.js のワーカー設定
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  <!-- アクションボタン -->
+  <div class="actions">
+    <button class="extract-btn" id="extract-btn" disabled>テキスト抽出</button>
+    <button class="copy-btn" id="copy-btn" disabled>結果をコピー</button>
+  </div>
 
-    // DOM要素の取得
-    const pdfFileInput = document.getElementById('pdfFile');
-    const extractBtn = document.getElementById('extractBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const statusDiv = document.getElementById('status');
-    const resultTextarea = document.getElementById('result');
+  <!-- ステータス -->
+  <div class="status-wrap" id="status-wrap">
+    <div class="status-bar" id="status-bar"></div>
+  </div>
 
-    let selectedFile = null;
+  <!-- 結果 -->
+  <div class="result-section" id="result-section">
+    <div class="section-header">
+      <div class="section-title">抽出結果</div>
+      <div class="count-badge" id="count-badge">0 pages</div>
+    </div>
+    <textarea id="result" placeholder="抽出されたテキストがここに表示されます…" readonly></textarea>
+  </div>
 
-    // ファイル選択時の処理
-    pdfFileInput.addEventListener('change', (e) => {
-      selectedFile = e.target.files[0];
-      if (selectedFile) {
-        extractBtn.disabled = false;
-        showStatus(`${selectedFile.name} を選択しました`, 'info');
-      } else {
-        extractBtn.disabled = true;
-        showStatus('', '');
+</main>
+
+<footer>
+  <div class="footer-note">アップロード不要・サーバー処理なし・PDFはブラウザ内だけで処理されます</div>
+  <div>縦書きPDF→横書きテキスト変換 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a></div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  const dropZone    = document.getElementById('drop-zone');
+  const fileInput   = document.getElementById('file-input');
+  const fileInfo    = document.getElementById('file-info');
+  const fileNameText = document.getElementById('file-name-text');
+  const fileMetaText = document.getElementById('file-meta-text');
+  const clearBtn    = document.getElementById('clear-btn');
+  const extractBtn  = document.getElementById('extract-btn');
+  const copyBtn     = document.getElementById('copy-btn');
+  const statusWrap  = document.getElementById('status-wrap');
+  const statusBar   = document.getElementById('status-bar');
+  const resultSec   = document.getElementById('result-section');
+  const countBadge  = document.getElementById('count-badge');
+  const resultArea  = document.getElementById('result');
+
+  let selectedFile = null;
+
+  // ── ドロップ&ファイル選択 ──
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type === 'application/pdf') setFile(f);
+  });
+
+  function setFile(file) {
+    selectedFile = file;
+    fileNameText.textContent = file.name;
+    fileMetaText.textContent = formatSize(file.size);
+    fileInfo.classList.remove('hidden');
+    extractBtn.disabled = false;
+    copyBtn.disabled = true;
+    statusWrap.classList.remove('show');
+    resultSec.classList.remove('show');
+    resultArea.value = '';
+  }
+
+  clearBtn.addEventListener('click', () => {
+    selectedFile = null;
+    fileInput.value = '';
+    fileInfo.classList.add('hidden');
+    extractBtn.disabled = true;
+    copyBtn.disabled = true;
+    statusWrap.classList.remove('show');
+    resultSec.classList.remove('show');
+    resultArea.value = '';
+  });
+
+  // ── テキスト抽出 ──
+  extractBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    await extractText();
+  });
+
+  async function extractText() {
+    resultArea.value = '';
+    copyBtn.disabled = true;
+    extractBtn.disabled = true;
+    showStatus('処理中...', 'info');
+    statusWrap.classList.add('show');
+
+    try {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const numPages = pdf.numPages;
+      countBadge.textContent = `${numPages} pages`;
+
+      let allText = '';
+
+      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        showStatus(`処理中… (${pageNum} / ${numPages})`, 'info');
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const sortedText = extractVerticalText(textContent.items);
+        allText += `===== Page ${pageNum} =====\n`;
+        allText += sortedText + '\n\n';
       }
+
+      resultArea.value = allText.trim();
+      resultSec.classList.add('show');
+      copyBtn.disabled = false;
+      showStatus(`✓ 抽出完了 (全${numPages}ページ)`, 'success');
+
+    } catch (error) {
+      console.error('PDF処理エラー:', error);
+      const msg = error?.message?.toLowerCase().includes('password')
+        ? 'パスワード付きPDFは対応していません'
+        : `エラーが発生しました: ${error.message}`;
+      showStatus(msg, 'error');
+    } finally {
+      extractBtn.disabled = false;
+    }
+  }
+
+  // ── コピー ──
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(resultArea.value);
+      showStatus('✓ クリップボードにコピーしました', 'success');
+    } catch (e) {
+      resultArea.select();
+      document.execCommand('copy');
+      showStatus('✓ クリップボードにコピーしました', 'success');
+    }
+  });
+
+  // ── 縦書きテキスト抽出 ──
+  function extractVerticalText(items) {
+    const itemsWithCoords = items.map(item => ({
+      str: item.str,
+      x: item.transform[4],
+      y: item.transform[5]
+    }));
+
+    itemsWithCoords.sort((a, b) => {
+      const xDiff = b.x - a.x;
+      if (Math.abs(xDiff) < 5) return b.y - a.y;
+      return xDiff;
     });
 
-    // テキスト抽出ボタンのクリック処理
-    extractBtn.addEventListener('click', async () => {
-      if (!selectedFile) {
-        showStatus('PDFファイルを選択してください', 'error');
-        return;
-      }
+    const rawText = itemsWithCoords.map(item => item.str).join('');
+    return normalizeVerticalPunctuation(rawText);
+  }
 
-      // ボタンを無効化して処理開始
-      extractBtn.disabled = true;
-      copyBtn.disabled = true;
-      resultTextarea.value = '';
-      showStatus('処理中...', 'info');
+  function normalizeVerticalPunctuation(text) {
+    return text
+      .replace(/︒/g, '。')
+      .replace(/︑/g, '、')
+      .replace(/﹁/g, '「')
+      .replace(/﹂/g, '」');
+  }
 
-      try {
-        // FileReaderでPDFを読み込み
-        const arrayBuffer = await readFileAsArrayBuffer(selectedFile);
-        
-        // PDF.jsでPDFを解析
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const numPages = pdf.numPages;
-        
-        showStatus(`全${numPages}ページを処理中...`, 'info');
+  // ── ユーティリティ ──
+  function showStatus(message, type) {
+    statusBar.textContent = message;
+    statusBar.className = 'status-bar ' + type;
+  }
 
-        let allText = '';
-
-        // 全ページを順番に処理
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-          const textContent = await page.getTextContent();
-          
-          // 縦書き対応: 座標でソート + 句読点正規化
-          const sortedText = extractVerticalText(textContent.items);
-          
-          // ページ区切りを追加
-          allText += `===== Page ${pageNum} =====\n`;
-          allText += sortedText + '\n\n';
-
-          // 進捗表示
-          showStatus(`処理中... (${pageNum}/${numPages})`, 'info');
-        }
-
-        // 結果を表示
-        resultTextarea.value = allText.trim();
-        copyBtn.disabled = false;
-        showStatus(`✓ 抽出完了 (全${numPages}ページ)`, 'success');
-
-      } catch (error) {
-        console.error('PDF処理エラー:', error);
-        const msg = error?.message?.toLowerCase().includes('password')
-          ? 'パスワード付きPDFは対応していません'
-          : `エラーが発生しました: ${error.message}`;
-        showStatus(msg, 'error');
-      } finally {
-        extractBtn.disabled = false;
-      }
-    });
-
-    // コピーボタンのクリック処理
-    copyBtn.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(resultTextarea.value);
-        showStatus('✓ クリップボードにコピーしました', 'success');
-      } catch (e) {
-        // fallback
-        resultTextarea.select();
-        document.execCommand('copy');
-        showStatus('✓ クリップボードにコピーしました', 'success');
-      }
-    });
-
-    /**
-     * ファイルをArrayBufferとして読み込む
-     */
-    function readFileAsArrayBuffer(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = (e) => reject(new Error('ファイル読み込みエラー'));
-        reader.readAsArrayBuffer(file);
-      });
-    }
-
-    /**
-     * 縦書きテキストを横書き順に並べ替える
-     * 
-     * 縦書きレイアウトの基本:
-     * - 列は右から左へ並ぶ (x座標の降順)
-     * - 各列内では上から下へ文字が並ぶ (y座標の降順 ※PDF座標系ではy軸が下→上)
-     * 
-     * @param {Array} items - PDF.jsのgetTextContent()で取得したitemsの配列
-     * @returns {string} - 並べ替えたテキスト
-     */
-    function extractVerticalText(items) {
-      // 各アイテムに座標情報を付与
-      const itemsWithCoords = items.map(item => {
-        // transform配列から座標を取得
-        // transform[4] = x座標, transform[5] = y座標
-        const x = item.transform[4];
-        const y = item.transform[5];
-        return {
-          str: item.str,
-          x: x,
-          y: y
-        };
-      });
-
-      // 縦書き順にソート
-      // 1. x座標で降順ソート (右側が先)
-      // 2. x座標が近い場合はy座標で降順ソート (上側が先)
-      itemsWithCoords.sort((a, b) => {
-        const xDiff = b.x - a.x; // 降順 (大きい方が先)
-        
-        // x座標が近い場合(差が5以下)は同じ列とみなす
-        if (Math.abs(xDiff) < 5) {
-          return b.y - a.y; // y座標降順 (大きい方が先 = 上が先)
-        }
-        
-        return xDiff;
-      });
-
-      // ソートした順に文字列を連結
-      const rawText = itemsWithCoords.map(item => item.str).join('');
-      
-      // 縦書き由来の句読点・括弧を横書き用に正規化
-      const normalizedText = normalizeVerticalPunctuation(rawText);
-      
-      return normalizedText;
-    }
-
-    /**
-     * 縦書き由来の句読点・括弧を横書き用に変換する
-     * 
-     * @param {string} text - 変換前のテキスト
-     * @returns {string} - 変換後のテキスト
-     */
-    function normalizeVerticalPunctuation(text) {
-      return text
-        .replace(/︒/g, '。')  // 縦書き句点 → 横書き句点
-        .replace(/︑/g, '、')  // 縦書き読点 → 横書き読点
-        .replace(/﹁/g, '「')  // 縦書き開き括弧 → 横書き開き括弧
-        .replace(/﹂/g, '」'); // 縦書き閉じ括弧 → 横書き閉じ括弧
-    }
-
-    /**
-     * ステータスメッセージを表示
-     */
-    function showStatus(message, type) {
-      statusDiv.textContent = message;
-      statusDiv.className = type;
-    }
-  </script>
+  function formatSize(bytes) {
+    if (bytes < 1024)     return bytes + ' B';
+    if (bytes < 1024**2)  return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024**2).toFixed(1) + ' MB';
+  }
+</script>
 </body>
 </html>
