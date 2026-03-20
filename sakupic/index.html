@@ -325,6 +325,32 @@
 
     .divider { height: 1px; background: var(--border); margin: 6px 0 12px; }
 
+    /* アコーディオン */
+    .section-title {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title .chevron {
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .section.collapsed .chevron { transform: rotate(-90deg); }
+    .section-body {
+      overflow: hidden;
+      max-height: 800px;
+      opacity: 1;
+      transition: max-height 0.25s ease, opacity 0.2s ease;
+    }
+    .section.collapsed .section-body {
+      max-height: 0;
+      opacity: 0;
+    }
+
     @media (max-width: 680px) {
       main { flex-direction: column; }
       #controls { width: 100%; min-width: unset; border-left: none; border-top: 1px solid var(--border); }
@@ -356,48 +382,55 @@
   <aside id="controls">
 
     <!-- ① サイズ -->
-    <div class="section">
-      <div class="section-title">① キャンバスサイズ</div>
-      <div class="size-presets" id="size-presets">
-        <!-- JS で生成 -->
+    <div class="section collapsed">
+      <div class="section-title" onclick="toggleSection(this)">① キャンバスサイズ <span class="chevron">▾</span></div>
+      <div class="section-body">
+        <div class="size-presets" id="size-presets">
+          <!-- JS で生成 -->
+        </div>
       </div>
     </div>
 
     <!-- ② 元画像 -->
     <div class="section">
-      <div class="section-title">② 元画像をアップロード</div>
-      <div class="upload-zone" onclick="document.getElementById('file-input').click()">
-        <div class="upload-icon">🖼</div>
-        <div class="upload-text">クリックして選択</div>
-        <div class="upload-sub">PNG・JPG・WebP（透過PNG対応）</div>
+      <div class="section-title" onclick="toggleSection(this)">② 元画像をアップロード <span class="chevron">▾</span></div>
+      <div class="section-body">
+        <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+          <div class="upload-icon">🖼</div>
+          <div class="upload-text">クリックして選択</div>
+          <div class="upload-sub">PNG・JPG・WebP（透過PNG対応）</div>
+        </div>
+        <!-- onclick で value をクリアすることで、同じファイルを再選択しても change イベントが発火する -->
+        <input type="file" id="file-input" accept="image/*" style="display:none" onclick="this.value=null">
       </div>
-      <!-- onclick で value をクリアすることで、同じファイルを再選択しても change イベントが発火する -->
-      <input type="file" id="file-input" accept="image/*" style="display:none" onclick="this.value=null">
     </div>
 
     <!-- ③ 背景 -->
     <div class="section">
-      <div class="section-title">③ 背景を選ぶ</div>
-      <div class="bg-options">
-        <div class="bg-option selected" data-bg="white_paper" title="白い紙"         onclick="setBg('white_paper')"></div>
-        <div class="bg-option"          data-bg="gray_wall"   title="グレーの壁"     onclick="setBg('gray_wall')"></div>
-        <div class="bg-option"          data-bg="warm_cream"  title="クリーム"       onclick="setBg('warm_cream')"></div>
-        <div class="bg-option"          data-bg="pale_blue"   title="ペールブルー"   onclick="setBg('pale_blue')"></div>
-        <div class="bg-option"          data-bg="dark_table"  title="ダークテーブル" onclick="setBg('dark_table')"></div>
-      </div>
-      <div style="margin-top:10px">
-        <div class="control-row">
-          <span class="control-label">明るさ</span>
-          <input type="range" id="bg-brightness" min="0.3" max="1.6" step="0.05" value="1.0"
-                 oninput="updateBgBrightness(this.value)">
-          <span class="control-value" id="bg-brightness-val">1.0</span>
+      <div class="section-title" onclick="toggleSection(this)">③ 背景を選ぶ <span class="chevron">▾</span></div>
+      <div class="section-body">
+        <div class="bg-options">
+          <div class="bg-option selected" data-bg="white_paper" title="白い紙"         onclick="setBg('white_paper')"></div>
+          <div class="bg-option"          data-bg="gray_wall"   title="グレーの壁"     onclick="setBg('gray_wall')"></div>
+          <div class="bg-option"          data-bg="warm_cream"  title="クリーム"       onclick="setBg('warm_cream')"></div>
+          <div class="bg-option"          data-bg="pale_blue"   title="ペールブルー"   onclick="setBg('pale_blue')"></div>
+          <div class="bg-option"          data-bg="dark_table"  title="ダークテーブル" onclick="setBg('dark_table')"></div>
+        </div>
+        <div style="margin-top:10px">
+          <div class="control-row">
+            <span class="control-label">明るさ</span>
+            <input type="range" id="bg-brightness" min="0.3" max="1.6" step="0.05" value="1.0"
+                   oninput="updateBgBrightness(this.value)">
+            <span class="control-value" id="bg-brightness-val">1.0</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- ④ 影 -->
     <div class="section">
-      <div class="section-title">④ 影を選ぶ</div>
+      <div class="section-title" onclick="toggleSection(this)">④ 影を選ぶ <span class="chevron">▾</span></div>
+      <div class="section-body">
       <div class="toggle-row">
         <span class="toggle-label">影 ON/OFF</span>
         <div class="toggle on" id="shadow-overlay-toggle" onclick="toggleShadowOverlay()"></div>
@@ -442,11 +475,13 @@
           <span class="control-value" id="shadow-blur-val">0</span>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- ⑤ 光 -->
     <div class="section">
-      <div class="section-title light-title">⑤ 光を選ぶ</div>
+      <div class="section-title light-title" onclick="toggleSection(this)">⑤ 光を選ぶ <span class="chevron">▾</span></div>
+      <div class="section-body">
       <div class="toggle-row">
         <span class="toggle-label">光 ON/OFF</span>
         <div class="toggle" id="light-overlay-toggle" onclick="toggleLightOverlay()"></div>
@@ -482,11 +517,13 @@
           <span class="control-value" id="light-blur-val">0</span>
         </div>
       </div>
+      </div>
     </div>
 
     <!-- 元画像の調整 -->
-    <div class="section">
-      <div class="section-title">元画像の調整</div>
+    <div class="section collapsed">
+      <div class="section-title" onclick="toggleSection(this)">元画像の調整 <span class="chevron">▾</span></div>
+      <div class="section-body">
       <div class="control-row">
         <span class="control-label">サイズ</span>
         <input type="range" id="main-scale" min="0.05" max="2.0" step="0.05" value="0.7"
@@ -516,13 +553,16 @@
                oninput="updateDropShadowBlur(this.value)">
         <span class="control-value" id="drop-shadow-blur-val">20</span>
       </div>
+      </div>
     </div>
 
     <!-- 書き出し -->
     <div class="section">
-      <div class="section-title">書き出し</div>
-      <button class="btn btn-primary"   onclick="exportImage()">📥 PNGでダウンロード</button>
-      <button class="btn btn-secondary" onclick="resetAll()">↺ リセット</button>
+      <div class="section-title" onclick="toggleSection(this)">書き出し <span class="chevron">▾</span></div>
+      <div class="section-body">
+        <button class="btn btn-primary"   onclick="exportImage()">📥 PNGでダウンロード</button>
+        <button class="btn btn-secondary" onclick="resetAll()">↺ リセット</button>
+      </div>
     </div>
 
   </aside>
@@ -996,6 +1036,13 @@ function drawOverlayLayer(ctx, layer, layerType) {
 // =============================================
 // ドラッグ操作
 // =============================================
+// =============================================
+// アコーディオン
+// =============================================
+function toggleSection(titleEl) {
+  titleEl.closest('.section').classList.toggle('collapsed');
+}
+
 function setDragMode(mode) {
   state.dragMode = mode;
   document.querySelectorAll('.mode-btn').forEach(btn =>
