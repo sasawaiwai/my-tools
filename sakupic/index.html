@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>影モックアップ — Shadow Mockup Tool</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:                #f2f0ed;
+      --surface:           #ffffff;
+      --surface2:          #f8f7f5;
+      --border:            #e3e0db;
+      --border2:           #d0ccc6;
+      --text:              #252220;
+      --text-muted:        #8c8680;
+      --accent:            #607060;
+      --accent-pale:       #e8ede8;
+      --accent-light:      #7a6840;
+      --accent-light-pale: #f5f0e0;
+    }
+
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 13px;
+    }
+
+    /* ヘッダー */
+    header {
+      height: 52px;
+      padding: 0 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1  { font-size: 14px; font-weight: 600; letter-spacing: 0.06em; }
+    header .sub { font-size: 11px; color: var(--text-muted); }
+
+    /* レイアウト */
+    main { display: flex; min-height: calc(100vh - 52px); }
+
+    /* プレビューエリア */
+    #preview-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 24px;
+      gap: 14px;
+      overflow: auto;
+      background: var(--bg);
+    }
+
+    /* ドラッグモードトグル */
+    .mode-toggle {
+      display: flex;
+      border: 1px solid var(--border2);
+      border-radius: 7px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .mode-btn {
+      padding: 7px 14px;
+      font-size: 12px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-btn.active { background: var(--accent); color: white; }
+
+    /* キャンバスラッパー
+       プレビューエリアの幅に収まるよう CSS でスケール制御する */
+    #canvas-wrapper {
+      box-shadow: 0 6px 32px rgba(0,0,0,0.14);
+      /* max-width は JS で動的に設定（縦横比によって変わる） */
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    #canvas {
+      display: block;
+      /* 実際の描画解像度は width/height 属性で指定
+         表示サイズは CSS の max-width + height:auto で収縮させる */
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* コントロールパネル */
+    #controls {
+      width: 270px;
+      min-width: 270px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 20px 18px 40px;
+    }
+
+    .section { margin-bottom: 26px; }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title.light-title {
+      color: var(--accent-light);
+      border-bottom-color: #e8dfc8;
+    }
+
+    /* =============================================
+       サイズプリセット
+    ============================================= */
+    .size-presets {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .size-preset {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      background: var(--surface2);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .size-preset:hover   { border-color: var(--accent); }
+    .size-preset.selected {
+      border-color: var(--accent);
+      background: var(--accent-pale);
+    }
+
+    /* サイズの縦横比を視覚的に示す小さいアイコン */
+    .size-thumb {
+      flex-shrink: 0;
+      background: var(--border2);
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+    .size-preset.selected .size-thumb { background: var(--accent); }
+
+    .size-info { flex: 1; }
+    .size-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .size-preset.selected .size-name { color: var(--accent); }
+    .size-tags {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .size-px {
+      font-size: 10px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* アップロードゾーン */
+    .upload-zone {
+      border: 1.5px dashed var(--border2);
+      border-radius: 7px;
+      padding: 18px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-zone:hover { border-color: var(--accent); background: var(--accent-pale); }
+    .upload-icon { font-size: 22px; margin-bottom: 6px; }
+    .upload-text { font-size: 12px; color: var(--text-muted); }
+    .upload-sub  { font-size: 10px; color: var(--border2); margin-top: 3px; }
+
+    /* 背景選択 */
+    .bg-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .bg-option {
+      aspect-ratio: 1;
+      border-radius: 5px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-option:hover { transform: scale(1.05); }
+    .bg-option.selected { border-color: var(--accent); }
+    .bg-option[data-bg="white_paper"] { background: #f8f7f4; border-color: #e0ddd8; }
+    .bg-option[data-bg="gray_wall"]   { background: linear-gradient(135deg,#c9c6c1,#aeaba6); }
+    .bg-option[data-bg="warm_cream"]  { background: #eddfc8; }
+    .bg-option[data-bg="pale_blue"]   { background: #cad7e2; }
+    .bg-option[data-bg="dark_table"]  { background: #2b211c; }
+    .bg-option.selected::after {
+      content: '✓';
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(255,255,255,0.4);
+    }
+    .bg-option[data-bg="dark_table"].selected::after { color: #fff; }
+
+    /* オーバーレイ選択 */
+    .overlay-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .overlay-options.light-options { grid-template-columns: repeat(2, 1fr); }
+
+    .overlay-option {
+      padding: 8px 5px;
+      border-radius: 5px;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.35;
+      color: var(--text-muted);
+      background: var(--surface2);
+      transition: all 0.15s;
+    }
+    .overlay-option:hover { border-color: var(--accent); }
+    .overlay-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-pale);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .overlay-option.light-opt:hover { border-color: var(--accent-light); }
+    .overlay-option.light-opt.selected {
+      border-color: var(--accent-light);
+      background: var(--accent-light-pale);
+      color: var(--accent-light);
+    }
+    .overlay-icon { font-size: 15px; display: block; margin-bottom: 3px; }
+
+    /* スライダー */
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 9px;
+    }
+    .control-label { font-size: 11px; color: var(--text-muted); width: 55px; flex-shrink: 0; }
+    .control-value { font-size: 10px; color: var(--text-muted); width: 34px; text-align: right; flex-shrink: 0; }
+    input[type="range"] { flex: 1; height: 3px; accent-color: var(--accent); cursor: pointer; }
+    input[type="range"].light-range { accent-color: var(--accent-light); }
+
+    /* トグルスイッチ */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .toggle-label { font-size: 12px; }
+    .toggle {
+      width: 34px; height: 19px;
+      background: var(--border);
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle.on.light-toggle { background: var(--accent-light); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 15px; height: 15px;
+      background: white;
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: left 0.2s;
+    }
+    .toggle.on::after { left: 17px; }
+
+    /* ボタン */
+    .btn {
+      display: block; width: 100%;
+      padding: 9px 12px;
+      border: none; border-radius: 6px;
+      font-size: 12px; cursor: pointer;
+      transition: opacity 0.15s;
+      margin-bottom: 7px;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .btn:hover { opacity: 0.82; }
+    .btn-primary   { background: var(--accent); color: white; font-weight: 600; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border2); color: var(--text-muted); }
+
+    .divider { height: 1px; background: var(--border); margin: 6px 0 12px; }
+
+    @media (max-width: 680px) {
+      main { flex-direction: column; }
+      #controls { width: 100%; min-width: unset; border-left: none; border-top: 1px solid var(--border); }
+      #preview-area { padding: 16px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>影モックアップ</h1>
+  <span class="sub">書影・同人誌・告知画像を手軽に</span>
+</header>
+
+<main>
+  <!-- プレビューエリア -->
+  <section id="preview-area">
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="shadow" onclick="setDragMode('shadow')">🌤 影を動かす</button>
+      <button class="mode-btn"        data-mode="light"  onclick="setDragMode('light')">🌈 光を動かす</button>
+      <button class="mode-btn"        data-mode="main"   onclick="setDragMode('main')">📖 画像を動かす</button>
+    </div>
+    <div id="canvas-wrapper">
+      <canvas id="canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- コントロールパネル -->
+  <aside id="controls">
+
+    <!-- ① サイズ -->
+    <div class="section">
+      <div class="section-title">① キャンバスサイズ</div>
+      <div class="size-presets" id="size-presets">
+        <!-- JS で生成 -->
+      </div>
+    </div>
+
+    <!-- ② 元画像 -->
+    <div class="section">
+      <div class="section-title">② 元画像をアップロード</div>
+      <div class="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="upload-icon">🖼</div>
+        <div class="upload-text">クリックして選択</div>
+        <div class="upload-sub">PNG・JPG・WebP（透過PNG対応）</div>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+    </div>
+
+    <!-- ③ 背景 -->
+    <div class="section">
+      <div class="section-title">③ 背景を選ぶ</div>
+      <div class="bg-options">
+        <div class="bg-option selected" data-bg="white_paper" title="白い紙"         onclick="setBg('white_paper')"></div>
+        <div class="bg-option"          data-bg="gray_wall"   title="グレーの壁"     onclick="setBg('gray_wall')"></div>
+        <div class="bg-option"          data-bg="warm_cream"  title="クリーム"       onclick="setBg('warm_cream')"></div>
+        <div class="bg-option"          data-bg="pale_blue"   title="ペールブルー"   onclick="setBg('pale_blue')"></div>
+        <div class="bg-option"          data-bg="dark_table"  title="ダークテーブル" onclick="setBg('dark_table')"></div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="control-row">
+          <span class="control-label">明るさ</span>
+          <input type="range" id="bg-brightness" min="0.3" max="1.6" step="0.05" value="1.0"
+                 oninput="updateBgBrightness(this.value)">
+          <span class="control-value" id="bg-brightness-val">1.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ 影 -->
+    <div class="section">
+      <div class="section-title">④ 影を選ぶ</div>
+      <div class="toggle-row">
+        <span class="toggle-label">影 ON/OFF</span>
+        <div class="toggle on" id="shadow-overlay-toggle" onclick="toggleShadowOverlay()"></div>
+      </div>
+      <div class="overlay-options">
+        <div class="overlay-option selected" data-shadow="window_soft" onclick="setShadow('window_soft')">
+          <span class="overlay-icon">🪟</span>窓影<br>やわらか
+        </div>
+        <div class="overlay-option" data-shadow="window_hard" onclick="setShadow('window_hard')">
+          <span class="overlay-icon">⬛</span>窓影<br>くっきり
+        </div>
+        <div class="overlay-option" data-shadow="blind" onclick="setShadow('blind')">
+          <span class="overlay-icon">🪟</span>ブラインド
+        </div>
+        <div class="overlay-option" data-shadow="plant" onclick="setShadow('plant')">
+          <span class="overlay-icon">🌿</span>植物影
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="control-row">
+          <span class="control-label">透明度</span>
+          <input type="range" id="shadow-opacity" min="0.05" max="1" step="0.05" value="0.65"
+                 oninput="updateShadowOpacity(this.value)">
+          <span class="control-value" id="shadow-opacity-val">0.65</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">サイズ</span>
+          <input type="range" id="shadow-scale" min="0.4" max="2.5" step="0.05" value="1.0"
+                 oninput="updateShadowScale(this.value)">
+          <span class="control-value" id="shadow-scale-val">1.0</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">回転</span>
+          <input type="range" id="shadow-rotation" min="-180" max="180" step="1" value="0"
+                 oninput="updateShadowRotation(this.value)">
+          <span class="control-value" id="shadow-rotation-val">0°</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ 光 -->
+    <div class="section">
+      <div class="section-title light-title">⑤ 光を選ぶ</div>
+      <div class="toggle-row">
+        <span class="toggle-label">光 ON/OFF</span>
+        <div class="toggle" id="light-overlay-toggle" onclick="toggleLightOverlay()"></div>
+      </div>
+      <div class="overlay-options light-options">
+        <div class="overlay-option light-opt selected" data-light="prism" onclick="setLight('prism')">
+          <span class="overlay-icon">🌈</span>プリズム光
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="control-row">
+          <span class="control-label">透明度</span>
+          <input type="range" class="light-range" id="light-opacity" min="0.05" max="1" step="0.05" value="0.75"
+                 oninput="updateLightOpacity(this.value)">
+          <span class="control-value" id="light-opacity-val">0.75</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">サイズ</span>
+          <input type="range" class="light-range" id="light-scale" min="0.4" max="2.5" step="0.05" value="1.0"
+                 oninput="updateLightScale(this.value)">
+          <span class="control-value" id="light-scale-val">1.0</span>
+        </div>
+        <div class="control-row">
+          <span class="control-label">回転</span>
+          <input type="range" class="light-range" id="light-rotation" min="-180" max="180" step="1" value="0"
+                 oninput="updateLightRotation(this.value)">
+          <span class="control-value" id="light-rotation-val">0°</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 元画像の調整 -->
+    <div class="section">
+      <div class="section-title">元画像の調整</div>
+      <div class="control-row">
+        <span class="control-label">サイズ</span>
+        <input type="range" id="main-scale" min="0.05" max="2.0" step="0.05" value="0.7"
+               oninput="updateMainScale(this.value)">
+        <span class="control-value" id="main-scale-val">0.7</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">回転</span>
+        <input type="range" id="main-rotation" min="-45" max="45" step="1" value="0"
+               oninput="updateMainRotation(this.value)">
+        <span class="control-value" id="main-rotation-val">0°</span>
+      </div>
+      <div class="divider"></div>
+      <div class="toggle-row">
+        <span class="toggle-label">ドロップシャドウ</span>
+        <div class="toggle on" id="drop-shadow-toggle" onclick="toggleDropShadow()"></div>
+      </div>
+      <div class="control-row">
+        <span class="control-label">影の濃さ</span>
+        <input type="range" id="drop-shadow-opacity" min="0" max="0.9" step="0.05" value="0.35"
+               oninput="updateDropShadowOpacity(this.value)">
+        <span class="control-value" id="drop-shadow-opacity-val">0.35</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">ぼかし</span>
+        <input type="range" id="drop-shadow-blur" min="0" max="60" step="2" value="20"
+               oninput="updateDropShadowBlur(this.value)">
+        <span class="control-value" id="drop-shadow-blur-val">20</span>
+      </div>
+    </div>
+
+    <!-- 書き出し -->
+    <div class="section">
+      <div class="section-title">書き出し</div>
+      <button class="btn btn-primary"   onclick="exportImage()">📥 PNGでダウンロード</button>
+      <button class="btn btn-secondary" onclick="resetAll()">↺ リセット</button>
+    </div>
+
+  </aside>
+</main>
+
+<script>
+// =============================================
+// サイズプリセット定義
+// =============================================
+// thumb: プリセット選択欄に表示する縦横比アイコンのサイズ（px）
+// w, h: 実際のcanvas描画解像度
+const SIZE_PRESETS = [
+  {
+    id:    'square_1080',
+    name:  '正方形',
+    tags:  'Instagram / X / Threads',
+    w:     1080, h: 1080,
+    thumb: { w: 24, h: 24 }
+  },
+  {
+    id:    'portrait_4x5',
+    name:  '縦長 4:5',
+    tags:  'Instagram ポスト',
+    w:     1080, h: 1350,
+    thumb: { w: 18, h: 23 }
+  },
+  {
+    id:    'portrait_story',
+    name:  '縦長 9:16',
+    tags:  'Stories / Reels / TikTok',
+    w:     1080, h: 1920,
+    thumb: { w: 13, h: 23 }
+  },
+  {
+    id:    'book_cover',
+    name:  '書影 縦長',
+    tags:  '同人誌 / 書影告知',
+    w:     744, h: 1052,   // ≒ A6比率
+    thumb: { w: 16, h: 23 }
+  },
+  {
+    id:    'landscape_ogp',
+    name:  '横長 1.91:1',
+    tags:  'X / OGP / note',
+    w:     1200, h: 630,
+    thumb: { w: 28, h: 15 }
+  },
+  {
+    id:    'landscape_16x9',
+    name:  '横長 16:9',
+    tags:  'YouTube サムネイル',
+    w:     1280, h: 720,
+    thumb: { w: 28, h: 16 }
+  },
+];
+
+// 現在選択中のサイズID
+let currentSizeId = 'book_cover';
+
+// =============================================
+// 状態管理
+// =============================================
+// キャンバスサイズは選択されたプリセットから動的に決まる
+// ここでは初期値として書影サイズを使う
+let CANVAS_W = 744;
+let CANVAS_H = 1052;
+
+const OVERLAY_SIZE = 1200;  // オーバーレイ用オフスクリーンcanvasのサイズ
+
+const state = {
+  bg: { type: 'white_paper', brightness: 1.0 },
+
+  main: {
+    img: null,
+    x: CANVAS_W / 2, y: CANVAS_H / 2,
+    scale: 0.7, rotation: 0,
+    dropShadow: true, shadowOpacity: 0.35, shadowBlur: 20
+  },
+
+  shadow: {
+    type: 'window_soft',
+    x: CANVAS_W / 2, y: CANVAS_H / 2,
+    scale: 1.0, rotation: 0, opacity: 0.65, enabled: true
+  },
+
+  light: {
+    type: 'prism',
+    x: CANVAS_W / 2, y: CANVAS_H * 0.85,
+    scale: 1.0, rotation: 0, opacity: 0.75, enabled: false
+  },
+
+  drag: { active: false, target: 'shadow', startX: 0, startY: 0, origX: 0, origY: 0 },
+  dragMode: 'shadow'
+};
+
+const overlayCache = {};
+// 外部PNGキャッシュ（shadows/ / lights/ から読み込んだ画像を格納）
+const extImageCache = {};
+
+// =============================================
+// Canvas 初期化
+// =============================================
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
+
+/**
+ * キャンバスのサイズを変更し、各レイヤーの座標をリセットする
+ * プレビュー表示サイズはCSSのmax-widthで自動縮小する
+ * @param {string} sizeId - SIZE_PRESETS の id
+ * @param {boolean} resetLayers - レイヤー座標を中央に戻すか
+ */
+function applyCanvasSize(sizeId, resetLayers = true) {
+  const preset = SIZE_PRESETS.find(p => p.id === sizeId);
+  if (!preset) return;
+
+  currentSizeId = sizeId;
+  CANVAS_W = preset.w;
+  CANVAS_H = preset.h;
+
+  // canvas の実描画解像度を変更
+  canvas.width  = CANVAS_W;
+  canvas.height = CANVAS_H;
+
+  // プレビュー表示の最大サイズ：縦横ともに画面に収まるよう制限
+  // 縦長・横長によってmax-widthを変える
+  const maxDispW = Math.min(preset.w, 600);  // 表示幅の上限 600px
+  canvas.style.maxWidth = maxDispW + 'px';
+
+  if (resetLayers) {
+    // 全レイヤーの座標をキャンバス中央にリセット
+    state.main.x   = CANVAS_W / 2;
+    state.main.y   = CANVAS_H / 2;
+    state.shadow.x = CANVAS_W / 2;
+    state.shadow.y = CANVAS_H / 2;
+    state.light.x  = CANVAS_W / 2;
+    state.light.y  = CANVAS_H * 0.85;
+  }
+
+  // UIの選択状態を更新
+  document.querySelectorAll('.size-preset').forEach(el =>
+    el.classList.toggle('selected', el.dataset.sizeId === sizeId));
+
+  // キャンバスキャッシュをクリア（サイズが変わるとオーバーレイの比率感が変わるため）
+  // ※ オーバーレイ自体のサイズは固定(OVERLAY_SIZE)なので描き直しは不要
+  //   ただし背景ノイズはgetImageData依存なので再描画で自動更新される
+
+  drawAll();
+}
+
+// =============================================
+// サイズプリセットのUI生成
+// =============================================
+function buildSizePresetUI() {
+  const container = document.getElementById('size-presets');
+  container.innerHTML = '';
+
+  SIZE_PRESETS.forEach(preset => {
+    const el = document.createElement('div');
+    el.className = 'size-preset' + (preset.id === currentSizeId ? ' selected' : '');
+    el.dataset.sizeId = preset.id;
+    el.onclick = () => applyCanvasSize(preset.id);
+
+    // サムネイルアイコン（縦横比の視覚表現）
+    const thumb = document.createElement('div');
+    thumb.className = 'size-thumb';
+    thumb.style.width  = preset.thumb.w + 'px';
+    thumb.style.height = preset.thumb.h + 'px';
+
+    // テキスト情報
+    const info = document.createElement('div');
+    info.className = 'size-info';
+    info.innerHTML = `
+      <div class="size-name">${preset.name}</div>
+      <div class="size-tags">${preset.tags}</div>
+    `;
+
+    // ピクセル数
+    const px = document.createElement('div');
+    px.className = 'size-px';
+    px.textContent = `${preset.w}×${preset.h}`;
+
+    el.appendChild(thumb);
+    el.appendChild(info);
+    el.appendChild(px);
+    container.appendChild(el);
+  });
+}
+
+// =============================================
+// 背景描画
+// =============================================
+function drawBackground(ctx, w, h, type, brightness) {
+  switch (type) {
+    case 'white_paper': drawBgWhitePaper(ctx, w, h, brightness); break;
+    case 'gray_wall':   drawBgGrayWall  (ctx, w, h, brightness); break;
+    case 'warm_cream':  drawBgWarmCream (ctx, w, h, brightness); break;
+    case 'pale_blue':   drawBgPaleBlue  (ctx, w, h, brightness); break;
+    case 'dark_table':  drawBgDarkTable (ctx, w, h, brightness); break;
+    default:            drawBgWhitePaper(ctx, w, h, brightness); break;
+  }
+}
+
+function drawBgWhitePaper(ctx, w, h, br) {
+  const v = c => Math.min(255, Math.round(c * br));
+  ctx.fillStyle = `rgb(${v(248)},${v(245)},${v(241)})`;
+  ctx.fillRect(0, 0, w, h);
+  addGrainNoise(ctx, w, h, 0.028);
+}
+function drawBgGrayWall(ctx, w, h, br) {
+  const v = c => Math.min(255, Math.round(c * br));
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, `rgb(${v(205)},${v(202)},${v(197)})`);
+  g.addColorStop(1, `rgb(${v(178)},${v(175)},${v(170)})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+  addGrainNoise(ctx, w, h, 0.022);
+}
+function drawBgWarmCream(ctx, w, h, br) {
+  const v = c => Math.min(255, Math.round(c * br));
+  ctx.fillStyle = `rgb(${v(237)},${v(224)},${v(205)})`;
+  ctx.fillRect(0, 0, w, h);
+  addGrainNoise(ctx, w, h, 0.018);
+}
+function drawBgPaleBlue(ctx, w, h, br) {
+  const v = c => Math.min(255, Math.round(c * br));
+  ctx.fillStyle = `rgb(${v(200)},${v(216)},${v(228)})`;
+  ctx.fillRect(0, 0, w, h);
+  addGrainNoise(ctx, w, h, 0.015);
+}
+function drawBgDarkTable(ctx, w, h, br) {
+  const v = c => Math.min(255, Math.round(c * br));
+  ctx.fillStyle = `rgb(${v(44)},${v(34)},${v(28)})`;
+  ctx.fillRect(0, 0, w, h);
+  ctx.save();
+  for (let i = 0; i < 14; i++) {
+    const y  = (h / 13) * i;
+    const op = (0.12 + Math.random() * 0.15) * Math.min(br, 1.0);
+    ctx.strokeStyle = `rgba(80,60,48,${op})`;
+    ctx.lineWidth   = Math.random() * 1.8 + 0.4;
+    ctx.beginPath();
+    ctx.moveTo(0, y + Math.random() * 14 - 7);
+    ctx.bezierCurveTo(w*0.3, y+Math.random()*16-8, w*0.7, y+Math.random()*16-8, w, y+Math.random()*14-7);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function addGrainNoise(ctx, w, h, intensity) {
+  const id = ctx.getImageData(0, 0, w, h);
+  const s  = 255 * intensity;
+  for (let i = 0; i < id.data.length; i += 4) {
+    const n = (Math.random() - 0.5) * s;
+    id.data[i]   = Math.max(0, Math.min(255, id.data[i]   + n));
+    id.data[i+1] = Math.max(0, Math.min(255, id.data[i+1] + n));
+    id.data[i+2] = Math.max(0, Math.min(255, id.data[i+2] + n));
+  }
+  ctx.putImageData(id, 0, 0);
+}
+
+// =============================================
+// オーバーレイ生成（影・光で共用）
+// =============================================
+function getOverlayCanvas(type) {
+  if (overlayCache[type]) return overlayCache[type];
+  const oc   = document.createElement('canvas');
+  oc.width   = OVERLAY_SIZE;
+  oc.height  = OVERLAY_SIZE;
+  const octx = oc.getContext('2d');
+  switch (type) {
+    case 'window_soft': generateWindowSoft(octx, OVERLAY_SIZE); break;
+    case 'window_hard': generateWindowHard(octx, OVERLAY_SIZE); break;
+    case 'blind':       generateBlind     (octx, OVERLAY_SIZE); break;
+    case 'plant':       generatePlant     (octx, OVERLAY_SIZE); break;
+    case 'prism':       generatePrism     (octx, OVERLAY_SIZE); break;
+    default: return null;  // 不明なタイプは null を返す（外部PNGなど）
+  }
+  overlayCache[type] = oc;
+  return oc;
+}
+
+function generateWindowSoft(ctx, s) {
+  const fw = s * 0.034;
+  ctx.clearRect(0, 0, s, s);
+  ctx.save();
+  ctx.shadowBlur  = 22;
+  ctx.shadowColor = 'rgba(55,65,75,0.55)';
+  ctx.fillStyle   = 'rgba(72,82,92,0.92)';
+  ctx.fillRect(0,        0,       s,  fw);
+  ctx.fillRect(0,        s - fw,  s,  fw);
+  ctx.fillRect(0,        0,       fw, s);
+  ctx.fillRect(s - fw,   0,       fw, s);
+  ctx.fillRect(s*0.5 - fw/2, 0,   fw, s);
+  ctx.fillRect(0, s*0.33 - fw/2,  s,  fw);
+  ctx.fillRect(0, s*0.67 - fw/2,  s,  fw);
+  ctx.restore();
+}
+function generateWindowHard(ctx, s) {
+  const fw = s * 0.028;
+  ctx.clearRect(0, 0, s, s);
+  ctx.fillStyle = 'rgba(52,60,68,0.95)';
+  ctx.fillRect(0,        0,       s,  fw);
+  ctx.fillRect(0,        s - fw,  s,  fw);
+  ctx.fillRect(0,        0,       fw, s);
+  ctx.fillRect(s - fw,   0,       fw, s);
+  ctx.fillRect(s*0.34 - fw/2, 0,  fw, s);
+  ctx.fillRect(s*0.68 - fw/2, 0,  fw, s);
+  ctx.fillRect(0, s*0.40 - fw/2,  s,  fw);
+  ctx.fillRect(0, s*0.70 - fw/2,  s,  fw);
+}
+function generateBlind(ctx, s) {
+  ctx.clearRect(0, 0, s, s);
+  ctx.save();
+  ctx.translate(s/2, s/2);
+  ctx.rotate(-28 * Math.PI / 180);
+  ctx.fillStyle = 'rgba(48,58,66,0.95)';
+  const sw = s * 0.055, gap = s * 0.075, span = s * 1.8;
+  for (let x = -span; x < span; x += sw + gap) ctx.fillRect(x, -span, sw, span*2);
+  ctx.restore();
+}
+function generatePlant(ctx, s) {
+  ctx.clearRect(0, 0, s, s);
+  ctx.save();
+  ctx.shadowBlur  = 14;
+  ctx.shadowColor = 'rgba(28,42,32,0.4)';
+  ctx.fillStyle   = 'rgba(38,52,40,0.92)';
+  const leaves = [
+    [0.28,0.18,0.13,0.23,-0.35],[0.62,0.12,0.11,0.21,0.50],
+    [0.14,0.42,0.09,0.19,-0.85],[0.72,0.38,0.14,0.25,0.20],
+    [0.42,0.48,0.10,0.17,-0.10],[0.55,0.62,0.12,0.22,0.65],
+    [0.20,0.68,0.09,0.16,-0.50],[0.80,0.68,0.11,0.19,0.30],
+    [0.46,0.82,0.13,0.11,0.12], [0.33,0.32,0.03,0.26,0.18],
+    [0.60,0.52,0.025,0.22,-0.22],
+  ];
+  leaves.forEach(([cx,cy,rx,ry,rot]) => {
+    ctx.save();
+    ctx.translate(cx*s, cy*s);
+    ctx.rotate(rot);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, rx*s, ry*s, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  });
+  ctx.restore();
+}
+function generatePrism(ctx, s) {
+  ctx.clearRect(0, 0, s, s);
+  ctx.save();
+  ctx.translate(s/2, s/2);
+  ctx.rotate(-0.48);
+  const g = ctx.createLinearGradient(-s*0.14, 0, s*0.14, 0);
+  g.addColorStop(0.00, 'rgba(255,  0,  0,0.0)');
+  g.addColorStop(0.08, 'rgba(255, 60,  0,0.85)');
+  g.addColorStop(0.22, 'rgba(255,210,  0,0.92)');
+  g.addColorStop(0.38, 'rgba(  0,240, 80,0.92)');
+  g.addColorStop(0.54, 'rgba(  0,170,255,0.92)');
+  g.addColorStop(0.70, 'rgba(120,  0,255,0.88)');
+  g.addColorStop(0.85, 'rgba(255,  0,180,0.80)');
+  g.addColorStop(1.00, 'rgba(255,  0, 80,0.0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-s*0.14, -s, s*0.28, s*2);
+  const g2 = ctx.createLinearGradient(-s*0.04, 0, s*0.04, 0);
+  g2.addColorStop(0,   'rgba(240,248,255,0)');
+  g2.addColorStop(0.5, 'rgba(240,248,255,0.75)');
+  g2.addColorStop(1,   'rgba(240,248,255,0)');
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = g2;
+  ctx.fillRect(-s*0.04, -s, s*0.08, s*2);
+  ctx.restore();
+}
+
+// =============================================
+// メインレンダリング
+// 描画順：① 背景 → ② 元画像 → ③ 影 → ④ 光
+// =============================================
+function drawAll() {
+  drawBackground(ctx, CANVAS_W, CANVAS_H, state.bg.type, state.bg.brightness);
+
+  if (state.main.img) {
+    drawMainImage(ctx, state.main);
+  } else {
+    drawPlaceholder(ctx, CANVAS_W, CANVAS_H);
+  }
+
+  if (state.shadow.enabled) drawOverlayLayer(ctx, state.shadow, 'shadow');
+  if (state.light.enabled)  drawOverlayLayer(ctx, state.light,  'light');
+}
+
+function drawMainImage(ctx, m) {
+  const iw = m.img.naturalWidth  || m.img.width;
+  const ih = m.img.naturalHeight || m.img.height;
+  ctx.save();
+  ctx.translate(m.x, m.y);
+  ctx.rotate(m.rotation * Math.PI / 180);
+  ctx.scale(m.scale, m.scale);
+  if (m.dropShadow) {
+    ctx.shadowColor   = `rgba(0,0,0,${m.shadowOpacity})`;
+    ctx.shadowBlur    = m.shadowBlur;
+    ctx.shadowOffsetX = m.shadowBlur * 0.25;
+    ctx.shadowOffsetY = m.shadowBlur * 0.45;
+  }
+  ctx.drawImage(m.img, -iw/2, -ih/2, iw, ih);
+  ctx.restore();
+}
+
+function drawPlaceholder(ctx, w, h) {
+  const pw = w*0.48, ph = h*0.58;
+  const px = (w-pw)/2, py = (h-ph)/2;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(155,148,140,0.45)';
+  ctx.lineWidth   = 1.5;
+  ctx.setLineDash([6,4]);
+  ctx.strokeRect(px, py, pw, ph);
+
+  // フォントサイズをキャンバスサイズに比例させる
+  const fs = Math.max(12, Math.round(w * 0.024));
+  ctx.fillStyle    = 'rgba(155,148,140,0.65)';
+  ctx.font         = `${fs}px sans-serif`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('元画像をアップロード', w/2, h/2 - fs*1.1);
+  ctx.font      = `${Math.round(fs*0.85)}px sans-serif`;
+  ctx.fillStyle = 'rgba(155,148,140,0.45)';
+  ctx.fillText('PNG・JPG・WebP（透過PNG対応）', w/2, h/2 + fs*0.9);
+  ctx.restore();
+}
+
+function drawOverlayLayer(ctx, layer, layerType) {
+  // 外部PNG（extImageCache）または内蔵生成Canvas（overlayCache）を取得
+  const drawable = extImageCache[layer.type] || getOverlayCanvas(layer.type);
+  if (!drawable) return;
+
+  // 外部PNGは画像の実サイズ、内蔵Canvasは OVERLAY_SIZE を使用
+  const dw = drawable.naturalWidth  || drawable.width;
+  const dh = drawable.naturalHeight || drawable.height;
+  ctx.save();
+  ctx.globalAlpha = layer.opacity;
+  if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+  ctx.translate(layer.x, layer.y);
+  ctx.rotate(layer.rotation * Math.PI / 180);
+  ctx.scale(layer.scale, layer.scale);
+  ctx.drawImage(drawable, -dw/2, -dh/2, dw, dh);
+  ctx.restore();
+}
+
+// =============================================
+// ドラッグ操作
+// =============================================
+function setDragMode(mode) {
+  state.dragMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.mode === mode));
+}
+
+function getCanvasPos(e) {
+  const rect   = canvas.getBoundingClientRect();
+  // 表示サイズと描画解像度の比率を考慮して座標変換
+  const scaleX = CANVAS_W / rect.width;
+  const scaleY = CANVAS_H / rect.height;
+  const src    = e.touches ? e.touches[0] : e;
+  return {
+    x: (src.clientX - rect.left) * scaleX,
+    y: (src.clientY - rect.top)  * scaleY
+  };
+}
+
+canvas.addEventListener('mousedown',  onDragStart);
+canvas.addEventListener('touchstart', onDragStart, { passive: false });
+window.addEventListener('mousemove',  onDragMove);
+window.addEventListener('touchmove',  onDragMove,  { passive: false });
+window.addEventListener('mouseup',    onDragEnd);
+window.addEventListener('touchend',   onDragEnd);
+
+function onDragStart(e) {
+  e.preventDefault();
+  const pos    = getCanvasPos(e);
+  const target = state.dragMode === 'main'  ? state.main
+               : state.dragMode === 'light' ? state.light
+               : state.shadow;
+  state.drag.active = true;
+  state.drag.target = state.dragMode;
+  state.drag.startX = pos.x;
+  state.drag.startY = pos.y;
+  state.drag.origX  = target.x;
+  state.drag.origY  = target.y;
+}
+function onDragMove(e) {
+  if (!state.drag.active) return;
+  e.preventDefault();
+  const pos = getCanvasPos(e);
+  const dx  = pos.x - state.drag.startX;
+  const dy  = pos.y - state.drag.startY;
+  if      (state.drag.target === 'main')  { state.main.x   = state.drag.origX + dx; state.main.y   = state.drag.origY + dy; }
+  else if (state.drag.target === 'light') { state.light.x  = state.drag.origX + dx; state.light.y  = state.drag.origY + dy; }
+  else                                    { state.shadow.x = state.drag.origX + dx; state.shadow.y = state.drag.origY + dy; }
+  drawAll();
+}
+function onDragEnd() { state.drag.active = false; }
+
+// =============================================
+// コントロール
+// =============================================
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img  = new Image();
+    img.onload = () => {
+      state.main.img = img;
+      const scale = Math.min(CANVAS_W * 0.68 / img.naturalWidth, CANVAS_H * 0.68 / img.naturalHeight, 1.0);
+      state.main.scale = parseFloat(scale.toFixed(2));
+      document.getElementById('main-scale').value = state.main.scale;
+      document.getElementById('main-scale-val').textContent = state.main.scale.toFixed(2);
+      drawAll();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function setBg(type) {
+  state.bg.type = type;
+  document.querySelectorAll('.bg-option').forEach(el =>
+    el.classList.toggle('selected', el.dataset.bg === type));
+  drawAll();
+}
+function updateBgBrightness(v) {
+  state.bg.brightness = parseFloat(v);
+  document.getElementById('bg-brightness-val').textContent = parseFloat(v).toFixed(2);
+  drawAll();
+}
+
+function setShadow(type) {
+  state.shadow.type = type;
+  document.querySelectorAll('[data-shadow]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.shadow === type));
+  drawAll();
+}
+function toggleShadowOverlay() {
+  state.shadow.enabled = !state.shadow.enabled;
+  document.getElementById('shadow-overlay-toggle').classList.toggle('on', state.shadow.enabled);
+  drawAll();
+}
+function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
+function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
+function updateShadowRotation(v) { state.shadow.rotation = parseInt(v);   document.getElementById('shadow-rotation-val').textContent = v + '°'; drawAll(); }
+
+function setLight(type) {
+  state.light.type = type;
+  document.querySelectorAll('[data-light]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.light === type));
+  drawAll();
+}
+function toggleLightOverlay() {
+  state.light.enabled = !state.light.enabled;
+  const tog = document.getElementById('light-overlay-toggle');
+  tog.classList.toggle('on',           state.light.enabled);
+  tog.classList.toggle('light-toggle', state.light.enabled);
+  drawAll();
+}
+function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
+function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
+function updateLightRotation(v) { state.light.rotation = parseInt(v);   document.getElementById('light-rotation-val').textContent = v + '°'; drawAll(); }
+
+function updateMainScale(v)    { state.main.scale    = parseFloat(v); document.getElementById('main-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
+function updateMainRotation(v) { state.main.rotation = parseInt(v);   document.getElementById('main-rotation-val').textContent = v + '°'; drawAll(); }
+
+function toggleDropShadow() {
+  state.main.dropShadow = !state.main.dropShadow;
+  document.getElementById('drop-shadow-toggle').classList.toggle('on', state.main.dropShadow);
+  drawAll();
+}
+function updateDropShadowOpacity(v) { state.main.shadowOpacity = parseFloat(v); document.getElementById('drop-shadow-opacity-val').textContent = parseFloat(v).toFixed(2); drawAll(); }
+function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').textContent    = v; drawAll(); }
+
+// =============================================
+// 書き出し
+// =============================================
+function exportImage() {
+  const link    = document.createElement('a');
+  link.download = `mockup_${currentSizeId}_${Date.now()}.png`;
+  link.href     = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// =============================================
+// リセット
+// =============================================
+function resetAll() {
+  state.bg     = { type: 'white_paper', brightness: 1.0 };
+  state.main   = { img: null, x: CANVAS_W/2, y: CANVAS_H/2, scale: 0.7, rotation: 0,
+                   dropShadow: true, shadowOpacity: 0.35, shadowBlur: 20 };
+  state.shadow = { type: 'window_soft', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, enabled: true };
+  state.light  = { type: 'prism', x: CANVAS_W/2, y: CANVAS_H*0.85, scale: 1.0, rotation: 0, opacity: 0.75, enabled: false };
+
+  document.getElementById('file-input').value = '';
+
+  const sliders = {
+    'bg-brightness':       [1.0,  'bg-brightness-val',       v => v.toFixed(2)],
+    'shadow-opacity':      [0.65, 'shadow-opacity-val',      v => v.toFixed(2)],
+    'shadow-scale':        [1.0,  'shadow-scale-val',        v => v.toFixed(2)],
+    'shadow-rotation':     [0,    'shadow-rotation-val',     v => v + '°'],
+    'light-opacity':       [0.75, 'light-opacity-val',       v => v.toFixed(2)],
+    'light-scale':         [1.0,  'light-scale-val',         v => v.toFixed(2)],
+    'light-rotation':      [0,    'light-rotation-val',      v => v + '°'],
+    'main-scale':          [0.7,  'main-scale-val',          v => v.toFixed(2)],
+    'main-rotation':       [0,    'main-rotation-val',       v => v + '°'],
+    'drop-shadow-opacity': [0.35, 'drop-shadow-opacity-val', v => v.toFixed(2)],
+    'drop-shadow-blur':    [20,   'drop-shadow-blur-val',    v => v],
+  };
+  Object.entries(sliders).forEach(([id, [val, labelId, fmt]]) => {
+    document.getElementById(id).value = val;
+    document.getElementById(labelId).textContent = fmt(val);
+  });
+
+  document.querySelectorAll('.bg-option').forEach(el =>
+    el.classList.toggle('selected', el.dataset.bg === 'white_paper'));
+  document.querySelectorAll('[data-shadow]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.shadow === 'window_soft'));
+  document.querySelectorAll('[data-light]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.light === 'prism'));
+
+  document.getElementById('shadow-overlay-toggle').classList.add('on');
+  document.getElementById('drop-shadow-toggle').classList.add('on');
+  const ltog = document.getElementById('light-overlay-toggle');
+  ltog.classList.remove('on');
+  ltog.classList.remove('light-toggle');
+
+  drawAll();
+}
+
+// =============================================
+// 外部PNG読み込み（shadows/ / lights/）
+// HTTP サーバー（Vercel等）経由のときのみ動作する
+// ローカルのファイル直接起動（file://）では CORS エラーになるためスキップ
+// =============================================
+
+/**
+ * shadows/ と lights/ フォルダから PNG を非同期で読み込み、
+ * extImageCache に登録して UI ボタンを追加する
+ */
+async function loadExternalPNGs() {
+  await Promise.all([
+    loadFromFolder('shadows', 'shadow'),
+    loadFromFolder('lights',  'light'),
+  ]);
+  drawAll();  // 読み込み完了後に再描画
+}
+
+/**
+ * フォルダの manifest.json を読み込み、PNG を extImageCache に登録してUIを追加する
+ * manifest.json の形式: ["ファイル名.png", ...]
+ * @param {string} folder   - 'shadows' または 'lights'
+ * @param {string} layerKey - 'shadow' または 'light'
+ */
+async function loadFromFolder(folder, layerKey) {
+  let filenames;
+  try {
+    const res = await fetch(`${folder}/manifest.json`);
+    if (!res.ok) return;
+    filenames = await res.json();
+  } catch (e) {
+    // ローカル起動時の CORS エラーなどは無視して内蔵素材のみで動作
+    return;
+  }
+  if (!Array.isArray(filenames) || filenames.length === 0) return;
+
+  // 影は .overlay-options（最初の方）、光は .light-options
+  const container = layerKey === 'shadow'
+    ? document.querySelector('.overlay-options:not(.light-options)')
+    : document.querySelector('.overlay-options.light-options');
+
+  await Promise.all(filenames.map(filename => new Promise(resolve => {
+    const name = filename.replace(/\.png$/i, '');  // 拡張子なしをキー兼ラベルに使う
+    const img  = new Image();
+    img.onload = () => {
+      // キャッシュに登録
+      extImageCache[name] = img;
+
+      // UIボタンを追加（内蔵素材と同じスタイル）
+      const el = document.createElement('div');
+      el.className = `overlay-option${layerKey === 'light' ? ' light-opt' : ''}`;
+      el.dataset[layerKey] = name;
+      el.title = name;
+      el.innerHTML = `<span class="overlay-icon">🖼</span>${name}`;
+      el.onclick = () => layerKey === 'shadow' ? setShadow(name) : setLight(name);
+      container.appendChild(el);
+      resolve();
+    };
+    img.onerror = resolve;  // 読み込み失敗は無視して続行
+    img.src = `${folder}/${filename}`;
+  })));
+}
+
+// =============================================
+// 初期化
+// =============================================
+buildSizePresetUI();
+applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（座標リセットなし）
+drawAll();
+// 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
+loadExternalPNGs();
+
+/*
+ * TODO
+ * - 影・光をPNGでアップロードして差し替えるUI
+ * - Vercelデプロイ後に shadows/ フォルダのPNGを自動読み込み
+ * - ブレンドモード選択（multiply / overlay / soft-light）
+ * - ガイド枠の表示（書影縦長・SNS正方形）
+ * - ムードプリセット（朝・夕方・室内光）
+ * - ドラッグ中にアクティブレイヤーのアウトライン表示
+ * - アンドゥ / リドゥ（Ctrl+Z）
+ * - 書き出し解像度選択（1x / 2x）
+ */
+</script>
+</body>
+</html>
