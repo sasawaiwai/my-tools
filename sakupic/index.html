@@ -279,7 +279,16 @@
       margin-bottom: 9px;
     }
     .control-label { font-size: 11px; color: var(--text-muted); width: 55px; flex-shrink: 0; }
-    .control-value { font-size: 10px; color: var(--text-muted); width: 34px; text-align: right; flex-shrink: 0; }
+    .control-value {
+      font-size: 10px; color: var(--text-muted); width: 38px; text-align: right; flex-shrink: 0;
+      border: none; background: transparent; padding: 0; outline: none;
+      font-family: inherit;
+      /* スピナー非表示 */
+      -moz-appearance: textfield;
+    }
+    .control-value::-webkit-outer-spin-button,
+    .control-value::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .control-value:focus { color: var(--text); border-bottom: 1px solid var(--border2); }
     input[type="range"] { flex: 1; height: 3px; accent-color: var(--accent); cursor: pointer; }
     input[type="range"].light-range { accent-color: var(--accent-light); }
 
@@ -421,7 +430,7 @@
             <span class="control-label">明るさ</span>
             <input type="range" id="bg-brightness" min="0.3" max="1.6" step="0.05" value="1.0"
                    oninput="updateBgBrightness(this.value)">
-            <span class="control-value" id="bg-brightness-val">1.0</span>
+            <input type="number" class="control-value" id="bg-brightness-val" min="0.3" max="1.6" step="0.05" value="1.0" onchange="syncFromNumber('bg-brightness-val','bg-brightness',updateBgBrightness)">
           </div>
         </div>
       </div>
@@ -454,25 +463,25 @@
           <span class="control-label">透明度</span>
           <input type="range" id="shadow-opacity" min="0.05" max="1" step="0.05" value="0.65"
                  oninput="updateShadowOpacity(this.value)">
-          <span class="control-value" id="shadow-opacity-val">0.65</span>
+          <input type="number" class="control-value" id="shadow-opacity-val" min="0.05" max="1" step="0.05" value="0.65" onchange="syncFromNumber('shadow-opacity-val','shadow-opacity',updateShadowOpacity)">
         </div>
         <div class="control-row">
           <span class="control-label">サイズ</span>
           <input type="range" id="shadow-scale" min="0.4" max="2.5" step="0.05" value="1.0"
                  oninput="updateShadowScale(this.value)">
-          <span class="control-value" id="shadow-scale-val">1.0</span>
+          <input type="number" class="control-value" id="shadow-scale-val" min="0.4" max="2.5" step="0.05" value="1.0" onchange="syncFromNumber('shadow-scale-val','shadow-scale',updateShadowScale)">
         </div>
         <div class="control-row">
           <span class="control-label">回転</span>
           <input type="range" id="shadow-rotation" min="-180" max="180" step="1" value="0"
                  oninput="updateShadowRotation(this.value)">
-          <span class="control-value" id="shadow-rotation-val">0°</span>
+          <input type="number" class="control-value" id="shadow-rotation-val" min="-180" max="180" step="1" value="0" onchange="syncFromNumber('shadow-rotation-val','shadow-rotation',updateShadowRotation,true)">
         </div>
         <div class="control-row">
           <span class="control-label">ぼかし</span>
           <input type="range" id="shadow-blur" min="0" max="80" step="2" value="0"
                  oninput="updateShadowBlur(this.value)">
-          <span class="control-value" id="shadow-blur-val">0</span>
+          <input type="number" class="control-value" id="shadow-blur-val" min="0" max="80" step="2" value="0" onchange="syncFromNumber('shadow-blur-val','shadow-blur',updateShadowBlur,true)">
         </div>
       </div>
       </div>
@@ -496,25 +505,25 @@
           <span class="control-label">透明度</span>
           <input type="range" class="light-range" id="light-opacity" min="0.05" max="1" step="0.05" value="0.75"
                  oninput="updateLightOpacity(this.value)">
-          <span class="control-value" id="light-opacity-val">0.75</span>
+          <input type="number" class="control-value" id="light-opacity-val" min="0.05" max="1" step="0.05" value="0.75" onchange="syncFromNumber('light-opacity-val','light-opacity',updateLightOpacity)">
         </div>
         <div class="control-row">
           <span class="control-label">サイズ</span>
           <input type="range" class="light-range" id="light-scale" min="0.4" max="2.5" step="0.05" value="1.0"
                  oninput="updateLightScale(this.value)">
-          <span class="control-value" id="light-scale-val">1.0</span>
+          <input type="number" class="control-value" id="light-scale-val" min="0.4" max="2.5" step="0.05" value="1.0" onchange="syncFromNumber('light-scale-val','light-scale',updateLightScale)">
         </div>
         <div class="control-row">
           <span class="control-label">回転</span>
           <input type="range" class="light-range" id="light-rotation" min="-180" max="180" step="1" value="0"
                  oninput="updateLightRotation(this.value)">
-          <span class="control-value" id="light-rotation-val">0°</span>
+          <input type="number" class="control-value" id="light-rotation-val" min="-180" max="180" step="1" value="0" onchange="syncFromNumber('light-rotation-val','light-rotation',updateLightRotation,true)">
         </div>
         <div class="control-row">
           <span class="control-label">ぼかし</span>
           <input type="range" class="light-range" id="light-blur" min="0" max="80" step="2" value="0"
                  oninput="updateLightBlur(this.value)">
-          <span class="control-value" id="light-blur-val">0</span>
+          <input type="number" class="control-value" id="light-blur-val" min="0" max="80" step="2" value="0" onchange="syncFromNumber('light-blur-val','light-blur',updateLightBlur,true)">
         </div>
       </div>
       </div>
@@ -528,13 +537,13 @@
         <span class="control-label">サイズ</span>
         <input type="range" id="main-scale" min="0.05" max="2.0" step="0.05" value="0.7"
                oninput="updateMainScale(this.value)">
-        <span class="control-value" id="main-scale-val">0.7</span>
+        <input type="number" class="control-value" id="main-scale-val" min="0.05" max="2.0" step="0.05" value="0.7" onchange="syncFromNumber('main-scale-val','main-scale',updateMainScale)">
       </div>
       <div class="control-row">
         <span class="control-label">回転</span>
         <input type="range" id="main-rotation" min="-45" max="45" step="1" value="0"
                oninput="updateMainRotation(this.value)">
-        <span class="control-value" id="main-rotation-val">0°</span>
+        <input type="number" class="control-value" id="main-rotation-val" min="-45" max="45" step="1" value="0" onchange="syncFromNumber('main-rotation-val','main-rotation',updateMainRotation,true)">
       </div>
       <div class="divider"></div>
       <div class="toggle-row">
@@ -545,13 +554,13 @@
         <span class="control-label">影の濃さ</span>
         <input type="range" id="drop-shadow-opacity" min="0" max="0.9" step="0.05" value="0.35"
                oninput="updateDropShadowOpacity(this.value)">
-        <span class="control-value" id="drop-shadow-opacity-val">0.35</span>
+        <input type="number" class="control-value" id="drop-shadow-opacity-val" min="0" max="0.9" step="0.05" value="0.35" onchange="syncFromNumber('drop-shadow-opacity-val','drop-shadow-opacity',updateDropShadowOpacity)">
       </div>
       <div class="control-row">
         <span class="control-label">ぼかし</span>
         <input type="range" id="drop-shadow-blur" min="0" max="60" step="2" value="20"
                oninput="updateDropShadowBlur(this.value)">
-        <span class="control-value" id="drop-shadow-blur-val">20</span>
+        <input type="number" class="control-value" id="drop-shadow-blur-val" min="0" max="60" step="2" value="20" onchange="syncFromNumber('drop-shadow-blur-val','drop-shadow-blur',updateDropShadowBlur,true)">
       </div>
       </div>
     </div>
@@ -1047,6 +1056,21 @@ function drawOverlayLayer(ctx, layer, layerType) {
 // ドラッグ操作
 // =============================================
 // =============================================
+// 数値入力 → スライダー同期ヘルパー
+// =============================================
+// 数値入力欄が変更されたとき、値をmin/maxにクランプしてスライダーと状態を更新する
+function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
+  const numEl    = document.getElementById(numInputId);
+  const slideEl  = document.getElementById(sliderId);
+  let val = isInt ? parseInt(numEl.value) : parseFloat(numEl.value);
+  // min/max の範囲にクランプ
+  val = Math.min(parseFloat(slideEl.max), Math.max(parseFloat(slideEl.min), val));
+  if (isNaN(val)) val = parseFloat(slideEl.value);
+  slideEl.value = val;
+  updateFn(val);
+}
+
+// =============================================
 // アコーディオン
 // =============================================
 function toggleSection(titleEl) {
@@ -1118,7 +1142,7 @@ document.getElementById('file-input').addEventListener('change', function(e) {
       const scale = Math.min(CANVAS_W * 0.68 / img.naturalWidth, CANVAS_H * 0.68 / img.naturalHeight, 1.0);
       state.main.scale = parseFloat(scale.toFixed(2));
       document.getElementById('main-scale').value = state.main.scale;
-      document.getElementById('main-scale-val').textContent = state.main.scale.toFixed(2);
+      document.getElementById('main-scale-val').value = state.main.scale.toFixed(2);
       drawAll();
     };
     img.src = ev.target.result;
@@ -1134,7 +1158,7 @@ function setBg(type) {
 }
 function updateBgBrightness(v) {
   state.bg.brightness = parseFloat(v);
-  document.getElementById('bg-brightness-val').textContent = parseFloat(v).toFixed(2);
+  document.getElementById('bg-brightness-val').value = parseFloat(v).toFixed(2);
   drawAll();
 }
 
@@ -1146,7 +1170,7 @@ function setShadow(type) {
     const fitScale = parseFloat(Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
     state.shadow.scale = fitScale;
     document.getElementById('shadow-scale').value = fitScale;
-    document.getElementById('shadow-scale-val').textContent = fitScale.toFixed(2);
+    document.getElementById('shadow-scale-val').value = fitScale.toFixed(2);
   }
   document.querySelectorAll('[data-shadow]').forEach(el =>
     el.classList.toggle('selected', el.dataset.shadow === type));
@@ -1157,10 +1181,10 @@ function toggleShadowOverlay() {
   document.getElementById('shadow-overlay-toggle').classList.toggle('on', state.shadow.enabled);
   drawAll();
 }
-function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
-function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
-function updateShadowRotation(v) { state.shadow.rotation = parseInt(v);   document.getElementById('shadow-rotation-val').textContent = v + '°'; drawAll(); }
-function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   document.getElementById('shadow-blur-val').textContent     = v; drawAll(); }
+function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateShadowRotation(v) { state.shadow.rotation = parseInt(v);   document.getElementById('shadow-rotation-val').value = v; drawAll(); }
+function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   document.getElementById('shadow-blur-val').value = v; drawAll(); }
 
 function setLight(type) {
   state.light.type = type;
@@ -1170,7 +1194,7 @@ function setLight(type) {
     const fitScale = parseFloat(Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
     state.light.scale = fitScale;
     document.getElementById('light-scale').value = fitScale;
-    document.getElementById('light-scale-val').textContent = fitScale.toFixed(2);
+    document.getElementById('light-scale-val').value = fitScale.toFixed(2);
   }
   document.querySelectorAll('[data-light]').forEach(el =>
     el.classList.toggle('selected', el.dataset.light === type));
@@ -1183,21 +1207,21 @@ function toggleLightOverlay() {
   tog.classList.toggle('light-toggle', state.light.enabled);
   drawAll();
 }
-function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').textContent  = parseFloat(v).toFixed(2); drawAll(); }
-function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
-function updateLightRotation(v) { state.light.rotation = parseInt(v);   document.getElementById('light-rotation-val').textContent = v + '°'; drawAll(); }
-function updateLightBlur(v)     { state.light.blur     = parseInt(v);   document.getElementById('light-blur-val').textContent     = v; drawAll(); }
+function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateLightRotation(v) { state.light.rotation = parseInt(v);   document.getElementById('light-rotation-val').value = v; drawAll(); }
+function updateLightBlur(v)     { state.light.blur     = parseInt(v);   document.getElementById('light-blur-val').value = v; drawAll(); }
 
-function updateMainScale(v)    { state.main.scale    = parseFloat(v); document.getElementById('main-scale-val').textContent    = parseFloat(v).toFixed(2); drawAll(); }
-function updateMainRotation(v) { state.main.rotation = parseInt(v);   document.getElementById('main-rotation-val').textContent = v + '°'; drawAll(); }
+function updateMainScale(v)    { state.main.scale    = parseFloat(v); document.getElementById('main-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateMainRotation(v) { state.main.rotation = parseInt(v);   document.getElementById('main-rotation-val').value = v; drawAll(); }
 
 function toggleDropShadow() {
   state.main.dropShadow = !state.main.dropShadow;
   document.getElementById('drop-shadow-toggle').classList.toggle('on', state.main.dropShadow);
   drawAll();
 }
-function updateDropShadowOpacity(v) { state.main.shadowOpacity = parseFloat(v); document.getElementById('drop-shadow-opacity-val').textContent = parseFloat(v).toFixed(2); drawAll(); }
-function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').textContent    = v; drawAll(); }
+function updateDropShadowOpacity(v) { state.main.shadowOpacity = parseFloat(v); document.getElementById('drop-shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
+function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').value = v; drawAll(); }
 
 // =============================================
 // 書き出し
@@ -1223,14 +1247,14 @@ function resetAll() {
     'bg-brightness':       [1.0,  'bg-brightness-val',       v => v.toFixed(2)],
     'shadow-opacity':      [0.65, 'shadow-opacity-val',      v => v.toFixed(2)],
     'shadow-scale':        [1.0,  'shadow-scale-val',        v => v.toFixed(2)],
-    'shadow-rotation':     [0,    'shadow-rotation-val',     v => v + '°'],
+    'shadow-rotation':     [0,    'shadow-rotation-val',     v => v],
     'shadow-blur':         [0,    'shadow-blur-val',         v => v],
     'light-opacity':       [0.75, 'light-opacity-val',       v => v.toFixed(2)],
     'light-scale':         [1.0,  'light-scale-val',         v => v.toFixed(2)],
-    'light-rotation':      [0,    'light-rotation-val',      v => v + '°'],
+    'light-rotation':      [0,    'light-rotation-val',      v => v],
     'light-blur':          [0,    'light-blur-val',          v => v],
     'main-scale':          [0.7,  'main-scale-val',          v => v.toFixed(2)],
-    'main-rotation':       [0,    'main-rotation-val',       v => v + '°'],
+    'main-rotation':       [0,    'main-rotation-val',       v => v],
     'drop-shadow-opacity': [0.35, 'drop-shadow-opacity-val', v => v.toFixed(2)],
     'drop-shadow-blur':    [20,   'drop-shadow-blur-val',    v => v],
   };
