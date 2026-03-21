@@ -1140,6 +1140,14 @@ function updateBgBrightness(v) {
 
 function setShadow(type) {
   state.shadow.type = type;
+  // 外部PNGはキャンバスに収まるスケールに自動調整
+  if (extImageCache[type]) {
+    const img = extImageCache[type];
+    const fitScale = parseFloat(Math.min(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
+    state.shadow.scale = fitScale;
+    document.getElementById('shadow-scale').value = fitScale;
+    document.getElementById('shadow-scale-val').textContent = fitScale.toFixed(2);
+  }
   document.querySelectorAll('[data-shadow]').forEach(el =>
     el.classList.toggle('selected', el.dataset.shadow === type));
   drawAll();
@@ -1156,6 +1164,14 @@ function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   docume
 
 function setLight(type) {
   state.light.type = type;
+  // 外部PNGはキャンバスに収まるスケールに自動調整
+  if (extImageCache[type]) {
+    const img = extImageCache[type];
+    const fitScale = parseFloat(Math.min(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
+    state.light.scale = fitScale;
+    document.getElementById('light-scale').value = fitScale;
+    document.getElementById('light-scale-val').textContent = fitScale.toFixed(2);
+  }
   document.querySelectorAll('[data-light]').forEach(el =>
     el.classList.toggle('selected', el.dataset.light === type));
   drawAll();
