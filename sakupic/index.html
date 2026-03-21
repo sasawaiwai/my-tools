@@ -1143,7 +1143,7 @@ function setShadow(type) {
   // 外部PNGはキャンバスに収まるスケールに自動調整
   if (extImageCache[type]) {
     const img = extImageCache[type];
-    const fitScale = parseFloat(Math.min(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
+    const fitScale = parseFloat(Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
     state.shadow.scale = fitScale;
     document.getElementById('shadow-scale').value = fitScale;
     document.getElementById('shadow-scale-val').textContent = fitScale.toFixed(2);
@@ -1167,7 +1167,7 @@ function setLight(type) {
   // 外部PNGはキャンバスに収まるスケールに自動調整
   if (extImageCache[type]) {
     const img = extImageCache[type];
-    const fitScale = parseFloat(Math.min(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
+    const fitScale = parseFloat(Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
     state.light.scale = fitScale;
     document.getElementById('light-scale').value = fitScale;
     document.getElementById('light-scale-val').textContent = fitScale.toFixed(2);
