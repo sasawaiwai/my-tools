@@ -663,6 +663,8 @@ const state = {
 const overlayCache = {};
 // 外部PNGキャッシュ（shadows/ / lights/ から読み込んだ画像を格納）
 const extImageCache = {};
+// 外部背景画像キャッシュ（backgrounds/ から読み込んだ画像を格納）
+const extBgCache = {};
 
 // =============================================
 // Canvas 初期化
@@ -757,6 +759,14 @@ function buildSizePresetUI() {
 // 背景描画
 // =============================================
 function drawBackground(ctx, w, h, type, brightness) {
+  // 外部背景画像があればそちらを優先
+  if (extBgCache[type]) {
+    ctx.save();
+    if (brightness !== 1.0) ctx.filter = `brightness(${brightness})`;
+    ctx.drawImage(extBgCache[type], 0, 0, w, h);
+    ctx.restore();
+    return;
+  }
   switch (type) {
     case 'white_paper': drawBgWhitePaper(ctx, w, h, brightness); break;
     case 'gray_wall':   drawBgGrayWall  (ctx, w, h, brightness); break;
@@ -1241,8 +1251,9 @@ function resetAll() {
  */
 async function loadExternalPNGs() {
   await Promise.all([
-    loadFromFolder('shadows', 'shadow'),
-    loadFromFolder('lights',  'light'),
+    loadFromFolder('shadows',     'shadow'),
+    loadFromFolder('lights',      'light'),
+    loadFromFolder('backgrounds', 'bg'),
   ]);
   drawAll();  // 読み込み完了後に再描画
 }
@@ -1264,6 +1275,32 @@ async function loadFromFolder(folder, layerKey) {
     return;
   }
   if (!Array.isArray(filenames) || filenames.length === 0) return;
+
+  // 背景の場合は専用処理
+  if (layerKey === 'bg') {
+    const container = document.querySelector('.bg-options');
+    await Promise.all(filenames.map(filename => new Promise(resolve => {
+      const name = filename.replace(/\.png$/i, '');
+      const img  = new Image();
+      img.onload = () => {
+        extBgCache[name] = img;
+        // スウォッチとして追加（サムネイルをCSSで表示）
+        const el = document.createElement('div');
+        el.className = 'bg-option';
+        el.dataset.bg = name;
+        el.title = name;
+        el.style.backgroundImage = `url(${img.src})`;
+        el.style.backgroundSize  = 'cover';
+        el.style.backgroundPosition = 'center';
+        el.onclick = () => setBg(name);
+        container.appendChild(el);
+        resolve();
+      };
+      img.onerror = resolve;
+      img.src = `${folder}/${filename}`;
+    })));
+    return;
+  }
 
   // 影は .overlay-options（最初の方）、光は .light-options
   const container = layerKey === 'shadow'
