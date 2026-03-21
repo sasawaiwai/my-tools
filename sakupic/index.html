@@ -1203,6 +1203,8 @@ function setLight(type) {
     const img = extImageCache[type];
     const fitScale = parseFloat(Math.max(CANVAS_W / img.naturalWidth, CANVAS_H / img.naturalHeight).toFixed(2));
     state.light.scale = fitScale;
+    state.light.x = Math.round(CANVAS_W / 2);
+    state.light.y = Math.round(img.naturalHeight * fitScale / 2);
     document.getElementById('light-scale').value = fitScale;
     document.getElementById('light-scale-val').value = fitScale.toFixed(2);
   }
