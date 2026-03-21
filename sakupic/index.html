@@ -280,7 +280,7 @@
     }
     .control-label { font-size: 11px; color: var(--text-muted); width: 55px; flex-shrink: 0; }
     .control-value {
-      font-size: 10px; color: var(--text-muted); width: 38px; text-align: right; flex-shrink: 0;
+      font-size: 10px; color: var(--text-muted); width: 34px; min-width: 0; text-align: right; flex-shrink: 0;
       border: none; background: transparent; padding: 0; outline: none;
       font-family: inherit;
       /* スピナー非表示 */
@@ -289,7 +289,7 @@
     .control-value::-webkit-outer-spin-button,
     .control-value::-webkit-inner-spin-button { -webkit-appearance: none; }
     .control-value:focus { color: var(--text); border-bottom: 1px solid var(--border2); }
-    input[type="range"] { flex: 1; height: 3px; accent-color: var(--accent); cursor: pointer; }
+    input[type="range"] { flex: 1; min-width: 0; height: 3px; accent-color: var(--accent); cursor: pointer; }
     input[type="range"].light-range { accent-color: var(--accent-light); }
 
     /* トグルスイッチ */
