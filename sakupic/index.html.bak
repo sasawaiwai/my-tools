@@ -450,6 +450,18 @@
         <div class="toggle on" id="shadow-overlay-toggle" onclick="toggleShadowOverlay()"></div>
       </div>
       <div class="overlay-options">
+        <div class="overlay-option selected" data-shadow="window_soft" onclick="setShadow('window_soft')">
+          <span class="overlay-icon">🪟</span>窓影<br>やわらか
+        </div>
+        <div class="overlay-option" data-shadow="window_hard" onclick="setShadow('window_hard')">
+          <span class="overlay-icon">⬛</span>窓影<br>くっきり
+        </div>
+        <div class="overlay-option" data-shadow="blind" onclick="setShadow('blind')">
+          <span class="overlay-icon">🪟</span>ブラインド
+        </div>
+        <div class="overlay-option" data-shadow="plant" onclick="setShadow('plant')">
+          <span class="overlay-icon">🌿</span>植物影
+        </div>
       </div>
       <div style="margin-top:12px">
         <div class="control-row">
