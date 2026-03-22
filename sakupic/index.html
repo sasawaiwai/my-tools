@@ -617,6 +617,7 @@
       <div class="section-title" onclick="toggleSection(this)">書き出し <span class="chevron">▾</span></div>
       <div class="section-body">
         <button class="btn btn-primary"   onclick="exportImage()">📥 PNGでダウンロード</button>
+        <button class="btn btn-primary"   id="share-btn" onclick="shareImage()" style="display:none">📸 写真に保存 / シェア</button>
         <button class="btn btn-secondary" onclick="resetAll()">↺ リセット</button>
       </div>
     </div>
@@ -1446,6 +1447,20 @@ function exportImage() {
   link.download = `sakupic_${currentSizeId}_${Date.now()}.png`;
   link.href     = canvas.toDataURL('image/png');
   link.click();
+}
+
+async function shareImage() {
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], 'sakupic.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'SAKUPic!' });
+    }
+  }, 'image/png');
+}
+
+// シェアボタンの表示判定（Web Share API対応端末のみ表示）
+if (navigator.canShare) {
+  document.getElementById('share-btn').style.display = '';
 }
 
 // =============================================
