@@ -368,10 +368,17 @@
       opacity: 0;
     }
 
-    @media (max-width: 680px) {
-      main { flex-direction: column; }
+    @media (max-width: 640px) {
+      main { flex-direction: column; overflow: auto; }
+      #preview-area {
+        height: 45vw;
+        padding: 8px 12px;
+        position: sticky;
+        top: 52px;
+        z-index: 10;
+        overflow: hidden;
+      }
       #controls { width: 100%; min-width: unset; border-left: none; border-top: 1px solid var(--border); }
-      #preview-area { padding: 16px 12px; }
     }
   </style>
 </head>
