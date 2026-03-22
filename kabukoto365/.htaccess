@@ -1,0 +1,5 @@
+# .ini ファイルへの直接アクセスを禁止
+<Files ~ "\.ini$">
+    Order allow,deny
+    Deny from all
+</Files>
