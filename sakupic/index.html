@@ -652,7 +652,7 @@ const state = {
   },
 
   shadow: {
-    type: 'window_soft',
+    type: 'leaves001',
     x: CANVAS_W / 2, y: CANVAS_H / 2,
     scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true
   },
@@ -1240,7 +1240,7 @@ function resetAll() {
   state.bg     = { type: 'white_paper', brightness: 1.0 };
   state.main   = { img: null, x: CANVAS_W/2, y: CANVAS_H/2, scale: 0.7, rotation: 0,
                    dropShadow: true, shadowOpacity: 0.35, shadowBlur: 20 };
-  state.shadow = { type: 'window_soft', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true };
+  state.shadow = { type: 'leaves001', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true };
   state.light  = { type: 'prism', x: CANVAS_W/2, y: CANVAS_H*0.85, scale: 1.0, rotation: 0, opacity: 0.75, blur: 0, enabled: true };
 
   const sliders = {
@@ -1266,7 +1266,7 @@ function resetAll() {
   document.querySelectorAll('.bg-option').forEach(el =>
     el.classList.toggle('selected', el.dataset.bg === 'white_paper'));
   document.querySelectorAll('[data-shadow]').forEach(el =>
-    el.classList.toggle('selected', el.dataset.shadow === 'window_soft'));
+    el.classList.toggle('selected', el.dataset.shadow === 'leaves001'));
   document.querySelectorAll('[data-light]').forEach(el =>
     el.classList.toggle('selected', el.dataset.light === 'prism'));
 
@@ -1373,7 +1373,7 @@ async function loadFromFolder(folder, layerKey) {
 buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
-loadExternalPNGs();
+loadExternalPNGs().then(() => drawAll());
 
 /*
  * TODO
