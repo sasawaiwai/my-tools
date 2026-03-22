@@ -390,6 +390,11 @@
     <div id="canvas-wrapper">
       <canvas id="canvas"></canvas>
     </div>
+    <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted);">
+      <button onclick="changeZoom(-0.25)" style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">−</button>
+      <span id="zoom-label">100%</span>
+      <button onclick="changeZoom(+0.25)" style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">＋</button>
+    </div>
   </section>
 
   <!-- コントロールパネル -->
@@ -628,6 +633,7 @@ const SIZE_PRESETS = [
 
 // 現在選択中のサイズID
 let currentSizeId = 'book_cover';
+let previewZoom = 1.0;
 
 // =============================================
 // 状態管理
@@ -700,7 +706,7 @@ function applyCanvasSize(sizeId, resetLayers = true) {
   // プレビュー表示の最大サイズ：縦横ともに画面に収まるよう制限
   // 縦長・横長によってmax-widthを変える
   const maxDispW = Math.min(preset.w, 600);  // 表示幅の上限 600px
-  canvas.style.maxWidth = maxDispW + 'px';
+  canvas.style.maxWidth = Math.round(maxDispW * previewZoom) + 'px';
 
   if (resetLayers) {
     // 全レイヤーの座標をキャンバス中央にリセット
@@ -1071,6 +1077,12 @@ function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
 // =============================================
 // アコーディオン
 // =============================================
+function changeZoom(delta) {
+  previewZoom = Math.min(2.0, Math.max(0.25, previewZoom + delta));
+  document.getElementById('zoom-label').textContent = Math.round(previewZoom * 100) + '%';
+  applyCanvasSize(currentSizeId, false);
+}
+
 function toggleSection(titleEl) {
   titleEl.closest('.section').classList.toggle('collapsed');
 }
@@ -1276,7 +1288,8 @@ function resetAll() {
   ltog.classList.add('on');
   ltog.classList.add('light-toggle');
 
-  drawAll();
+  setShadow(state.shadow.type);
+  setLight(state.light.type);
 }
 
 // =============================================
