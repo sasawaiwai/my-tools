@@ -1092,7 +1092,7 @@ function applyPreset(name) {
   const presets = {
     morning: { shadow: 'win001',    shadowOpacity: 0.15, shadowBlur: 0, light: 'lights002', lightOpacity: 0.6,  bg: 'bg001' },
     noon:    { shadow: 'leaves001', shadowOpacity: 0.2,  shadowBlur: 0, light: 'lights006', lightOpacity: 0.75, bg: 'bg004' },
-    night:   { shadow: 'leaves004', shadowOpacity: 0.65, shadowBlur: 0, light: 'lights003', lightOpacity: 0.75, bg: 'bg005' },
+    night:   { shadow: 'leaves004', shadowOpacity: 0.2,  shadowBlur: 10, light: 'lights003', lightOpacity: 0.75, bg: 'bg005' },
   };
   const p = presets[name];
   if (!p) return;
