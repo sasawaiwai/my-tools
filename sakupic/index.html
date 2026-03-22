@@ -394,6 +394,9 @@
       <canvas id="canvas"></canvas>
     </div>
     <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted);">
+      <button id="btn-undo" onclick="undo()" title="取り消す (Ctrl+Z)" disabled style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">↩</button>
+      <button id="btn-redo" onclick="redo()" title="やり直す (Ctrl+Y)" disabled style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">↪</button>
+      <span style="color:var(--border2);">|</span>
       <button onclick="changeZoom(-0.25)" style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">−</button>
       <span id="zoom-label">100%</span>
       <button onclick="changeZoom(+0.25)" style="width:28px;height:28px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;line-height:1;">＋</button>
@@ -1069,6 +1072,107 @@ function drawOverlayLayer(ctx, layer, layerType) {
 // ドラッグ操作
 // =============================================
 // =============================================
+// 取り消す / やり直す (Undo / Redo)
+// =============================================
+const MAX_HISTORY = 20;
+let undoHistory = [];
+let undoIndex   = -1;
+let _skipSnapshot = false;
+
+function getSnapshot() {
+  return {
+    bg:     { ...state.bg },
+    main:   { ...state.main },
+    shadow: { ...state.shadow },
+    light:  { ...state.light },
+  };
+}
+
+function saveSnapshot() {
+  if (_skipSnapshot) return;
+  undoHistory = undoHistory.slice(0, undoIndex + 1);
+  undoHistory.push(getSnapshot());
+  if (undoHistory.length > MAX_HISTORY) undoHistory.shift();
+  else undoIndex++;
+  updateUndoRedoButtons();
+}
+
+function restoreSnapshot(snap) {
+  state.bg     = { ...snap.bg };
+  state.main   = { ...snap.main };
+  state.shadow = { ...snap.shadow };
+  state.light  = { ...snap.light };
+  syncAllUI();
+  drawAll();
+}
+
+function undo() {
+  if (undoIndex <= 0) return;
+  undoIndex--;
+  restoreSnapshot(undoHistory[undoIndex]);
+  updateUndoRedoButtons();
+}
+
+function redo() {
+  if (undoIndex >= undoHistory.length - 1) return;
+  undoIndex++;
+  restoreSnapshot(undoHistory[undoIndex]);
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const btnUndo = document.getElementById('btn-undo');
+  const btnRedo = document.getElementById('btn-redo');
+  if (btnUndo) btnUndo.disabled = undoIndex <= 0;
+  if (btnRedo) btnRedo.disabled = undoIndex >= undoHistory.length - 1;
+}
+
+function setSlider(id, val, fmt) {
+  const r = document.getElementById(id);
+  const n = document.getElementById(id + '-val');
+  if (r) r.value = val;
+  if (n) n.value = fmt ? fmt(val) : val;
+}
+
+function syncAllUI() {
+  const fmtF = v => parseFloat(v).toFixed(2);
+  // 背景
+  document.querySelectorAll('.bg-option').forEach(el =>
+    el.classList.toggle('selected', el.dataset.bg === state.bg.type));
+  setSlider('bg-brightness', state.bg.brightness, fmtF);
+  // 影
+  document.querySelectorAll('[data-shadow]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.shadow === state.shadow.type));
+  document.getElementById('shadow-overlay-toggle').classList.toggle('on', state.shadow.enabled);
+  setSlider('shadow-opacity',  state.shadow.opacity,  fmtF);
+  setSlider('shadow-scale',    state.shadow.scale,    fmtF);
+  setSlider('shadow-rotation', state.shadow.rotation, v => v);
+  setSlider('shadow-blur',     state.shadow.blur,     v => v);
+  // 光
+  document.querySelectorAll('[data-light]').forEach(el =>
+    el.classList.toggle('selected', el.dataset.light === state.light.type));
+  const ltog = document.getElementById('light-overlay-toggle');
+  ltog.classList.toggle('on',           state.light.enabled);
+  ltog.classList.toggle('light-toggle', state.light.enabled);
+  setSlider('light-opacity',  state.light.opacity,  fmtF);
+  setSlider('light-scale',    state.light.scale,    fmtF);
+  setSlider('light-rotation', state.light.rotation, v => v);
+  setSlider('light-blur',     state.light.blur,     v => v);
+  // 画像
+  document.getElementById('drop-shadow-toggle').classList.toggle('on', state.main.dropShadow);
+  setSlider('main-scale',          state.main.scale,         fmtF);
+  setSlider('main-rotation',       state.main.rotation,      v => v);
+  setSlider('drop-shadow-opacity', state.main.shadowOpacity, fmtF);
+  setSlider('drop-shadow-blur',    state.main.shadowBlur,    v => v);
+}
+
+// キーボードショートカット (Ctrl+Z / Ctrl+Y)
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
+});
+
+// =============================================
 // 数値入力 → スライダー同期ヘルパー
 // =============================================
 // 数値入力欄が変更されたとき、値をmin/maxにクランプしてスライダーと状態を更新する
@@ -1081,6 +1185,7 @@ function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
   if (isNaN(val)) val = parseFloat(slideEl.value);
   slideEl.value = val;
   updateFn(val);
+  saveSnapshot();
 }
 
 // =============================================
@@ -1094,9 +1199,11 @@ function applyPreset(name) {
   };
   const p = presets[name];
   if (!p) return;
+  _skipSnapshot = true;
   setBg(p.bg);
   setShadow(p.shadow);
   setLight(p.light);
+  _skipSnapshot = false;
   state.shadow.opacity = p.shadowOpacity;
   state.shadow.blur    = p.shadowBlur;
   state.light.opacity  = p.lightOpacity;
@@ -1114,6 +1221,7 @@ function applyPreset(name) {
   ltog.classList.add('on');
   ltog.classList.add('light-toggle');
   drawAll();
+  saveSnapshot();
 }
 
 function changeZoom(delta) {
@@ -1151,6 +1259,11 @@ window.addEventListener('touchmove',  onDragMove,  { passive: false });
 window.addEventListener('mouseup',    onDragEnd);
 window.addEventListener('touchend',   onDragEnd);
 
+// スライダーを離したとき（change）にスナップショット保存
+document.querySelectorAll('input[type="range"]').forEach(el => {
+  el.addEventListener('change', saveSnapshot);
+});
+
 function onDragStart(e) {
   e.preventDefault();
   const pos    = getCanvasPos(e);
@@ -1175,7 +1288,7 @@ function onDragMove(e) {
   else                                    { state.shadow.x = state.drag.origX + dx; state.shadow.y = state.drag.origY + dy; }
   drawAll();
 }
-function onDragEnd() { state.drag.active = false; }
+function onDragEnd() { if (state.drag.active) saveSnapshot(); state.drag.active = false; }
 
 // =============================================
 // コントロール
@@ -1193,6 +1306,7 @@ document.getElementById('file-input').addEventListener('change', function(e) {
       document.getElementById('main-scale').value = state.main.scale;
       document.getElementById('main-scale-val').value = state.main.scale.toFixed(2);
       drawAll();
+      saveSnapshot();
     };
     img.src = ev.target.result;
   };
@@ -1204,6 +1318,7 @@ function setBg(type) {
   document.querySelectorAll('.bg-option').forEach(el =>
     el.classList.toggle('selected', el.dataset.bg === type));
   drawAll();
+  saveSnapshot();
 }
 function updateBgBrightness(v) {
   state.bg.brightness = parseFloat(v);
@@ -1233,11 +1348,13 @@ function setShadow(type) {
   document.querySelectorAll('[data-shadow]').forEach(el =>
     el.classList.toggle('selected', el.dataset.shadow === type));
   drawAll();
+  saveSnapshot();
 }
 function toggleShadowOverlay() {
   state.shadow.enabled = !state.shadow.enabled;
   document.getElementById('shadow-overlay-toggle').classList.toggle('on', state.shadow.enabled);
   drawAll();
+  saveSnapshot();
 }
 function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
@@ -1259,6 +1376,7 @@ function setLight(type) {
   document.querySelectorAll('[data-light]').forEach(el =>
     el.classList.toggle('selected', el.dataset.light === type));
   drawAll();
+  saveSnapshot();
 }
 function toggleLightOverlay() {
   state.light.enabled = !state.light.enabled;
@@ -1266,6 +1384,7 @@ function toggleLightOverlay() {
   tog.classList.toggle('on',           state.light.enabled);
   tog.classList.toggle('light-toggle', state.light.enabled);
   drawAll();
+  saveSnapshot();
 }
 function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
@@ -1279,6 +1398,7 @@ function toggleDropShadow() {
   state.main.dropShadow = !state.main.dropShadow;
   document.getElementById('drop-shadow-toggle').classList.toggle('on', state.main.dropShadow);
   drawAll();
+  saveSnapshot();
 }
 function updateDropShadowOpacity(v) { state.main.shadowOpacity = parseFloat(v); document.getElementById('drop-shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').value = v; drawAll(); }
@@ -1336,8 +1456,11 @@ function resetAll() {
   ltog.classList.add('on');
   ltog.classList.add('light-toggle');
 
+  _skipSnapshot = true;
   setShadow(state.shadow.type);
   setLight(state.light.type);
+  _skipSnapshot = false;
+  saveSnapshot();
 }
 
 // =============================================
@@ -1439,14 +1562,17 @@ buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
 loadExternalPNGs().then(() => {
+  _skipSnapshot = true;
   setShadow(state.shadow.type);
   setLight(state.light.type);
+  _skipSnapshot = false;
   // プリズム光のサムネイルをcanvas→dataURLで生成
   const prismCanvas = getOverlayCanvas('prism');
   if (prismCanvas) {
     const el = document.getElementById('prism-thumb');
     if (el) el.style.backgroundImage = `url(${prismCanvas.toDataURL()})`;
   }
+  saveSnapshot(); // 初期状態を履歴に保存
 });
 
 /*
