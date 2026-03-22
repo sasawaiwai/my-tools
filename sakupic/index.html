@@ -735,7 +735,9 @@ function applyCanvasSize(sizeId, resetLayers = true) {
   // ※ オーバーレイ自体のサイズは固定(OVERLAY_SIZE)なので描き直しは不要
   //   ただし背景ノイズはgetImageData依存なので再描画で自動更新される
 
-  drawAll();
+  // サイズ変更時は影・光のfitScaleと位置を新サイズに合わせて再計算
+  setShadow(state.shadow.type);
+  setLight(state.light.type);
 }
 
 // =============================================
