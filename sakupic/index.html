@@ -1222,6 +1222,15 @@ function setShadow(type) {
     document.getElementById('shadow-scale').value = fitScale;
     document.getElementById('shadow-scale-val').value = fitScale.toFixed(2);
   }
+  // winシリーズはデフォルト透明度0.2・ぼかし15
+  if (type.startsWith('win')) {
+    state.shadow.opacity = 0.2;
+    state.shadow.blur    = 15;
+    document.getElementById('shadow-opacity').value     = 0.2;
+    document.getElementById('shadow-opacity-val').value = '0.20';
+    document.getElementById('shadow-blur').value        = 15;
+    document.getElementById('shadow-blur-val').value    = 15;
+  }
   document.querySelectorAll('[data-shadow]').forEach(el =>
     el.classList.toggle('selected', el.dataset.shadow === type));
   drawAll();
