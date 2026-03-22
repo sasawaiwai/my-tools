@@ -510,9 +510,9 @@
       <div style="margin-top:12px">
         <div class="control-row">
           <span class="control-label">透明度</span>
-          <input type="range" id="shadow-opacity" min="0.05" max="1" step="0.05" value="0.65"
+          <input type="range" id="shadow-opacity" min="0.05" max="1" step="0.05" value="0.25"
                  oninput="updateShadowOpacity(this.value)">
-          <input type="number" class="control-value" id="shadow-opacity-val" min="0.05" max="1" step="0.05" value="0.65" onchange="syncFromNumber('shadow-opacity-val','shadow-opacity',updateShadowOpacity)">
+          <input type="number" class="control-value" id="shadow-opacity-val" min="0.05" max="1" step="0.05" value="0.25" onchange="syncFromNumber('shadow-opacity-val','shadow-opacity',updateShadowOpacity)">
         </div>
         <div class="control-row">
           <span class="control-label">サイズ</span>
@@ -696,7 +696,7 @@ const SHADOW_SIZE  = 2400;  // 影専用（縦長キャンバスでも端が切�
 const PRISM_SIZE   = 2400;  // プリズム専用（同上）
 
 const state = {
-  bg: { type: 'white_paper', brightness: 1.0 },
+  bg: { type: 'bg001', brightness: 1.0 },
 
   main: {
     img: null,
@@ -708,7 +708,7 @@ const state = {
   shadow: {
     type: 'leaves001',
     x: CANVAS_W / 2, y: CANVAS_H / 2,
-    scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true
+    scale: 1.0, rotation: 0, opacity: 0.25, blur: 0, enabled: true
   },
 
   light: {
@@ -1469,7 +1469,7 @@ if (navigator.canShare) {
 // リセット
 // =============================================
 function resetAll() {
-  state.bg     = { type: 'white_paper', brightness: 1.0 };
+  state.bg     = { type: 'bg001', brightness: 1.0 };
   state.main   = { img: null, x: CANVAS_W/2, y: CANVAS_H/2, scale: 0.7, rotation: 0,
                    dropShadow: true, shadowOpacity: 0.35, shadowBlur: 20 };
   state.shadow = { type: 'leaves001', x: CANVAS_W/2, y: CANVAS_H/2, scale: 1.0, rotation: 0, opacity: 0.65, blur: 0, enabled: true };
@@ -1477,7 +1477,7 @@ function resetAll() {
 
   const sliders = {
     'bg-brightness':       [1.0,  'bg-brightness-val',       v => v.toFixed(2)],
-    'shadow-opacity':      [0.65, 'shadow-opacity-val',      v => v.toFixed(2)],
+    'shadow-opacity':      [0.25, 'shadow-opacity-val',      v => v.toFixed(2)],
     'shadow-scale':        [1.0,  'shadow-scale-val',        v => v.toFixed(2)],
     'shadow-rotation':     [0,    'shadow-rotation-val',     v => v],
     'shadow-blur':         [0,    'shadow-blur-val',         v => v],
@@ -1496,7 +1496,7 @@ function resetAll() {
   });
 
   document.querySelectorAll('.bg-option').forEach(el =>
-    el.classList.toggle('selected', el.dataset.bg === 'white_paper'));
+    el.classList.toggle('selected', el.dataset.bg === 'bg001'));
   document.querySelectorAll('[data-shadow]').forEach(el =>
     el.classList.toggle('selected', el.dataset.shadow === 'leaves001'));
   document.querySelectorAll('[data-light]').forEach(el =>
