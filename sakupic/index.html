@@ -1088,9 +1088,9 @@ function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
 // =============================================
 function applyPreset(name) {
   const presets = {
-    morning: { shadow: 'win001',    shadowOpacity: 0.15, light: 'lights002', lightOpacity: 0.6,  bg: 'bg001' },
-    noon:    { shadow: 'leaves001', shadowOpacity: 0.65, light: 'lights006', lightOpacity: 0.75, bg: 'bg004' },
-    night:   { shadow: 'leaves004', shadowOpacity: 0.65, light: 'lights003', lightOpacity: 0.75, bg: 'bg005' },
+    morning: { shadow: 'win001',    shadowOpacity: 0.15, shadowBlur: 0, light: 'lights002', lightOpacity: 0.6,  bg: 'bg001' },
+    noon:    { shadow: 'leaves001', shadowOpacity: 0.65, shadowBlur: 0, light: 'lights006', lightOpacity: 0.75, bg: 'bg004' },
+    night:   { shadow: 'leaves004', shadowOpacity: 0.65, shadowBlur: 0, light: 'lights003', lightOpacity: 0.75, bg: 'bg005' },
   };
   const p = presets[name];
   if (!p) return;
@@ -1098,9 +1098,12 @@ function applyPreset(name) {
   setShadow(p.shadow);
   setLight(p.light);
   state.shadow.opacity = p.shadowOpacity;
+  state.shadow.blur    = p.shadowBlur;
   state.light.opacity  = p.lightOpacity;
   document.getElementById('shadow-opacity').value     = p.shadowOpacity;
   document.getElementById('shadow-opacity-val').value = p.shadowOpacity.toFixed(2);
+  document.getElementById('shadow-blur').value        = p.shadowBlur;
+  document.getElementById('shadow-blur-val').value    = p.shadowBlur;
   document.getElementById('light-opacity').value      = p.lightOpacity;
   document.getElementById('light-opacity-val').value  = p.lightOpacity.toFixed(2);
   // 光をオン・影をオンにする
