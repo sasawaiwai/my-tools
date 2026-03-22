@@ -1373,7 +1373,7 @@ async function loadFromFolder(folder, layerKey) {
 buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
-loadExternalPNGs().then(() => drawAll());
+loadExternalPNGs().then(() => { setShadow(state.shadow.type); setLight(state.light.type); });
 
 /*
  * TODO
