@@ -1317,57 +1317,54 @@ async function loadFromFolder(folder, layerKey) {
   if (!Array.isArray(filenames) || filenames.length === 0) return;
   filenames.sort((a, b) => a.localeCompare(b));
 
-  // 背景の場合は専用処理
+  // 並列ロードしてキャッシュに登録（順序はネットワーク任せでOK）
+  await Promise.all(filenames.map(filename => new Promise(resolve => {
+    const name = filename.replace(/\.png$/i, '');
+    const img  = new Image();
+    img.onload = () => {
+      if (layerKey === 'bg') extBgCache[name] = img;
+      else                   extImageCache[name] = img;
+      resolve();
+    };
+    img.onerror = resolve;
+    img.src = `${folder}/${filename}`;
+  })));
+
+  // UIへの追加はソート済みの順番通りに行う
   if (layerKey === 'bg') {
     const container = document.querySelector('.bg-options');
-    await Promise.all(filenames.map(filename => new Promise(resolve => {
+    filenames.forEach(filename => {
       const name = filename.replace(/\.png$/i, '');
-      const img  = new Image();
-      img.onload = () => {
-        extBgCache[name] = img;
-        // スウォッチとして追加（サムネイルをCSSで表示）
-        const el = document.createElement('div');
-        el.className = 'bg-option';
-        el.dataset.bg = name;
-        el.title = name;
-        el.style.backgroundImage = `url(${img.src})`;
-        el.style.backgroundSize  = 'cover';
-        el.style.backgroundPosition = 'center';
-        el.onclick = () => setBg(name);
-        container.appendChild(el);
-        resolve();
-      };
-      img.onerror = resolve;
-      img.src = `${folder}/${filename}`;
-    })));
+      if (!extBgCache[name]) return;
+      const img = extBgCache[name];
+      const el = document.createElement('div');
+      el.className = 'bg-option';
+      el.dataset.bg = name;
+      el.title = name;
+      el.style.backgroundImage = `url(${img.src})`;
+      el.style.backgroundSize  = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.onclick = () => setBg(name);
+      container.appendChild(el);
+    });
     return;
   }
 
-  // 影は .overlay-options（最初の方）、光は .light-options
   const container = layerKey === 'shadow'
     ? document.querySelector('.overlay-options:not(.light-options)')
     : document.querySelector('.overlay-options.light-options');
 
-  await Promise.all(filenames.map(filename => new Promise(resolve => {
-    const name = filename.replace(/\.png$/i, '');  // 拡張子なしをキー兼ラベルに使う
-    const img  = new Image();
-    img.onload = () => {
-      // キャッシュに登録
-      extImageCache[name] = img;
-
-      // UIボタンを追加（内蔵素材と同じスタイル）
-      const el = document.createElement('div');
-      el.className = `overlay-option${layerKey === 'light' ? ' light-opt' : ''}`;
-      el.dataset[layerKey] = name;
-      el.title = name;
-      el.innerHTML = `<span class="overlay-icon">🖼</span>${name}`;
-      el.onclick = () => layerKey === 'shadow' ? setShadow(name) : setLight(name);
-      container.appendChild(el);
-      resolve();
-    };
-    img.onerror = resolve;  // 読み込み失敗は無視して続行
-    img.src = `${folder}/${filename}`;
-  })));
+  filenames.forEach(filename => {
+    const name = filename.replace(/\.png$/i, '');
+    if (!extImageCache[name]) return;
+    const el = document.createElement('div');
+    el.className = `overlay-option${layerKey === 'light' ? ' light-opt' : ''}`;
+    el.dataset[layerKey] = name;
+    el.title = name;
+    el.innerHTML = `<span class="overlay-icon">🖼</span>${name}`;
+    el.onclick = () => layerKey === 'shadow' ? setShadow(name) : setLight(name);
+    container.appendChild(el);
+  });
 }
 
 // =============================================
