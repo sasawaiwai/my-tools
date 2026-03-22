@@ -260,6 +260,7 @@
       color: var(--text-muted);
       background: var(--surface2);
       transition: all 0.15s;
+      min-height: 60px;
     }
     .overlay-option:hover { border-color: var(--accent); }
     .overlay-option.selected {
@@ -1411,11 +1412,15 @@ async function loadFromFolder(folder, layerKey) {
   filenames.forEach(filename => {
     const name = filename.replace(/\.png$/i, '');
     if (!extImageCache[name]) return;
+    const img = extImageCache[name];
     const el = document.createElement('div');
     el.className = `overlay-option${layerKey === 'light' ? ' light-opt' : ''}`;
     el.dataset[layerKey] = name;
     el.title = name;
-    el.innerHTML = `<span class="overlay-icon">🖼</span>${name}`;
+    el.style.backgroundImage = `url(${img.src})`;
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center top';
+    el.style.backgroundColor = '#e8e4de';
     el.onclick = () => layerKey === 'shadow' ? setShadow(name) : setLight(name);
     container.appendChild(el);
   });
