@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プライバシーポリシー — SAKUPic!</title>
+  <meta name="description" content="SAKUPic! のプライバシーポリシー・利用規約・免責事項">
+  <link rel="canonical" href="https://tools.sasadokoro.online/sakupic/privacy.html">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #f2f0ed;
+      --surface:      #ffffff;
+      --surface2:     #f8f7f5;
+      --border:       #e3e0db;
+      --border2:      #d0ccc6;
+      --text:         #252220;
+      --text-muted:   #8c8680;
+      --accent:       #607060;
+      --accent-pale:  #e8ede8;
+    }
+
+    body {
+      font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── ヘッダー ── */
+    header {
+      height: 52px;
+      padding: 0 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-back {
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      transition: background 0.15s;
+    }
+    .header-back:hover { background: var(--accent-pale); }
+    .header-title { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); }
+
+    /* ── メインコンテンツ ── */
+    main {
+      flex: 1;
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .page-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .page-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── セクション ── */
+    .section { margin-bottom: 40px; }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+    }
+
+    p { margin-bottom: 12px; color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      margin: 8px 0 12px 0;
+      padding-left: 1.4em;
+    }
+    li { margin-bottom: 6px; }
+
+    /* ── 強調ボックス ── */
+    .highlight-box {
+      background: var(--accent-pale);
+      border: 1px solid #c8d4c8;
+      border-radius: 7px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+    .highlight-box strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── 外部リンク ── */
+    a { color: var(--accent); }
+    a:hover { text-decoration: underline; }
+
+    /* ── フッター ── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 20px 28px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="header-back" href="./index.html">← SAKUPic! に戻る</a>
+  <span class="header-title">プライバシーポリシー</span>
+</header>
+
+<main>
+  <p class="page-eyebrow">SAKUPic!</p>
+  <h1>プライバシーポリシー</h1>
+  <p class="page-meta">制定日：2025年　最終更新：2025年　運営：ササドコロ / 笹塚</p>
+
+  <!-- 1. サービス概要 -->
+  <section class="section">
+    <h2>01 &nbsp;サービス概要</h2>
+    <p>SAKUPic!（以下「本サービス」）は、ブラウザ上で告知画像を作成できる無料ツールです。</p>
+    <div class="highlight-box">
+      <strong>画像データについて</strong>
+      アップロードされた画像はすべてお使いのブラウザ内でのみ処理されます。外部サーバーへの送信・保存は一切行いません。
+    </div>
+  </section>
+
+  <!-- 2. 収集する情報 -->
+  <section class="section">
+    <h2>02 &nbsp;収集する情報（Cookie の使用）</h2>
+    <p>本サービスでは、以下の目的で Cookie および類似技術を使用しています。</p>
+
+    <p><strong>● アクセス解析（Google Analytics）</strong></p>
+    <p>Google LLC が提供する Google Analytics を使用しています。Cookie を通じて以下の情報を収集します。</p>
+    <ul>
+      <li>ページの閲覧数・滞在時間などのアクセス状況</li>
+      <li>使用ブラウザ・OS・デバイスの種類</li>
+      <li>おおよそのアクセス地域</li>
+    </ul>
+    <p>Cookie による情報収集を無効にしたい場合は、<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google アナリティクス オプトアウト アドオン</a>をご利用ください。</p>
+
+    <p><strong>● 広告配信（Google AdSense）</strong></p>
+    <p>本サービスでは、Google LLC が提供する Google AdSense を使用して広告を表示しています。Google AdSense は Cookie を使用して、ユーザーの興味・関心に基づくパーソナライズ広告を配信することがあります。Cookie を通じて以下の情報が収集される場合があります。</p>
+    <ul>
+      <li>サイトの閲覧履歴・行動情報</li>
+      <li>広告のクリック・表示に関するデータ</li>
+      <li>興味・関心に関する推定情報</li>
+    </ul>
+    <div class="highlight-box">
+      <strong>広告のパーソナライズをオフにする方法</strong>
+      <a href="https://adssettings.google.com/" target="_blank" rel="noopener">Google 広告設定ページ</a>から、パーソナライズ広告の配信を無効にできます。また、<a href="https://optout.aboutads.info/" target="_blank" rel="noopener">aboutads.info</a> からも業界横断でオプトアウトできます。
+    </div>
+    <p>Google のプライバシーポリシーおよび Cookie の使用については<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">こちら</a>をご参照ください。</p>
+  </section>
+
+  <!-- 3. 生成画像の著作権・商用利用 -->
+  <section class="section">
+    <h2>03 &nbsp;生成画像の著作権・商用利用</h2>
+    <p>SAKUPic! を使って作成・書き出した画像（以下「生成画像」）の著作権は、画像を作成したご利用者に帰属します。</p>
+    <div class="highlight-box">
+      <strong>商用利用について</strong>
+      生成画像は商用利用を含め自由にご使用いただけます。SNS への投稿・同人誌・商業出版物・広告素材など、用途の制限はありません。
+    </div>
+    <p>ただし、ご利用者がアップロードした素材（書影・イラスト等）については、その素材の著作権者が定める条件が適用されます。第三者の著作物を使用する場合は、権利関係をご自身でご確認ください。</p>
+  </section>
+
+  <!-- 4. 素材の利用条件 -->
+  <section class="section">
+    <h2>04 &nbsp;同梱素材の利用条件</h2>
+    <p>本サービスに同梱されている影・光・背景などの素材ファイル（PNG 画像等）は、ササドコロ / 笹塚が制作・管理するものです。</p>
+    <ul>
+      <li>SAKUPic! を通じた生成画像への使用：<strong>商用利用を含め自由</strong></li>
+      <li>素材ファイル単体のダウンロード・再配布・転用：<strong>禁止</strong></li>
+      <li>素材ファイルを第三者に販売・譲渡すること：<strong>禁止</strong></li>
+    </ul>
+    <p>素材はあくまで SAKUPic! の機能の一部としてご利用いただくものです。</p>
+  </section>
+
+  <!-- 5. 免責事項 -->
+  <section class="section">
+    <h2>05 &nbsp;免責事項</h2>
+    <p>本サービスは現状有姿で提供されます。運営者は以下について一切の責任を負いません。</p>
+    <ul>
+      <li>本サービスの利用・利用不能により生じた損害</li>
+      <li>生成画像の利用に起因する第三者との紛争</li>
+      <li>サービスの中断・変更・終了</li>
+      <li>ブラウザ・OS の環境差異による動作の違い</li>
+    </ul>
+  </section>
+
+  <!-- 6. プライバシーポリシーの変更 -->
+  <section class="section">
+    <h2>06 &nbsp;ポリシーの変更</h2>
+    <p>本ポリシーは予告なく変更される場合があります。変更後のポリシーはこのページに掲載した時点で効力を生じます。</p>
+  </section>
+
+  <!-- 7. お問い合わせ -->
+  <section class="section">
+    <h2>07 &nbsp;お問い合わせ</h2>
+    <p>本サービスに関するお問い合わせは、ツール上部または配布ページに記載の連絡先よりお願いします。</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>© ササドコロ / 笹塚　&nbsp;|&nbsp; <a href="./index.html">SAKUPic! に戻る</a></p>
+</footer>
+
+</body>
+</html>
