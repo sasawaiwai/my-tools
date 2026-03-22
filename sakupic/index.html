@@ -1408,7 +1408,7 @@ function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   
 // =============================================
 function exportImage() {
   const link    = document.createElement('a');
-  link.download = `mockup_${currentSizeId}_${Date.now()}.png`;
+  link.download = `sakupic_${currentSizeId}_${Date.now()}.png`;
   link.href     = canvas.toDataURL('image/png');
   link.click();
 }
