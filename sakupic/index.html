@@ -1088,15 +1088,21 @@ function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
 // =============================================
 function applyPreset(name) {
   const presets = {
-    morning: { shadow: 'win001',    light: 'lights002', bg: 'bg001' },
-    noon:    { shadow: 'leaves001', light: 'lights006', bg: 'bg004' },
-    night:   { shadow: 'leaves004', light: 'lights003', bg: 'bg005' },
+    morning: { shadow: 'win001',    shadowOpacity: 0.15, light: 'lights002', lightOpacity: 0.6,  bg: 'bg001' },
+    noon:    { shadow: 'leaves001', shadowOpacity: 0.65, light: 'lights006', lightOpacity: 0.75, bg: 'bg004' },
+    night:   { shadow: 'leaves004', shadowOpacity: 0.65, light: 'lights003', lightOpacity: 0.75, bg: 'bg005' },
   };
   const p = presets[name];
   if (!p) return;
   setBg(p.bg);
   setShadow(p.shadow);
   setLight(p.light);
+  state.shadow.opacity = p.shadowOpacity;
+  state.light.opacity  = p.lightOpacity;
+  document.getElementById('shadow-opacity').value     = p.shadowOpacity;
+  document.getElementById('shadow-opacity-val').value = p.shadowOpacity.toFixed(2);
+  document.getElementById('light-opacity').value      = p.lightOpacity;
+  document.getElementById('light-opacity-val').value  = p.lightOpacity.toFixed(2);
   // 光をオン・影をオンにする
   state.shadow.enabled = true;
   state.light.enabled  = true;
