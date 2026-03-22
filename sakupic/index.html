@@ -369,16 +369,32 @@
     }
 
     @media (max-width: 640px) {
-      main { flex-direction: column; overflow: auto; }
+      body {
+        height: auto;
+        overflow-y: auto;
+      }
+      main {
+        flex-direction: column;
+        overflow: visible;
+        height: auto;
+      }
       #preview-area {
+        flex: none;
         height: 45vw;
-        padding: 8px 12px;
         position: sticky;
         top: 52px;
         z-index: 10;
         overflow: hidden;
+        padding: 8px 12px;
       }
-      #controls { width: 100%; min-width: unset; border-left: none; border-top: 1px solid var(--border); }
+      #controls {
+        width: 100%;
+        min-width: unset;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        height: auto;
+        overflow: visible;
+      }
     }
   </style>
 </head>
