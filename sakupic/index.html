@@ -380,18 +380,22 @@
       }
       #preview-area {
         flex: none;
-        height: auto;
-        max-height: 55vh;
-        position: static;
+        max-height: 50vh;
         padding: 12px;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       #canvas-wrapper {
-        max-height: calc(55vh - 24px);
+        max-height: calc(50vh - 24px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       #canvas {
         max-width: 100%;
-        max-height: 100%;
+        max-height: calc(50vh - 24px);
         width: auto;
         height: auto;
       }
