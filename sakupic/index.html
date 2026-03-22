@@ -1315,6 +1315,7 @@ async function loadFromFolder(folder, layerKey) {
     return;
   }
   if (!Array.isArray(filenames) || filenames.length === 0) return;
+  filenames.sort((a, b) => a.localeCompare(b));
 
   // 背景の場合は専用処理
   if (layerKey === 'bg') {
