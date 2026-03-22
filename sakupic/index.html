@@ -400,6 +400,16 @@
   <!-- コントロールパネル -->
   <aside id="controls">
 
+    <!-- プリセット -->
+    <div class="section">
+      <div class="section-title" onclick="toggleSection(this)">🎨 雰囲気プリセット <span class="chevron">▾</span></div>
+      <div class="section-body" style="display:flex; flex-direction:column; gap:6px;">
+        <button class="btn btn-secondary" onclick="applyPreset('morning')">🌅 朝の窓辺</button>
+        <button class="btn btn-secondary" onclick="applyPreset('noon')">☀️ 昼のリビング</button>
+        <button class="btn btn-secondary" onclick="applyPreset('night')">🌙 夜の室内</button>
+      </div>
+    </div>
+
     <!-- ① サイズ -->
     <div class="section collapsed">
       <div class="section-title" onclick="toggleSection(this)">① キャンバスサイズ <span class="chevron">▾</span></div>
@@ -1076,6 +1086,27 @@ function syncFromNumber(numInputId, sliderId, updateFn, isInt = false) {
 // =============================================
 // アコーディオン
 // =============================================
+function applyPreset(name) {
+  const presets = {
+    morning: { shadow: 'win001',    light: 'lights002', bg: 'bg001' },
+    noon:    { shadow: 'leaves001', light: 'lights006', bg: 'bg004' },
+    night:   { shadow: 'leaves004', light: 'lights003', bg: 'bg005' },
+  };
+  const p = presets[name];
+  if (!p) return;
+  setBg(p.bg);
+  setShadow(p.shadow);
+  setLight(p.light);
+  // 光をオン・影をオンにする
+  state.shadow.enabled = true;
+  state.light.enabled  = true;
+  document.getElementById('shadow-overlay-toggle').classList.add('on');
+  const ltog = document.getElementById('light-overlay-toggle');
+  ltog.classList.add('on');
+  ltog.classList.add('light-toggle');
+  drawAll();
+}
+
 function changeZoom(delta) {
   previewZoom = Math.min(2.0, Math.max(0.25, previewZoom + delta));
   document.getElementById('zoom-label').textContent = Math.round(previewZoom * 100) + '%';
