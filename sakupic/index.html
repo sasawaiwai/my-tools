@@ -505,9 +505,7 @@
         <div class="toggle on light-toggle" id="light-overlay-toggle" onclick="toggleLightOverlay()"></div>
       </div>
       <div class="overlay-options light-options">
-        <div class="overlay-option light-opt selected" data-light="prism" onclick="setLight('prism')">
-          <span class="overlay-icon">🌈</span>プリズム光
-        </div>
+        <div class="overlay-option light-opt selected" data-light="prism" onclick="setLight('prism')" id="prism-thumb" style="background-size:cover; background-position:center top; min-height:60px;"></div>
       </div>
       <div style="margin-top:12px">
         <div class="control-row">
@@ -1432,7 +1430,16 @@ async function loadFromFolder(folder, layerKey) {
 buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
-loadExternalPNGs().then(() => { setShadow(state.shadow.type); setLight(state.light.type); });
+loadExternalPNGs().then(() => {
+  setShadow(state.shadow.type);
+  setLight(state.light.type);
+  // プリズム光のサムネイルをcanvas→dataURLで生成
+  const prismCanvas = getOverlayCanvas('prism');
+  if (prismCanvas) {
+    const el = document.getElementById('prism-thumb');
+    if (el) el.style.backgroundImage = `url(${prismCanvas.toDataURL()})`;
+  }
+});
 
 /*
  * TODO
