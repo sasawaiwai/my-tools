@@ -2,3 +2,7 @@ ccfolia-notify/.DS_Store
 *.ini
 *.xlsx
 *.csv
+.DS_Store
+*.clip
+*.zip
+same.*
