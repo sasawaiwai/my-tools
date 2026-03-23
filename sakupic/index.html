@@ -1128,15 +1128,36 @@ function drawOverlayLayer(ctx, layer, layerType) {
   // 外部PNGは画像の実サイズ、内蔵Canvasは OVERLAY_SIZE を使用
   const dw = drawable.naturalWidth  || drawable.width;
   const dh = drawable.naturalHeight || drawable.height;
-  ctx.save();
-  ctx.globalAlpha = layer.opacity;
-  if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
-  if (layer.blur > 0 && CANVAS_FILTER_SUPPORTED) ctx.filter = `blur(${layer.blur}px)`;
-  ctx.translate(layer.x, layer.y);
-  ctx.rotate(layer.rotation * Math.PI / 180);
-  ctx.scale(layer.scale, layer.scale);
-  ctx.drawImage(drawable, -dw/2, -dh/2, dw, dh);
-  ctx.restore();
+
+  if (layer.blur > 0 && CANVAS_FILTER_SUPPORTED) {
+    // iOS Safari対応: transformとfilterを分離してオフスクリーンCanvasで処理
+    const offscreen = document.createElement('canvas');
+    offscreen.width  = ctx.canvas.width;
+    offscreen.height = ctx.canvas.height;
+    const octx = offscreen.getContext('2d');
+    octx.save();
+    octx.translate(layer.x, layer.y);
+    octx.rotate(layer.rotation * Math.PI / 180);
+    octx.scale(layer.scale, layer.scale);
+    octx.drawImage(drawable, -dw/2, -dh/2, dw, dh);
+    octx.restore();
+
+    ctx.save();
+    ctx.globalAlpha = layer.opacity;
+    if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+    ctx.filter = `blur(${layer.blur}px)`;
+    ctx.drawImage(offscreen, 0, 0);
+    ctx.restore();
+  } else {
+    ctx.save();
+    ctx.globalAlpha = layer.opacity;
+    if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+    ctx.translate(layer.x, layer.y);
+    ctx.rotate(layer.rotation * Math.PI / 180);
+    ctx.scale(layer.scale, layer.scale);
+    ctx.drawImage(drawable, -dw/2, -dh/2, dw, dh);
+    ctx.restore();
+  }
 }
 
 // =============================================
