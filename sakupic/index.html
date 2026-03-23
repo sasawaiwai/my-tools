@@ -753,6 +753,19 @@ const extBgCache = {};
 const canvas  = document.getElementById('canvas');
 const ctx     = canvas.getContext('2d');
 
+// ctx.filter サポート確認
+const _testCtx = document.createElement('canvas').getContext('2d');
+_testCtx.filter = 'blur(1px)';
+const CANVAS_FILTER_SUPPORTED = (_testCtx.filter === 'blur(1px)');
+
+// 描画間引きヘルパー
+let _rafPending = false;
+function drawAllThrottled() {
+  if (_rafPending) return;
+  _rafPending = true;
+  requestAnimationFrame(() => { _rafPending = false; drawAll(); });
+}
+
 /**
  * キャンバスのサイズを変更し、各レイヤーの座標をリセットする
  * プレビュー表示サイズはCSSのmax-widthで自動縮小する
@@ -1118,7 +1131,7 @@ function drawOverlayLayer(ctx, layer, layerType) {
   ctx.save();
   ctx.globalAlpha = layer.opacity;
   if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
-  if (layer.blur > 0) ctx.filter = `blur(${layer.blur}px)`;
+  if (layer.blur > 0 && CANVAS_FILTER_SUPPORTED) ctx.filter = `blur(${layer.blur}px)`;
   ctx.translate(layer.x, layer.y);
   ctx.rotate(layer.rotation * Math.PI / 180);
   ctx.scale(layer.scale, layer.scale);
@@ -1421,7 +1434,7 @@ function toggleShadowOverlay() {
 function updateShadowOpacity(v)  { state.shadow.opacity  = parseFloat(v); document.getElementById('shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateShadowScale(v)    { state.shadow.scale    = parseFloat(v); document.getElementById('shadow-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateShadowRotation(v) { state.shadow.rotation = parseInt(v);   document.getElementById('shadow-rotation-val').value = v; drawAll(); }
-function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   document.getElementById('shadow-blur-val').value = v; drawAll(); }
+function updateShadowBlur(v)     { state.shadow.blur     = parseInt(v);   document.getElementById('shadow-blur-val').value = v; drawAllThrottled(); }
 
 function setLight(type) {
   state.light.type = type;
@@ -1451,7 +1464,7 @@ function toggleLightOverlay() {
 function updateLightOpacity(v)  { state.light.opacity  = parseFloat(v); document.getElementById('light-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateLightScale(v)    { state.light.scale    = parseFloat(v); document.getElementById('light-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateLightRotation(v) { state.light.rotation = parseInt(v);   document.getElementById('light-rotation-val').value = v; drawAll(); }
-function updateLightBlur(v)     { state.light.blur     = parseInt(v);   document.getElementById('light-blur-val').value = v; drawAll(); }
+function updateLightBlur(v)     { state.light.blur     = parseInt(v);   document.getElementById('light-blur-val').value = v; drawAllThrottled(); }
 
 function updateMainScale(v)    { state.main.scale    = parseFloat(v); document.getElementById('main-scale-val').value = parseFloat(v).toFixed(2); drawAll(); }
 function updateMainRotation(v) { state.main.rotation = parseInt(v);   document.getElementById('main-rotation-val').value = v; drawAll(); }
@@ -1463,7 +1476,7 @@ function toggleDropShadow() {
   saveSnapshot();
 }
 function updateDropShadowOpacity(v) { state.main.shadowOpacity = parseFloat(v); document.getElementById('drop-shadow-opacity-val').value = parseFloat(v).toFixed(2); drawAll(); }
-function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').value = v; drawAll(); }
+function updateDropShadowBlur(v)    { state.main.shadowBlur    = parseInt(v);   document.getElementById('drop-shadow-blur-val').value = v; drawAllThrottled(); }
 
 // =============================================
 // 書き出し
@@ -1637,6 +1650,18 @@ async function loadFromFolder(folder, layerKey) {
 // =============================================
 buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
+
+// ctx.filter 非対応環境ではぼかしスライダーを無効化
+if (!CANVAS_FILTER_SUPPORTED) {
+  ['shadow-blur', 'light-blur', 'drop-shadow-blur'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.disabled = true;
+      const label = el.closest('.control-row')?.querySelector('.control-label');
+      if (label) label.textContent += '（※この環境では非対応）';
+    }
+  });
+}
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
 loadExternalPNGs().then(() => {
   _skipSnapshot = true;
