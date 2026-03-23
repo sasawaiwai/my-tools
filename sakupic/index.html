@@ -753,10 +753,62 @@ const extBgCache = {};
 const canvas  = document.getElementById('canvas');
 const ctx     = canvas.getContext('2d');
 
-// ctx.filter サポート確認
-const _testCtx = document.createElement('canvas').getContext('2d');
-_testCtx.filter = 'blur(1px)';
-const CANVAS_FILTER_SUPPORTED = (_testCtx.filter === 'blur(1px)');
+// ctx.filter サポート確認（プロパティ設定ではなく実際の描画で判定）
+function _detectCanvasFilter() {
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 20;
+    const cx = c.getContext('2d');
+    cx.filter = 'blur(4px)';
+    cx.fillStyle = '#000';
+    cx.fillRect(10, 10, 1, 1);
+    return cx.getImageData(6, 6, 1, 1).data[3] > 0;
+  } catch(e) { return false; }
+}
+const CANVAS_FILTER_SUPPORTED = _detectCanvasFilter();
+
+// JS製ぼかし（Safari対応フォールバック）: 3回ボックスブラーでガウスぼかし近似
+function _jsBlur(canvas, radius) {
+  const r = Math.max(1, Math.round(radius / 3));
+  const octx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const imgData = octx.getImageData(0, 0, w, h);
+  const px = imgData.data;
+  for (let pass = 0; pass < 3; pass++) {
+    const pr = new Float32Array(w+1), pg = new Float32Array(w+1);
+    const pb = new Float32Array(w+1), pa = new Float32Array(w+1);
+    for (let y = 0; y < h; y++) {
+      const base = y * w;
+      pr[0]=pg[0]=pb[0]=pa[0]=0;
+      for (let x = 0; x < w; x++) {
+        const i=(base+x)*4;
+        pr[x+1]=pr[x]+px[i]; pg[x+1]=pg[x]+px[i+1];
+        pb[x+1]=pb[x]+px[i+2]; pa[x+1]=pa[x]+px[i+3];
+      }
+      for (let x = 0; x < w; x++) {
+        const x0=Math.max(0,x-r), x1=Math.min(w,x+r+1), cnt=x1-x0, i=(base+x)*4;
+        px[i]=(pr[x1]-pr[x0])/cnt; px[i+1]=(pg[x1]-pg[x0])/cnt;
+        px[i+2]=(pb[x1]-pb[x0])/cnt; px[i+3]=(pa[x1]-pa[x0])/cnt;
+      }
+    }
+    const qr = new Float32Array(h+1), qg = new Float32Array(h+1);
+    const qb = new Float32Array(h+1), qa = new Float32Array(h+1);
+    for (let x = 0; x < w; x++) {
+      qr[0]=qg[0]=qb[0]=qa[0]=0;
+      for (let y = 0; y < h; y++) {
+        const i=(y*w+x)*4;
+        qr[y+1]=qr[y]+px[i]; qg[y+1]=qg[y]+px[i+1];
+        qb[y+1]=qb[y]+px[i+2]; qa[y+1]=qa[y]+px[i+3];
+      }
+      for (let y = 0; y < h; y++) {
+        const y0=Math.max(0,y-r), y1=Math.min(h,y+r+1), cnt=y1-y0, i=(y*w+x)*4;
+        px[i]=(qr[y1]-qr[y0])/cnt; px[i+1]=(qg[y1]-qg[y0])/cnt;
+        px[i+2]=(qb[y1]-qb[y0])/cnt; px[i+3]=(qa[y1]-qa[y0])/cnt;
+      }
+    }
+  }
+  octx.putImageData(imgData, 0, 0);
+}
 
 // 描画間引きヘルパー
 let _rafPending = false;
@@ -1129,8 +1181,8 @@ function drawOverlayLayer(ctx, layer, layerType) {
   const dw = drawable.naturalWidth  || drawable.width;
   const dh = drawable.naturalHeight || drawable.height;
 
-  if (layer.blur > 0 && CANVAS_FILTER_SUPPORTED) {
-    // iOS Safari対応: transformとfilterを分離してオフスクリーンCanvasで処理
+  if (layer.blur > 0) {
+    // ぼかし適用: オフスクリーンCanvasに描画してからぼかしをかけて合成
     const offscreen = document.createElement('canvas');
     offscreen.width  = ctx.canvas.width;
     offscreen.height = ctx.canvas.height;
@@ -1142,12 +1194,23 @@ function drawOverlayLayer(ctx, layer, layerType) {
     octx.drawImage(drawable, -dw/2, -dh/2, dw, dh);
     octx.restore();
 
-    ctx.save();
-    ctx.globalAlpha = layer.opacity;
-    if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
-    ctx.filter = `blur(${layer.blur}px)`;
-    ctx.drawImage(offscreen, 0, 0);
-    ctx.restore();
+    if (CANVAS_FILTER_SUPPORTED) {
+      // Chrome等: GPU加速のctx.filterを使用
+      ctx.save();
+      ctx.globalAlpha = layer.opacity;
+      if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+      ctx.filter = `blur(${layer.blur}px)`;
+      ctx.drawImage(offscreen, 0, 0);
+      ctx.restore();
+    } else {
+      // Safari等: JSぼかしで代替
+      _jsBlur(offscreen, layer.blur);
+      ctx.save();
+      ctx.globalAlpha = layer.opacity;
+      if (layerType === 'light') ctx.globalCompositeOperation = 'screen';
+      ctx.drawImage(offscreen, 0, 0);
+      ctx.restore();
+    }
   } else {
     ctx.save();
     ctx.globalAlpha = layer.opacity;
@@ -1672,17 +1735,6 @@ async function loadFromFolder(folder, layerKey) {
 buildSizePresetUI();
 applyCanvasSize(currentSizeId, false);  // 初期サイズ適用（内部で drawAll() を呼ぶ）
 
-// ctx.filter 非対応環境ではぼかしスライダーを無効化
-if (!CANVAS_FILTER_SUPPORTED) {
-  ['shadow-blur', 'light-blur', 'drop-shadow-blur'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.disabled = true;
-      const label = el.closest('.control-row')?.querySelector('.control-label');
-      if (label) label.textContent += '（※この環境では非対応）';
-    }
-  });
-}
 // 外部PNGを非同期で読み込む（HTTP サーバー起動時のみ有効）
 loadExternalPNGs().then(() => {
   _skipSnapshot = true;
