@@ -200,7 +200,29 @@ function generatePalettesForOneColor(hex) {
     });
   }
 
-  // 3. ゴールデンミックス
+  // 3. カラフルトライアド
+  // 色相環3等分で、一方をやや明るめ・もう一方をやや深めにして動きをつける
+  {
+    const c1 = {
+      h: clampHue(h + 120),
+      s: clamp(s * 0.85, 30, 70),
+      l: clamp(l + 12, 48, 72)
+    };
+    const c2 = {
+      h: clampHue(h + 240),
+      s: clamp(s * 0.7, 25, 60),
+      l: clamp(l - 12, 28, 52)
+    };
+    palettes.push({
+      label: 'カラフルトライアド',
+      reason: '色相環を3等分し明暗差をつけた華やかな配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'トライアドA', 'トライアドB']
+    });
+  }
+
+  // 4. ゴールデンミックス
   // 黄金角（137.5°）で色相を分割。120°等間隔より予測不能な美しさ
   {
     const c1 = {
