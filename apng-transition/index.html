@@ -542,7 +542,8 @@
         <div class="dir-btn" data-dir="right_to_left" data-tip="右から左">←</div>
         <div class="dir-btn" data-dir="top_to_bottom" data-tip="上から下">↓</div>
         <div class="dir-btn" data-dir="bottom_to_top" data-tip="下から上">↑</div>
-        <div class="dir-btn active center" data-dir="center_out" data-tip="中央から放射">◎</div>
+        <div class="dir-btn" data-dir="center_out" data-tip="中央から放射">◎</div>
+        <div class="dir-btn active" data-dir="uniform" data-tip="全体を均等に拡大">⊞</div>
       </div>
     </div>
 
@@ -640,7 +641,7 @@ const state = {
   maxSz: 100,   // % of diagonal half
   duration: 1.0, fps: 12,
   spread: 0.6,
-  direction: 'center_out',
+  direction: 'uniform',
   easing: 'ease_in',
   loopNum: 0,  // 0=無限, 1=1回
   mode: 'out', // 'out'=通常, 'in'=反転（destination-out）
@@ -757,6 +758,7 @@ function getWeight(c, r, colsM1, rowsM1, dir) {
       const dx = nx - 0.5, dy = ny - 0.5;
       return Math.sqrt(dx*dx + dy*dy) / (Math.sqrt(0.5*0.5 + 0.5*0.5));
     }
+    case 'uniform': return 0;
     default: return nx;
   }
 }
