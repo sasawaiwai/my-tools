@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カラピッ！ - 足りない色、ピックアップ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <header class="header">
+    <div class="header__inner">
+      <div class="header__icon">🎨</div>
+      <div>
+        <h1 class="header__title">カラピッ！</h1>
+        <p class="header__desc">足りない色、ピックアップ</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- モード切替タブ -->
+    <div class="tabs" role="tablist" aria-label="入力モード">
+      <button class="tab tab--active" data-mode="one" role="tab" aria-selected="true">
+        1色から提案
+      </button>
+      <button class="tab" data-mode="two" role="tab" aria-selected="false">
+        2色から提案
+      </button>
+    </div>
+
+    <!-- 入力エリア -->
+    <section class="input-area card" aria-label="カラー入力">
+
+      <!-- 1色モード -->
+      <div id="input-one" class="color-inputs">
+        <div class="color-input-group">
+          <label class="color-label" for="hex1">ベースカラー</label>
+          <div class="color-input-row">
+            <input type="color" id="picker1" class="color-picker" value="#4a90e2" aria-label="カラーピッカー1">
+            <input type="text"  id="hex1"    class="hex-input"    value="#4a90e2"
+                   placeholder="#000000" maxlength="7" spellcheck="false">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2色モード（初期非表示） -->
+      <div id="input-two" class="color-inputs hidden">
+        <div class="color-input-group">
+          <label class="color-label" for="hex2">カラー 1</label>
+          <div class="color-input-row">
+            <input type="color" id="picker2" class="color-picker" value="#4a90e2" aria-label="カラーピッカー2">
+            <input type="text"  id="hex2"    class="hex-input"    value="#4a90e2"
+                   placeholder="#000000" maxlength="7" spellcheck="false">
+          </div>
+        </div>
+        <div class="color-input-group">
+          <label class="color-label" for="hex3">カラー 2</label>
+          <div class="color-input-row">
+            <input type="color" id="picker3" class="color-picker" value="#e27a4a" aria-label="カラーピッカー3">
+            <input type="text"  id="hex3"    class="hex-input"    value="#e27a4a"
+                   placeholder="#000000" maxlength="7" spellcheck="false">
+          </div>
+        </div>
+      </div>
+
+      <!-- エラーメッセージ -->
+      <div id="error-msg" class="error-msg hidden" role="alert" aria-live="polite"></div>
+
+      <!-- 生成ボタン -->
+      <button id="generate-btn" class="generate-btn" type="button">
+        配色を提案する
+      </button>
+
+    </section>
+
+    <!-- 提案結果エリア -->
+    <section id="results-area" class="results-area hidden" aria-label="提案カラー">
+      <h2 class="section-title">提案カラー</h2>
+      <div id="suggestions" class="suggestions"></div>
+    </section>
+
+    <!-- プレビューエリア -->
+    <section id="preview-area" class="preview-area hidden" aria-label="配色プレビュー">
+      <h2 class="section-title">配色プレビュー</h2>
+      <div class="preview card">
+        <div id="preview-inner">
+          <h3 id="preview-heading">見出しのサンプルテキスト</h3>
+          <p id="preview-body">本文のサンプルテキストです。この配色の組み合わせで、読みやすさと印象を確認できます。配色は全体のトーンを決める大切な要素です。</p>
+          <button id="preview-button" type="button">ボタンサンプル</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
