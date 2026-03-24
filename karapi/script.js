@@ -426,12 +426,69 @@ function renderSuggestions(palettes) {
 // ────────────────────────────────────────────
 
 // 回転パターン：3色をどの役割に割り当てるか
-// [背景のインデックス, 文字のインデックス, アクセントのインデックス]
+// [背景のインデックス, テキストのインデックス, アクセント(ボタン)のインデックス]
 const ROLE_ROTATIONS = [
-  [0, 1, 2],
+  [0, 2, 1],  // 初期: 1色目=背景, 3色目=文字, 2色目=ボタン
   [2, 0, 1],
   [1, 2, 0],
 ];
+
+// 円グラフの割合パターン（60-30-10の法則ベース）
+const PIE_RATIOS = [60, 30, 10];
+
+/** SVG円グラフを生成する */
+function buildPieChart(colors, roles) {
+  const size = 80;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 2;
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', '0 0 ' + size + ' ' + size);
+  svg.classList.add('preview-card__pie');
+
+  let cumulative = 0;
+  const roleOrder = [roles[0], roles[2], roles[1]]; // 背景60%, アクセント30%, 文字10%
+
+  roleOrder.forEach((colorIdx, i) => {
+    const ratio = PIE_RATIOS[i] / 100;
+    const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    cumulative += ratio;
+    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+    const largeArc = ratio > 0.5 ? 1 : 0;
+
+    const path = document.createElementNS(ns, 'path');
+    const d = [
+      'M', cx, cy,
+      'L', x1, y1,
+      'A', r, r, 0, largeArc, 1, x2, y2,
+      'Z'
+    ].join(' ');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', colors[colorIdx]);
+    svg.appendChild(path);
+  });
+
+  // 外枠の円
+  const circle = document.createElementNS(ns, 'circle');
+  circle.setAttribute('cx', String(cx));
+  circle.setAttribute('cy', String(cy));
+  circle.setAttribute('r', String(r));
+  circle.setAttribute('fill', 'none');
+  circle.setAttribute('stroke', 'rgba(0,0,0,0.08)');
+  circle.setAttribute('stroke-width', '1');
+  svg.appendChild(circle);
+
+  return svg;
+}
 
 /** プレビューカード1枚を生成 */
 function buildPreviewCard(palette) {
@@ -462,19 +519,16 @@ function buildPreviewCard(palette) {
   header.appendChild(label);
   header.appendChild(rotateBtn);
 
-  // ── パレットスウォッチ（3色横並び） ──
-  const paletteRow = document.createElement('div');
-  paletteRow.className = 'preview-card__palette';
+  // ── ビジュアルエリア（円グラフ＋サンプル横並び） ──
+  const visual = document.createElement('div');
+  visual.className = 'preview-card__visual';
 
-  palette.colors.forEach((hex, i) => {
-    const swatch = document.createElement('div');
-    swatch.className = 'preview-card__swatch';
-    swatch.style.backgroundColor = hex;
-    swatch.title = palette.colorLabels[i] + ': ' + hex.toUpperCase();
-    paletteRow.appendChild(swatch);
-  });
+  // 円グラフ
+  const pieWrap = document.createElement('div');
+  pieWrap.className = 'preview-card__pie-wrap';
+  visual.appendChild(pieWrap);
 
-  // ── サンプル表示エリア ──
+  // テキストサンプル
   const sample = document.createElement('div');
   sample.className = 'preview-card__sample';
 
@@ -484,7 +538,7 @@ function buildPreviewCard(palette) {
 
   const body = document.createElement('p');
   body.className = 'preview-card__body';
-  body.textContent = 'これは本文のサンプルテキストです。配色の読みやすさを確認できます。';
+  body.textContent = '本文テキストの読みやすさを確認できます。';
 
   const btn = document.createElement('button');
   btn.className = 'preview-card__btn';
@@ -494,14 +548,14 @@ function buildPreviewCard(palette) {
   sample.appendChild(heading);
   sample.appendChild(body);
   sample.appendChild(btn);
+  visual.appendChild(sample);
 
   // ── ロール表示 ──
   const roleInfo = document.createElement('div');
   roleInfo.className = 'preview-card__roles';
 
   card.appendChild(header);
-  card.appendChild(paletteRow);
-  card.appendChild(sample);
+  card.appendChild(visual);
   card.appendChild(roleInfo);
 
   // 初期配色を適用
@@ -517,16 +571,22 @@ function applyPreviewColors(card, colors, colorLabels, roles) {
   const textColor = colors[textIdx];
   const accentColor = colors[accentIdx];
 
-  // サンプルエリアに色を適用
+  // 円グラフを再描画
+  const pieWrap = card.querySelector('.preview-card__pie-wrap');
+  while (pieWrap.firstChild) {
+    pieWrap.removeChild(pieWrap.firstChild);
+  }
+  pieWrap.appendChild(buildPieChart(colors, roles));
+
+  // テキストサンプルに色を適用
   const sample = card.querySelector('.preview-card__sample');
   sample.style.backgroundColor = bgColor;
 
-  card.querySelector('.preview-card__heading').style.color = accentColor;
+  card.querySelector('.preview-card__heading').style.color = textColor;
   card.querySelector('.preview-card__body').style.color = textColor;
 
   const btn = card.querySelector('.preview-card__btn');
   btn.style.backgroundColor = accentColor;
-  // ボタン文字色：アクセントの明度に応じて白か黒
   const accentHsl = hexToHsl(accentColor);
   btn.style.color = accentHsl.l > 55 ? '#222' : '#fff';
 
@@ -536,7 +596,7 @@ function applyPreviewColors(card, colors, colorLabels, roles) {
     roleInfo.removeChild(roleInfo.firstChild);
   }
 
-  const roleNames = ['背景', '文字', 'アクセント'];
+  const roleNames = ['背景 60%', '文字', 'ボタン 30%'];
   roles.forEach((colorIdx, roleIdx) => {
     const span = document.createElement('span');
     span.className = 'preview-card__role';
