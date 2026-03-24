@@ -272,57 +272,82 @@ body {
    提案カード一覧
 ──────────────────────────────────────────── */
 .results-area {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .suggestions {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ────────────────────────────────────────────
+   提案グループ（パレットごと）
+──────────────────────────────────────────── */
+.suggestion-group {
+  background: var(--color-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 18px 20px;
+}
+
+.suggestion-group__label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.suggestion-group__reason {
+  font-size: 0.82rem;
+  color: var(--color-text-sub);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.suggestion-group__cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* ────────────────────────────────────────────
    個別提案カード
 ──────────────────────────────────────────── */
 .suggestion-card {
-  background: var(--color-card);
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
+  background: #fafbfc;
+  border-radius: 10px;
+  border: 1.5px solid var(--color-border);
   overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition);
+  flex: 1;
+  min-width: 140px;
 }
 
 .suggestion-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.10), 0 0 0 1px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 .suggestion-swatch {
   width: 100%;
-  height: 72px;
+  height: 56px;
 }
 
 .suggestion-info {
-  padding: 12px 14px 14px;
+  padding: 10px 12px 12px;
 }
 
 .suggestion-label {
   display: inline-block;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--color-primary);
   background: var(--color-primary-bg);
-  padding: 2px 9px;
+  padding: 2px 8px;
   border-radius: 4px;
-  margin-bottom: 7px;
-}
-
-.suggestion-reason {
-  font-size: 0.88rem;
-  color: var(--color-text-sub);
-  line-height: 1.45;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .suggestion-hex-row {
@@ -333,7 +358,7 @@ body {
 
 .suggestion-hex {
   font-family: var(--font-mono);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text);
   letter-spacing: 0.03em;
@@ -341,7 +366,7 @@ body {
 
 .copy-btn {
   margin-left: auto;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: 1.5px solid var(--color-border);
   border-radius: 5px;
   background: #fff;
@@ -373,41 +398,128 @@ body {
   margin-bottom: 20px;
 }
 
-.preview {
+.section-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-sub);
+  margin-top: -8px;
+  margin-bottom: 14px;
+}
+
+.previews {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* ────────────────────────────────────────────
+   プレビューカード
+──────────────────────────────────────────── */
+.preview-card {
   overflow: hidden;
 }
 
-#preview-inner {
-  padding: 32px 28px;
-  transition: background-color 0.3s ease;
+.preview-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 8px;
 }
 
-#preview-heading {
-  font-size: 1.15rem;
+.preview-card__label {
+  font-size: 0.82rem;
   font-weight: 700;
-  margin-bottom: 10px;
-  transition: color 0.3s ease;
-  line-height: 1.45;
+  color: var(--color-text);
 }
 
-#preview-body {
-  font-size: 0.88rem;
-  line-height: 1.75;
-  margin-bottom: 20px;
-  transition: color 0.3s ease;
+.preview-card__rotate {
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-text-sub);
+  transition: border-color var(--transition), color var(--transition), background var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#preview-button {
-  padding: 11px 28px;
+.preview-card__rotate:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.preview-card__palette {
+  display: flex;
+  margin: 0 16px 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 28px;
+}
+
+.preview-card__swatch {
+  flex: 1;
+}
+
+.preview-card__sample {
+  margin: 0 16px;
+  padding: 18px 16px;
+  border-radius: 8px;
+  transition: background-color 0.25s ease;
+}
+
+.preview-card__heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.4;
+  transition: color 0.25s ease;
+}
+
+.preview-card__body {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  margin-bottom: 12px;
+  transition: color 0.25s ease;
+}
+
+.preview-card__btn {
+  padding: 7px 18px;
   border: none;
-  border-radius: 7px;
+  border-radius: 5px;
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #fff;
   cursor: default;
-  transition: background-color 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.preview-card__roles {
+  display: flex;
+  gap: 12px;
+  padding: 10px 16px 14px;
+  flex-wrap: wrap;
+}
+
+.preview-card__role {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--color-text-sub);
+}
+
+.preview-card__role-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
+  flex-shrink: 0;
 }
 
 /* ────────────────────────────────────────────
@@ -456,22 +568,31 @@ body {
     min-width: unset;
   }
 
-  .suggestions {
-    grid-template-columns: 1fr 1fr;
+  .suggestion-group {
+    padding: 14px 14px;
+  }
+
+  .suggestion-group__cards {
     gap: 10px;
   }
 
-  #preview-inner {
-    padding: 22px 18px;
+  .suggestion-card {
+    min-width: 120px;
   }
 
-  #preview-heading {
-    font-size: 1rem;
+  .previews {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .preview-card__sample {
+    margin: 0 12px;
+    padding: 14px 12px;
   }
 }
 
 @media (max-width: 360px) {
-  .suggestions {
-    grid-template-columns: 1fr;
+  .suggestion-group__cards {
+    flex-direction: column;
   }
 }
