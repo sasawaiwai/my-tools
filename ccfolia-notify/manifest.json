@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ココフォリア チャット通知",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "ココフォリアのチャット更新時に通知音を鳴らします",
   "permissions": ["storage"],
   "content_scripts": [
