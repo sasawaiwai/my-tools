@@ -124,15 +124,6 @@ function hueMiddle(h1, h2) {
   return ((h1 + diff / 2) + 360) % 360;
 }
 
-/** 毒々しい色を穏やかに補正 */
-function soften(h, s, l) {
-  h = clampHue(h);
-  if (s > 85) s = 78;
-  l = clamp(l, 25, 75);
-  return { h, s, l };
-}
-
-
 // ────────────────────────────────────────────
 // パレット生成ロジック
 // ────────────────────────────────────────────
@@ -146,68 +137,110 @@ function soften(h, s, l) {
  *   suggested: number[],                  // 提案色のインデックス
  *   colorLabels: [string, string, string] // 各色のラベル
  * }
+ *
+ * 設計方針：
+ *   色相だけでなく明度・彩度も意図的に変化させ、
+ *   パレットごとに異なる「ムード」を提案する。
+ *   同じトーンの3色が並ぶのを避け、明暗差・鮮やかさの
+ *   コントラストで実用的な配色をつくる。
  */
 
 /**
  * 1色モード：ベースカラーから4つの3色パレットを生成
- *   1. 類似色ハーモニー（H±30°）
- *   2. 補色ハーモニー（H+180° + ニュートラル）
- *   3. トライアド（H+120° / H+240°）
- *   4. スプリット補色（H+150° / H+210°）
+ *   1. やわらかハーモニー — 隣接色＋明暗差で上品に
+ *   2. 大胆アクセント — 補色の鮮やかさ＋ニュートラル
+ *   3. カラフルトライアド — 120°間隔＋明暗の強弱
+ *   4. シック＆モダン — スプリット補色＋深いニュートラル
  */
 function generatePalettesForOneColor(hex) {
   const { h, s, l } = hexToHsl(hex);
   const palettes = [];
 
-  // 1. 類似色ハーモニー
+  // 1. やわらかハーモニー
+  // 隣接色相で、一方を明るく柔らかく、もう一方を深く落ち着かせる
   {
-    const c1 = soften(h + 30, s, l);
-    const c2 = soften(h - 30, s, l);
+    const c1 = {
+      h: clampHue(h + 25),
+      s: clamp(s * 0.55, 15, 45),
+      l: clamp(l + 28, 78, 93)
+    };
+    const c2 = {
+      h: clampHue(h - 20),
+      s: clamp(s * 0.55, 12, 40),
+      l: clamp(l - 30, 15, 32)
+    };
     palettes.push({
-      label: '類似色ハーモニー',
-      reason: '隣り合う色相で統一感のある落ち着いた配色',
+      label: 'やわらかハーモニー',
+      reason: '明暗差のある隣接色で上品にまとまる配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
-      colorLabels: ['入力色', '類似色A', '類似色B']
+      colorLabels: ['入力色', 'ライト', 'ダーク']
     });
   }
 
-  // 2. 補色ハーモニー
+  // 2. 大胆アクセント
+  // 補色を鮮やかなアクセントに、入力色のごく薄いトーンで地を作る
   {
-    const comp = soften(h + 180, Math.max(s, 45), l);
-    const neut = { h: clampHue(h), s: clamp(s * 0.15, 0, 12), l: 92 };
+    const c1 = {
+      h: clampHue(h + 180),
+      s: clamp(Math.max(s, 50) * 1.05, 48, 82),
+      l: clamp(l, 38, 58)
+    };
+    const c2 = {
+      h: clampHue(h + 10),
+      s: clamp(s * 0.1, 2, 10),
+      l: 93
+    };
     palettes.push({
-      label: '補色ハーモニー',
-      reason: '反対色で強いコントラストとメリハリのある配色',
-      colors: [hex, hslToHex(comp.h, comp.s, comp.l), hslToHex(neut.h, neut.s, neut.l)],
+      label: '大胆アクセント',
+      reason: '補色の鮮やかなアクセントが目を引く配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
-      colorLabels: ['入力色', '補色', 'ニュートラル']
+      colorLabels: ['入力色', 'アクセント', 'ニュートラル']
     });
   }
 
-  // 3. トライアド
+  // 3. カラフルトライアド
+  // 色相環3等分で、一方をやや明るめ・もう一方をやや深めにして動きをつける
   {
-    const c1 = soften(h + 120, s, l);
-    const c2 = soften(h + 240, s, l);
+    const c1 = {
+      h: clampHue(h + 120),
+      s: clamp(s * 0.85, 30, 70),
+      l: clamp(l + 12, 48, 72)
+    };
+    const c2 = {
+      h: clampHue(h + 240),
+      s: clamp(s * 0.7, 25, 60),
+      l: clamp(l - 12, 28, 52)
+    };
     palettes.push({
-      label: 'トライアド',
-      reason: '色相環を3等分したバランスの良い鮮やかな配色',
+      label: 'カラフルトライアド',
+      reason: '色相環を3等分し明暗差をつけた華やかな配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'トライアドA', 'トライアドB']
     });
   }
 
-  // 4. スプリット補色
+  // 4. シック＆モダン
+  // スプリット補色の1色を中彩度で使い、深いニュートラルで引き締める
   {
-    const c1 = soften(h + 150, Math.max(s, 40), l);
-    const c2 = soften(h + 210, Math.max(s, 40), l);
+    const c1 = {
+      h: clampHue(h + 150),
+      s: clamp(Math.max(s, 40) * 0.9, 35, 72),
+      l: clamp(l + 5, 42, 62)
+    };
+    const c2 = {
+      h: clampHue(h + 200),
+      s: clamp(s * 0.18, 5, 15),
+      l: 20
+    };
     palettes.push({
-      label: 'スプリット補色',
-      reason: '補色の両隣を使い強すぎないコントラストで調和',
+      label: 'シック＆モダン',
+      reason: 'スプリット補色と深いニュートラルで洗練された配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
-      colorLabels: ['入力色', 'スプリットA', 'スプリットB']
+      colorLabels: ['入力色', 'スプリット', 'ディープ']
     });
   }
 
@@ -216,10 +249,10 @@ function generatePalettesForOneColor(hex) {
 
 /**
  * 2色モード：2つのベースカラーから4つの3色パレットを生成
- *   1. 橋渡し色（2色の色相中間）
- *   2. コントラスト差し色（中間+90°）
- *   3. トライアド補完（中間+180°）
- *   4. ニュートラル補完（低彩度の中間調）
+ *   1. なめらかブリッジ — 2色を柔らかくつなぐ中間色
+ *   2. ポップアクセント — 直角色相の鮮やかな差し色
+ *   3. バランス補完 — 色相環の反対側で均等バランス
+ *   4. 落ち着きグラウンド — 2色を引き立てるニュートラル
  */
 function generatePalettesForTwoColors(hex1, hex2) {
   const hsl1 = hexToHsl(hex1);
@@ -230,51 +263,72 @@ function generatePalettesForTwoColors(hex1, hex2) {
 
   const palettes = [];
 
-  // 1. 橋渡し色
+  // 1. なめらかブリッジ
+  // 中間色相で、彩度をやや落とし明度を少し上げてなじませる
   {
-    const c = soften(hMid, sMid, lMid);
+    const c = {
+      h: hMid,
+      s: clamp(sMid * 0.7, 18, 50),
+      l: clamp(lMid + 18, 60, 82)
+    };
     palettes.push({
-      label: '橋渡し色',
-      reason: '2色の中間に位置し全体をなめらかにつなぐ色',
+      label: 'なめらかブリッジ',
+      reason: '2色の間を柔らかくつなぐ中間色',
       colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
       suggested: [2],
-      colorLabels: ['入力色1', '入力色2', '橋渡し色']
+      colorLabels: ['入力色1', '入力色2', 'ブリッジ']
     });
   }
 
-  // 2. コントラスト差し色
+  // 2. ポップアクセント
+  // 中間色相から直角方向に鮮やかな色を取る
   {
-    const c = soften(hMid + 90, Math.max(sMid, 50), lMid);
+    const c = {
+      h: clampHue(hMid + 90),
+      s: clamp(Math.max(sMid, 45) * 1.1, 45, 80),
+      l: clamp(lMid, 40, 58)
+    };
     palettes.push({
-      label: 'コントラスト',
-      reason: '2色に対して直角の色相でメリハリを加える差し色',
+      label: 'ポップアクセント',
+      reason: '2色に対して鮮やかなメリハリを加える差し色',
       colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
       suggested: [2],
-      colorLabels: ['入力色1', '入力色2', '差し色']
+      colorLabels: ['入力色1', '入力色2', 'アクセント']
     });
   }
 
-  // 3. トライアド補完
+  // 3. バランス補完
+  // 中間色相の反対側、やや落ち着いたトーンで均等感を出す
   {
-    const c = soften(hMid + 180, Math.max(sMid, 40), lMid);
+    const c = {
+      h: clampHue(hMid + 180),
+      s: clamp(sMid * 0.8, 28, 65),
+      l: clamp(lMid - 8, 32, 55)
+    };
     palettes.push({
-      label: 'トライアド補完',
-      reason: '3色が色相環上で均等に分散するバランス配色',
+      label: 'バランス補完',
+      reason: '色相環の反対側で3色を均等に分散させる配色',
       colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
       suggested: [2],
-      colorLabels: ['入力色1', '入力色2', 'トライアド色']
+      colorLabels: ['入力色1', '入力色2', '補完色']
     });
   }
 
-  // 4. ニュートラル補完
+  // 4. 落ち着きグラウンド
+  // 入力色が暗ければ明るいニュートラル、明るければ暗いニュートラル
   {
-    const neut = { h: clampHue(hMid), s: clamp(sMid * 0.2, 0, 15), l: clamp(lMid, 85, 95) };
+    const goLight = lMid < 50;
+    const c = {
+      h: hMid,
+      s: clamp(sMid * 0.12, 2, 10),
+      l: goLight ? clamp(lMid + 40, 88, 95) : clamp(lMid - 35, 12, 22)
+    };
     palettes.push({
-      label: 'ニュートラル',
-      reason: '2色を引き立てる控えめな中間色で全体を落ち着かせる',
-      colors: [hex1, hex2, hslToHex(neut.h, neut.s, neut.l)],
+      label: '落ち着きグラウンド',
+      reason: '2色を引き立てる控えめな地色で全体を安定させる',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
       suggested: [2],
-      colorLabels: ['入力色1', '入力色2', 'ニュートラル']
+      colorLabels: ['入力色1', '入力色2', goLight ? 'ライトベース' : 'ダークベース']
     });
   }
 
