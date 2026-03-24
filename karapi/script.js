@@ -748,7 +748,7 @@ function updateSlidersFromHex(slidersContainer, hex) {
     const slider = slidersContainer.querySelector('[data-channel="' + ch + '"]');
     const valDisplay = slidersContainer.querySelector('[data-channel-value="' + ch + '"]');
     if (slider) slider.value = rgb[ch];
-    if (valDisplay) valDisplay.textContent = rgb[ch];
+    if (valDisplay) valDisplay.value = rgb[ch];
   });
 }
 
@@ -786,16 +786,39 @@ function setupColorSync(pickerId, hexId, targetNum) {
 
   // スライダー → HEX + ピッカー
   if (slidersContainer) {
+    // スライダー → 数値入力 + HEX + ピッカー
     slidersContainer.querySelectorAll('.rgb-slider').forEach(slider => {
       slider.addEventListener('input', () => {
         const ch = slider.dataset.channel;
         const valDisplay = slidersContainer.querySelector('[data-channel-value="' + ch + '"]');
-        if (valDisplay) valDisplay.textContent = slider.value;
+        if (valDisplay) valDisplay.value = slider.value;
         const hex = hexFromSliders(slidersContainer);
         hexInput.value = hex;
         picker.value = hex;
         hexInput.classList.remove('is-error');
         hideError();
+      });
+    });
+
+    // 数値入力 → スライダー + HEX + ピッカー
+    slidersContainer.querySelectorAll('.rgb-slider-value').forEach(numInput => {
+      numInput.addEventListener('input', () => {
+        const ch = numInput.dataset.channelValue;
+        let v = parseInt(numInput.value);
+        if (isNaN(v)) return;
+        v = clamp(v, 0, 255);
+        const slider = slidersContainer.querySelector('[data-channel="' + ch + '"]');
+        if (slider) slider.value = v;
+        const hex = hexFromSliders(slidersContainer);
+        hexInput.value = hex;
+        picker.value = hex;
+        hexInput.classList.remove('is-error');
+        hideError();
+      });
+      numInput.addEventListener('blur', () => {
+        let v = parseInt(numInput.value);
+        if (isNaN(v)) v = 0;
+        numInput.value = clamp(v, 0, 255);
       });
     });
   }
