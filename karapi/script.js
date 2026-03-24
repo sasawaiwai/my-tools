@@ -200,25 +200,96 @@ function generatePalettesForOneColor(hex) {
     });
   }
 
-  // 3. カラフルトライアド
-  // 色相環3等分で、一方をやや明るめ・もう一方をやや深めにして動きをつける
+  // 3. ゴールデンミックス
+  // 黄金角（137.5°）で色相を分割。120°等間隔より予測不能な美しさ
   {
     const c1 = {
-      h: clampHue(h + 120),
-      s: clamp(s * 0.85, 30, 70),
-      l: clamp(l + 12, 48, 72)
+      h: clampHue(h + 137.5),
+      s: clamp(s * 0.9, 35, 75),
+      l: clamp(l + 10, 45, 68)
     };
     const c2 = {
-      h: clampHue(h + 240),
-      s: clamp(s * 0.7, 25, 60),
-      l: clamp(l - 12, 28, 52)
+      h: clampHue(h + 275),
+      s: clamp(s * 0.75, 28, 65),
+      l: clamp(l - 15, 25, 48)
     };
     palettes.push({
-      label: 'カラフルトライアド',
-      reason: '色相環を3等分し明暗差をつけた華やかな配色',
+      label: 'ゴールデンミックス',
+      reason: '黄金角で分割した自然界の美しさを持つ配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
-      colorLabels: ['入力色', 'トライアドA', 'トライアドB']
+      colorLabels: ['入力色', 'ゴールドA', 'ゴールドB']
+    });
+  }
+
+  // 4. クラッシュポップ
+  // あえて合わない色をぶつける。超ビビッド＋超ペールの極端なコントラスト
+  {
+    const c1 = {
+      h: clampHue(h + 70),
+      s: clamp(Math.max(s, 60) * 1.3, 70, 100),
+      l: clamp(50, 42, 55)
+    };
+    const c2 = {
+      h: clampHue(h + 200),
+      s: clamp(s * 0.25, 8, 22),
+      l: clamp(l > 50 ? 15 : 90, 12, 92)
+    };
+    palettes.push({
+      label: 'クラッシュポップ',
+      reason: 'ビビッドとペールを極端にぶつけるファッション的ハズし配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'ビビッド', 'ペール']
+    });
+  }
+
+  // 5. テンペラチャークラッシュ
+  // 暖色なら寒色、寒色なら暖色を強制的に提案する色温度の逆突き
+  {
+    const isWarm = (h >= 0 && h < 70) || h >= 300;
+    const targetBase = isWarm ? 210 : 30;
+    const c1 = {
+      h: clampHue(targetBase - 20),
+      s: clamp(Math.max(s, 40) * 1.0, 40, 78),
+      l: clamp(l + 8, 45, 65)
+    };
+    const c2 = {
+      h: clampHue(targetBase + 30),
+      s: clamp(Math.max(s, 35) * 0.85, 32, 68),
+      l: clamp(l - 18, 22, 42)
+    };
+    palettes.push({
+      label: 'テンペラチャークラッシュ',
+      reason: isWarm
+        ? '暖色に対して寒色系を大胆にぶつける冒険的配色'
+        : '寒色に対して暖色系を大胆にぶつける冒険的配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', isWarm ? 'クール' : 'ウォーム', isWarm ? 'ディープクール' : 'ディープウォーム']
+    });
+  }
+
+  // 6. ランダムジェム
+  // 宝石モチーフ。入力色と全く違う領域から高彩度＋深い明度の強い色を持ってくる
+  {
+    const gemOffsets = [95, 220];
+    const c1 = {
+      h: clampHue(h + gemOffsets[0]),
+      s: clamp(Math.max(s, 50) * 1.15, 55, 88),
+      l: clamp(38, 32, 45)
+    };
+    const c2 = {
+      h: clampHue(h + gemOffsets[1]),
+      s: clamp(Math.max(s, 45) * 1.1, 50, 85),
+      l: clamp(30, 22, 38)
+    };
+    palettes.push({
+      label: 'ランダムジェム',
+      reason: '宝石のように深く鮮やかな色を大胆に組み合わせる配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'ジェムA', 'ジェムB']
     });
   }
 
