@@ -672,6 +672,8 @@
   <span>© ササドコロ / 笹塚</span>
   <span>｜</span>
   <a href="/">ツール一覧</a>
+  <span>｜</span>
+  <span>※ PCブラウザ推奨（スマホ非対応）</span>
 </footer>
 
 <script>
@@ -809,6 +811,10 @@ document.getElementById('customShapeInput').addEventListener('change', e => {
   if (!file) return;
   const url = URL.createObjectURL(file);
   const img = new Image();
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    alert('画像の読み込みに失敗しました。PNG/SVGファイルを確認してください。');
+  };
   img.onload = () => {
     state.customShapeImg = img;
     state.shape = 'custom';
@@ -1019,7 +1025,7 @@ function tick(ts) {
   lastTime = ts;
   animT = Math.min(animT + dt / state.duration, 1.0);
 
-  renderFrame(previewCtx, animT, state.canvasW, state.canvasH, {...state});
+  renderFrame(previewCtx, animT, previewCanvas.width, previewCanvas.height, {...state});
   progressBar.style.width = (animT * 100) + '%';
   timeLabel.textContent = (animT * state.duration).toFixed(1) + 's';
 
