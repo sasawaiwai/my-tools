@@ -544,6 +544,8 @@
         <div class="shape-btn" data-shape="cross" data-tip="十字">✚</div>
         <div class="shape-btn" data-shape="ring" data-tip="リング">○</div>
         <div class="shape-btn" data-shape="hex" data-tip="六角形">⬡</div>
+        <div class="shape-btn" data-shape="triangle" data-tip="三角">▲</div>
+        <div class="shape-btn" data-shape="rect" data-tip="長方形（ブラインド）">▬</div>
         <div class="shape-btn" id="customShapeBtn" data-shape="custom" data-tip="透過PNG/SVGを読み込む">＋</div>
         <input type="file" id="customShapeInput" accept="image/png,image/svg+xml" style="display:none">
       </div>
@@ -874,6 +876,18 @@ function drawShape(ctx, shape, cx, cy, r, rotation) {
       break;
     case 'square':
       ctx.fillRect(-r, -r, r * 2, r * 2);
+      break;
+    case 'triangle': {
+      const h = r * Math.sqrt(3);
+      ctx.moveTo(0, -r * 1.15);
+      ctx.lineTo(h * 0.667, r * 0.577);
+      ctx.lineTo(-h * 0.667, r * 0.577);
+      ctx.closePath();
+      ctx.fill();
+      break;
+    }
+    case 'rect':
+      ctx.fillRect(-r, -r * 0.35, r * 2, r * 0.7);
       break;
     case 'heart': {
       ctx.moveTo(0, r * 0.8);
