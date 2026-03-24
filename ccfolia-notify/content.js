@@ -134,6 +134,9 @@ function shouldNotify(msgEl) {
 
   const tabName = getTabName(msgEl);
 
+  // チャットタブ外の要素（マーカーパネル等）は通知しない
+  if (!tabName) return false;
+
   if (settings.tabFilter === 'main-only' && tabName !== 'メイン') return false;
   if (settings.tabFilter === 'main-and-chat' && tabName !== 'メイン' && tabName !== '雑談') return false;
 
@@ -176,9 +179,15 @@ initObserver.observe(document.body, { childList: true, subtree: true });
 let lastNotifyTime = 0;
 const NOTIFY_COOLDOWN_MS = 500;
 
+// 再レンダリング検知: 一度に大量のメッセージが追加された場合は
+// シーン切替等による再描画とみなし通知をスキップする
+const RERENDER_THRESHOLD = 3;
+
 const observer = new MutationObserver((mutations) => {
   if (!initialized) return;
 
+  // まず今回追加された未知のメッセージを全て収集
+  const newMsgs = [];
   for (const mutation of mutations) {
     for (const node of mutation.addedNodes) {
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
@@ -188,18 +197,30 @@ const observer = new MutationObserver((mutations) => {
         : Array.from(node.querySelectorAll?.('.MuiListItemText-secondary') ?? []);
 
       for (const msg of msgs) {
-        if (knownMessages.has(msg)) continue;
-        knownMessages.add(msg);
-
-        if (shouldNotify(msg)) {
-          const now = Date.now();
-          if (now - lastNotifyTime >= NOTIFY_COOLDOWN_MS) {
-            lastNotifyTime = now;
-            playSound();
-          }
-          break;
+        if (!knownMessages.has(msg)) {
+          newMsgs.push(msg);
         }
       }
+    }
+  }
+
+  // 全て既知として登録
+  for (const msg of newMsgs) {
+    knownMessages.add(msg);
+  }
+
+  // 大量追加 = 再レンダリング（シーン切替等）→ 通知しない
+  if (newMsgs.length >= RERENDER_THRESHOLD) return;
+
+  // 少数の新着メッセージ → 通知判定
+  for (const msg of newMsgs) {
+    if (shouldNotify(msg)) {
+      const now = Date.now();
+      if (now - lastNotifyTime >= NOTIFY_COOLDOWN_MS) {
+        lastNotifyTime = now;
+        playSound();
+      }
+      break;
     }
   }
 });
