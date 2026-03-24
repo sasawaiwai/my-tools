@@ -147,6 +147,7 @@ body {
   gap: 8px;
   flex: 1;
   min-width: 200px;
+  max-width: 380px;
 }
 
 .color-label {
