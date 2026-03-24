@@ -312,8 +312,6 @@
   }
   #previewCanvas {
     display: block;
-    max-width: calc(100vw - 340px);
-    max-height: calc(100vh - 200px);
   }
   .preview-badge {
     position: absolute;
@@ -863,14 +861,27 @@ function renderFrame(ctx, t, w, h, s) {
 }
 
 // ── プレビューキャンバスセットアップ ──
+function getPreviewScale() {
+  const maxW = previewCanvas.parentElement
+    ? previewCanvas.parentElement.clientWidth - 2
+    : window.innerWidth - 340;
+  const maxH = window.innerHeight - 200;
+  return Math.min(1, maxW / state.canvasW, maxH / state.canvasH);
+}
+
 function setupCanvas() {
-  previewCanvas.width = state.canvasW;
-  previewCanvas.height = state.canvasH;
+  const scale = getPreviewScale();
+  const dw = Math.max(1, Math.floor(state.canvasW * scale));
+  const dh = Math.max(1, Math.floor(state.canvasH * scale));
+  previewCanvas.width  = dw;
+  previewCanvas.height = dh;
+  previewCanvas.style.width  = dw + 'px';
+  previewCanvas.style.height = dh + 'px';
 }
 
 function redraw() {
   setupCanvas();
-  renderFrame(previewCtx, animT, state.canvasW, state.canvasH, {...state});
+  renderFrame(previewCtx, animT, previewCanvas.width, previewCanvas.height, {...state});
 }
 
 // ── アニメーション ──
