@@ -491,7 +491,7 @@
       <div class="shape-grid">
         <div class="shape-btn active" data-shape="circle" data-tip="円">●</div>
         <div class="shape-btn" data-shape="square" data-tip="四角">■</div>
-        <div class="shape-btn" data-shape="triangle" data-tip="三角">▲</div>
+        <div class="shape-btn" data-shape="heart" data-tip="ハート">♥</div>
         <div class="shape-btn" data-shape="diamond" data-tip="ひし形">◆</div>
         <div class="shape-btn" data-shape="star" data-tip="星">★</div>
         <div class="shape-btn" data-shape="cross" data-tip="十字">✚</div>
@@ -775,11 +775,10 @@ function drawShape(ctx, shape, cx, cy, r) {
     case 'square':
       ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
       break;
-    case 'triangle': {
-      const h = r * Math.sqrt(3);
-      ctx.moveTo(cx, cy - r * 1.15);
-      ctx.lineTo(cx + h * 0.667, cy + r * 0.577);
-      ctx.lineTo(cx - h * 0.667, cy + r * 0.577);
+    case 'heart': {
+      ctx.moveTo(cx, cy + r * 0.8);
+      ctx.bezierCurveTo(cx - r * 2, cy - r * 0.2, cx - r, cy - r * 1.2, cx, cy - r * 0.4);
+      ctx.bezierCurveTo(cx + r, cy - r * 1.2, cx + r * 2, cy - r * 0.2, cx, cy + r * 0.8);
       ctx.closePath();
       ctx.fill();
       break;
