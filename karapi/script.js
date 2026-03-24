@@ -740,23 +740,65 @@ function getCurrentMode() {
 // カラーピッカー ↔ HEXテキスト同期
 // ────────────────────────────────────────────
 
-function setupColorSync(pickerId, hexId) {
+/** スライダーの値をHEXから更新する */
+function updateSlidersFromHex(slidersContainer, hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+  ['r', 'g', 'b'].forEach(ch => {
+    const slider = slidersContainer.querySelector('[data-channel="' + ch + '"]');
+    const valDisplay = slidersContainer.querySelector('[data-channel-value="' + ch + '"]');
+    if (slider) slider.value = rgb[ch];
+    if (valDisplay) valDisplay.textContent = rgb[ch];
+  });
+}
+
+/** HEXをスライダーのRGB値から生成する */
+function hexFromSliders(slidersContainer) {
+  const r = parseInt(slidersContainer.querySelector('[data-channel="r"]').value);
+  const g = parseInt(slidersContainer.querySelector('[data-channel="g"]').value);
+  const b = parseInt(slidersContainer.querySelector('[data-channel="b"]').value);
+  return rgbToHex(r, g, b);
+}
+
+function setupColorSync(pickerId, hexId, targetNum) {
   const picker = document.getElementById(pickerId);
   const hexInput = document.getElementById(hexId);
+  const slidersContainer = document.querySelector('.rgb-sliders[data-target="' + targetNum + '"]');
 
+  // ピッカー → HEX + スライダー
   picker.addEventListener('input', () => {
     hexInput.value = picker.value;
     hexInput.classList.remove('is-error');
     hideError();
+    if (slidersContainer) updateSlidersFromHex(slidersContainer, picker.value);
   });
 
+  // HEXテキスト → ピッカー + スライダー
   hexInput.addEventListener('input', () => {
     const val = hexInput.value.trim();
     if (isValidHex(val)) {
-      picker.value = normalizeHex(val);
+      const normalized = normalizeHex(val);
+      picker.value = normalized;
       hexInput.classList.remove('is-error');
+      if (slidersContainer) updateSlidersFromHex(slidersContainer, normalized);
     }
   });
+
+  // スライダー → HEX + ピッカー
+  if (slidersContainer) {
+    slidersContainer.querySelectorAll('.rgb-slider').forEach(slider => {
+      slider.addEventListener('input', () => {
+        const ch = slider.dataset.channel;
+        const valDisplay = slidersContainer.querySelector('[data-channel-value="' + ch + '"]');
+        if (valDisplay) valDisplay.textContent = slider.value;
+        const hex = hexFromSliders(slidersContainer);
+        hexInput.value = hex;
+        picker.value = hex;
+        hexInput.classList.remove('is-error');
+        hideError();
+      });
+    });
+  }
 }
 
 
@@ -765,9 +807,9 @@ function setupColorSync(pickerId, hexId) {
 // ────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  setupColorSync('picker1', 'hex1');
-  setupColorSync('picker2', 'hex2');
-  setupColorSync('picker3', 'hex3');
+  setupColorSync('picker1', 'hex1', '1');
+  setupColorSync('picker2', 'hex2', '2');
+  setupColorSync('picker3', 'hex3', '3');
 
   // タブ切り替え
   document.querySelectorAll('.tab').forEach(tab => {

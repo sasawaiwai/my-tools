@@ -54,11 +54,28 @@
       <!-- 1色モード -->
       <div id="input-one" class="color-inputs">
         <div class="color-input-group">
-          <label class="color-label" for="hex1">ベースカラー</label>
+          <label class="color-label">ベースカラー</label>
           <div class="color-input-row">
             <input type="color" id="picker1" class="color-picker" value="#4a90e2" aria-label="カラーピッカー1">
             <input type="text"  id="hex1"    class="hex-input"    value="#4a90e2"
                    placeholder="#000000" maxlength="7" spellcheck="false">
+          </div>
+          <div class="rgb-sliders" data-target="1">
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--r">R</span>
+              <input type="range" class="rgb-slider rgb-slider--r" data-channel="r" min="0" max="255" value="74">
+              <span class="rgb-slider-value" data-channel-value="r">74</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--g">G</span>
+              <input type="range" class="rgb-slider rgb-slider--g" data-channel="g" min="0" max="255" value="144">
+              <span class="rgb-slider-value" data-channel-value="g">144</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--b">B</span>
+              <input type="range" class="rgb-slider rgb-slider--b" data-channel="b" min="0" max="255" value="226">
+              <span class="rgb-slider-value" data-channel-value="b">226</span>
+            </div>
           </div>
         </div>
       </div>
@@ -66,19 +83,53 @@
       <!-- 2色モード（初期非表示） -->
       <div id="input-two" class="color-inputs hidden">
         <div class="color-input-group">
-          <label class="color-label" for="hex2">カラー 1</label>
+          <label class="color-label">カラー 1</label>
           <div class="color-input-row">
             <input type="color" id="picker2" class="color-picker" value="#4a90e2" aria-label="カラーピッカー2">
             <input type="text"  id="hex2"    class="hex-input"    value="#4a90e2"
                    placeholder="#000000" maxlength="7" spellcheck="false">
           </div>
+          <div class="rgb-sliders" data-target="2">
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--r">R</span>
+              <input type="range" class="rgb-slider rgb-slider--r" data-channel="r" min="0" max="255" value="74">
+              <span class="rgb-slider-value" data-channel-value="r">74</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--g">G</span>
+              <input type="range" class="rgb-slider rgb-slider--g" data-channel="g" min="0" max="255" value="144">
+              <span class="rgb-slider-value" data-channel-value="g">144</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--b">B</span>
+              <input type="range" class="rgb-slider rgb-slider--b" data-channel="b" min="0" max="255" value="226">
+              <span class="rgb-slider-value" data-channel-value="b">226</span>
+            </div>
+          </div>
         </div>
         <div class="color-input-group">
-          <label class="color-label" for="hex3">カラー 2</label>
+          <label class="color-label">カラー 2</label>
           <div class="color-input-row">
             <input type="color" id="picker3" class="color-picker" value="#e27a4a" aria-label="カラーピッカー3">
             <input type="text"  id="hex3"    class="hex-input"    value="#e27a4a"
                    placeholder="#000000" maxlength="7" spellcheck="false">
+          </div>
+          <div class="rgb-sliders" data-target="3">
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--r">R</span>
+              <input type="range" class="rgb-slider rgb-slider--r" data-channel="r" min="0" max="255" value="226">
+              <span class="rgb-slider-value" data-channel-value="r">226</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--g">G</span>
+              <input type="range" class="rgb-slider rgb-slider--g" data-channel="g" min="0" max="255" value="122">
+              <span class="rgb-slider-value" data-channel-value="g">122</span>
+            </div>
+            <div class="rgb-slider-row">
+              <span class="rgb-slider-label rgb-slider-label--b">B</span>
+              <input type="range" class="rgb-slider rgb-slider--b" data-channel="b" min="0" max="255" value="74">
+              <span class="rgb-slider-value" data-channel-value="b">74</span>
+            </div>
           </div>
         </div>
       </div>
