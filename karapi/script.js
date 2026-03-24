@@ -341,11 +341,15 @@ function generatePalettesForOneColor(hex) {
 }
 
 /**
- * 2色モード：2つのベースカラーから4つの3色パレットを生成
+ * 2色モード：2つのベースカラーから8つの3色パレットを生成
  *   1. なめらかブリッジ — 2色を柔らかくつなぐ中間色
  *   2. ポップアクセント — 直角色相の鮮やかな差し色
  *   3. バランス補完 — 色相環の反対側で均等バランス
  *   4. 落ち着きグラウンド — 2色を引き立てるニュートラル
+ *   5. ゴールデンリンク — 黄金角で中間から外れた意外な色
+ *   6. クラッシュスパイス — 2色どちらとも違う強烈なアクセント
+ *   7. テンペラチャーシフト — 2色の平均色温度の真逆を突く
+ *   8. ジュエルドロップ — 宝石のような深く鮮やかな1色を添える
  */
 function generatePalettesForTwoColors(hex1, hex2) {
   const hsl1 = hexToHsl(hex1);
@@ -422,6 +426,82 @@ function generatePalettesForTwoColors(hex1, hex2) {
       colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
       suggested: [2],
       colorLabels: ['入力色1', '入力色2', goLight ? 'ライトベース' : 'ダークベース']
+    });
+  }
+
+  // 5. ゴールデンリンク
+  // 中間色相から黄金角（137.5°）ずらした意外な色
+  {
+    const c = {
+      h: clampHue(hMid + 137.5),
+      s: clamp(sMid * 0.85, 30, 70),
+      l: clamp(lMid + 5, 42, 65)
+    };
+    palettes.push({
+      label: 'ゴールデンリンク',
+      reason: '黄金角で導き出した予測不能な第3の色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'ゴールデン']
+    });
+  }
+
+  // 6. クラッシュスパイス
+  // 2色のどちらとも離れた位置から超高彩度の色をぶつける
+  {
+    const hDiff = ((hsl2.h - hsl1.h + 540) % 360) - 180;
+    const perpH = clampHue(hMid + (Math.abs(hDiff) < 60 ? 90 : 60));
+    const c = {
+      h: perpH,
+      s: clamp(Math.max(sMid, 55) * 1.3, 65, 100),
+      l: clamp(48, 40, 55)
+    };
+    palettes.push({
+      label: 'クラッシュスパイス',
+      reason: '2色とは全く違う強烈な刺激色を差し込む冒険配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'スパイス']
+    });
+  }
+
+  // 7. テンペラチャーシフト
+  // 2色の平均が暖色なら寒色、寒色なら暖色を提案
+  {
+    const avgH = hMid;
+    const isWarm = (avgH >= 0 && avgH < 70) || avgH >= 300;
+    const targetH = isWarm ? clampHue(210 + (hsl1.h - hsl2.h) * 0.1) : clampHue(30 + (hsl1.h - hsl2.h) * 0.1);
+    const c = {
+      h: targetH,
+      s: clamp(Math.max(sMid, 38) * 0.95, 35, 75),
+      l: clamp(lMid, 35, 58)
+    };
+    palettes.push({
+      label: 'テンペラチャーシフト',
+      reason: isWarm
+        ? '暖色ペアに寒色を差して意外性を生む配色'
+        : '寒色ペアに暖色を差して意外性を生む配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', isWarm ? 'クールシフト' : 'ウォームシフト']
+    });
+  }
+
+  // 8. ジュエルドロップ
+  // 宝石のような深く鮮やかな1色。2色から最も遠い色相領域から選ぶ
+  {
+    const awayH = clampHue(hMid + 150);
+    const c = {
+      h: awayH,
+      s: clamp(Math.max(sMid, 50) * 1.15, 55, 90),
+      l: clamp(32, 25, 40)
+    };
+    palettes.push({
+      label: 'ジュエルドロップ',
+      reason: '宝石のように深く輝く1色で配色に高級感を加える',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'ジュエル']
     });
   }
 
