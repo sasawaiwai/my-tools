@@ -492,7 +492,8 @@
         <div class="shape-btn active" data-shape="circle" data-tip="円">●</div>
         <div class="shape-btn" data-shape="square" data-tip="四角">■</div>
         <div class="shape-btn" data-shape="heart" data-tip="ハート">♥</div>
-        <div class="shape-btn" data-shape="diamond" data-tip="ひし形">◆</div>
+        <div class="shape-btn" id="customShapeBtn" data-shape="custom" data-tip="透過PNG/SVGを読み込む">＋</div>
+        <input type="file" id="customShapeInput" accept="image/png,image/svg+xml" style="display:none">
         <div class="shape-btn" data-shape="star" data-tip="星">★</div>
         <div class="shape-btn" data-shape="cross" data-tip="十字">✚</div>
         <div class="shape-btn" data-shape="ring" data-tip="リング">○</div>
@@ -645,6 +646,7 @@ const state = {
   easing: 'ease_in',
   loopNum: 0,  // 0=無限, 1=1回
   mode: 'out', // 'out'=通常, 'in'=反転（destination-out）
+  customShapeImg: null,
 };
 
 // ── DOM ──
@@ -735,6 +737,32 @@ bindSelector('.dir-btn[data-dir]','direction','dir');
 bindSelector('.ease-btn[data-ease]','easing', 'ease');
 bindSelector('[data-loop]',       'loopNum',  'loop', parseInt, false);
 bindSelector('[data-mode]',       'mode',     'mode', v => v,   true);
+
+// ── カスタムシェイプ（画像読み込み） ──
+document.getElementById('customShapeBtn').addEventListener('click', () => {
+  document.getElementById('customShapeInput').click();
+});
+document.getElementById('customShapeInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    state.customShapeImg = img;
+    state.shape = 'custom';
+    document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('customShapeBtn');
+    btn.classList.add('active');
+    btn.style.backgroundImage = `url(${url})`;
+    btn.style.backgroundSize = 'contain';
+    btn.style.backgroundRepeat = 'no-repeat';
+    btn.style.backgroundPosition = 'center';
+    btn.textContent = '';
+    redraw();
+  };
+  img.src = url;
+});
+
 function applyEasing(t, type) {
   t = Math.max(0, Math.min(1, t));
   switch(type) {
@@ -783,14 +811,10 @@ function drawShape(ctx, shape, cx, cy, r) {
       ctx.fill();
       break;
     }
-    case 'diamond':
-      ctx.moveTo(cx, cy - r * 1.2);
-      ctx.lineTo(cx + r, cy);
-      ctx.lineTo(cx, cy + r * 1.2);
-      ctx.lineTo(cx - r, cy);
-      ctx.closePath();
-      ctx.fill();
-      break;
+    case 'custom':
+      if (!state.customShapeImg) return;
+      ctx.drawImage(state.customShapeImg, cx - r, cy - r, r * 2, r * 2);
+      return;
     case 'star': {
       const n = 5;
       for (let i = 0; i < n * 2; i++) {
