@@ -862,9 +862,7 @@ function renderFrame(ctx, t, w, h, s) {
 
 // ── プレビューキャンバスセットアップ ──
 function getPreviewScale() {
-  const maxW = previewCanvas.parentElement
-    ? previewCanvas.parentElement.clientWidth - 2
-    : window.innerWidth - 340;
+  const maxW = window.innerWidth - 300; // サイドバー260px + 余白
   const maxH = window.innerHeight - 200;
   return Math.min(1, maxW / state.canvasW, maxH / state.canvasH);
 }
