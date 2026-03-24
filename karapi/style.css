@@ -206,6 +206,82 @@ body {
 }
 
 /* ────────────────────────────────────────────
+   RGBスライダー
+──────────────────────────────────────────── */
+.rgb-sliders {
+  margin-top: 4px;
+}
+
+.rgb-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+}
+
+.rgb-slider-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.rgb-slider-label--r { color: #d94b3a; }
+.rgb-slider-label--g { color: #2a9e60; }
+.rgb-slider-label--b { color: #4a7fe8; }
+
+.rgb-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.rgb-slider--r { background: linear-gradient(to right, #000, #ff0000); }
+.rgb-slider--g { background: linear-gradient(to right, #000, #00cc55); }
+.rgb-slider--b { background: linear-gradient(to right, #000, #4488ff); }
+
+.rgb-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: border-color var(--transition);
+}
+
+.rgb-slider::-webkit-slider-thumb:hover {
+  border-color: #999;
+}
+
+.rgb-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+
+.rgb-slider-value {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-sub);
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ────────────────────────────────────────────
    エラーメッセージ
 ──────────────────────────────────────────── */
 .error-msg {
