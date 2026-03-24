@@ -276,9 +276,9 @@ body {
 }
 
 .suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 
 /* ────────────────────────────────────────────
@@ -288,27 +288,27 @@ body {
   background: var(--color-card);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
-  padding: 18px 20px;
+  padding: 14px 14px;
 }
 
 .suggestion-group__label {
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .suggestion-group__reason {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   color: var(--color-text-sub);
-  margin-bottom: 14px;
-  line-height: 1.5;
+  margin-bottom: 10px;
+  line-height: 1.45;
 }
 
 .suggestion-group__cards {
   display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ────────────────────────────────────────────
@@ -568,16 +568,13 @@ body {
     min-width: unset;
   }
 
-  .suggestion-group {
-    padding: 14px 14px;
-  }
-
-  .suggestion-group__cards {
+  .suggestions {
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
 
-  .suggestion-card {
-    min-width: 120px;
+  .suggestion-group {
+    padding: 12px 12px;
   }
 
   .previews {
@@ -592,7 +589,7 @@ body {
 }
 
 @media (max-width: 360px) {
-  .suggestion-group__cards {
-    flex-direction: column;
+  .suggestions {
+    grid-template-columns: 1fr;
   }
 }
