@@ -600,6 +600,14 @@
           <span class="icon">📦</span> Export ZIP
         </button>
       </div>
+      <div class="export-card">
+        <h3>Both Patterns</h3>
+        <p>通常（フェードアウト）と逆パターン（フェードイン）を同時に出力します。</p>
+        <div class="gen-status" id="bothStatus"></div>
+        <button class="btn" id="exportBothBtn" data-tip="通常＋逆パターンのAPNGを同時に書き出す">
+          <span class="icon">⬇</span> Export Both
+        </button>
+      </div>
     </div>
   </main>
 </div>
@@ -929,10 +937,7 @@ function generateFrames() {
 // ── 連番PNG→ZIP出力 ──
 document.getElementById('exportZipBtn').addEventListener('click', async () => {
   const statusEl = document.getElementById('zipStatus');
-  const apngBtn = document.getElementById('exportApngBtn');
-  const zipBtn = document.getElementById('exportZipBtn');
-  apngBtn.disabled = true;
-  zipBtn.disabled = true;
+  setExportBtns(true);
   statusEl.className = 'gen-status active';
   statusEl.textContent = 'フレーム生成中...';
 
@@ -972,8 +977,7 @@ document.getElementById('exportZipBtn').addEventListener('click', async () => {
     statusEl.textContent = '生成に失敗しました。設定を確認してください。';
     console.error(e);
   } finally {
-    apngBtn.disabled = false;
-    zipBtn.disabled = false;
+    setExportBtns(false);
   }
 });
 
@@ -1017,13 +1021,36 @@ function patchApngLoop(apngBuf, numPlays) {
   return buf.buffer;
 }
 
+// ── 全書き出しボタンの一括制御 ──
+function setExportBtns(disabled) {
+  ['exportApngBtn','exportZipBtn','exportBothBtn'].forEach(id => {
+    document.getElementById(id).disabled = disabled;
+  });
+}
+
+// ── フレーム配列→APNGバイナリ変換（共通処理） ──
+function framesToApng(frames) {
+  const msPerFrame = Math.round(1000 / state.fps);
+  const delays = frames.map(() => msPerFrame);
+  const rawFrames = frames.map(fd => fd.data.buffer.slice(fd.data.byteOffset, fd.data.byteOffset + fd.data.byteLength));
+  return patchApngLoop(UPNG.encode(rawFrames, state.canvasW, state.canvasH, 0, delays), state.loopNum);
+}
+
+// ── APNGをダウンロード ──
+function downloadApng(apngBuf, filename) {
+  const blob = new Blob([apngBuf], { type: 'image/png' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ── APNG出力 ──
 document.getElementById('exportApngBtn').addEventListener('click', async () => {
   const statusEl = document.getElementById('apngStatus');
-  const apngBtn = document.getElementById('exportApngBtn');
-  const zipBtn = document.getElementById('exportZipBtn');
-  apngBtn.disabled = true;
-  zipBtn.disabled = true;
+  setExportBtns(true);
   statusEl.className = 'gen-status active';
   statusEl.textContent = 'フレーム生成中...';
 
@@ -1034,30 +1061,12 @@ document.getElementById('exportApngBtn').addEventListener('click', async () => {
       throw new Error('UPNG.jsの読み込みに失敗しました。ネット接続を確認してください。');
     }
 
-    const { frames, totalFrames, w, h } = generateFrames();
-    const delays = [];
-    const msPerFrame = Math.round(1000 / state.fps);
-
+    const { frames, totalFrames } = generateFrames();
     statusEl.textContent = 'APNGエンコード中...';
     await new Promise(r => setTimeout(r, 10));
 
-    const rawFrames = frames.map(fd => {
-      const buf = fd.data.buffer.slice(
-        fd.data.byteOffset,
-        fd.data.byteOffset + fd.data.byteLength
-      );
-      delays.push(msPerFrame);
-      return buf;
-    });
-
-    const apngBuf = patchApngLoop(UPNG.encode(rawFrames, w, h, 0, delays), state.loopNum);
-    const blob = new Blob([apngBuf], { type: 'image/png' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transition_${state.shape}_${state.direction}.png`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const apngBuf = framesToApng(frames);
+    downloadApng(apngBuf, `transition_${state.shape}_${state.direction}.png`);
 
     const kb = (apngBuf.byteLength / 1024).toFixed(1);
     const loopLabel = state.loopNum === 0 ? '無限ループ' : '1回再生';
@@ -1068,8 +1077,43 @@ document.getElementById('exportApngBtn').addEventListener('click', async () => {
     statusEl.textContent = '生成に失敗しました。設定を確認してください。';
     console.error(e);
   } finally {
-    apngBtn.disabled = false;
-    zipBtn.disabled = false;
+    setExportBtns(false);
+  }
+});
+
+// ── 通常＋逆パターン同時出力 ──
+document.getElementById('exportBothBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('bothStatus');
+  setExportBtns(true);
+  statusEl.className = 'gen-status active';
+  statusEl.textContent = 'フレーム生成中...';
+
+  await new Promise(r => setTimeout(r, 10));
+
+  try {
+    if (typeof UPNG === 'undefined') {
+      throw new Error('UPNG.jsの読み込みに失敗しました。ネット接続を確認してください。');
+    }
+
+    const { frames, totalFrames } = generateFrames();
+    const base = `transition_${state.shape}_${state.direction}`;
+
+    statusEl.textContent = '通常パターンをエンコード中...';
+    await new Promise(r => setTimeout(r, 10));
+    downloadApng(framesToApng(frames), `${base}_out.png`);
+
+    statusEl.textContent = '逆パターンをエンコード中...';
+    await new Promise(r => setTimeout(r, 10));
+    downloadApng(framesToApng([...frames].reverse()), `${base}_in.png`);
+
+    statusEl.className = 'gen-status done';
+    statusEl.textContent = `✓ 2ファイル出力完了 (${totalFrames}f × 2)`;
+  } catch(e) {
+    statusEl.className = 'gen-status error';
+    statusEl.textContent = '生成に失敗しました。設定を確認してください。';
+    console.error(e);
+  } finally {
+    setExportBtns(false);
   }
 });
 
