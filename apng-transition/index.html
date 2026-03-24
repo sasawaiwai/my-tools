@@ -282,6 +282,11 @@
   .mode-btn:hover { color: var(--text); border-color: var(--text-dim); }
   .mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,92,0,.1); }
 
+  .field.disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
   /* ── カスタムツールチップ ── */
   [data-tip] { position: relative; }
   [data-tip]::after {
@@ -774,7 +779,7 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 function updateBgVisibility() {
   const hasBg = state.mode === 'bg_to_shape' || state.mode === 'shape_to_bg';
   ['bgColorPicker', 'bgAlphaRow'].forEach(id => {
-    document.getElementById(id).style.display = hasBg ? '' : 'none';
+    document.getElementById(id).classList.toggle('disabled', !hasBg);
   });
 }
 updateBgVisibility();
