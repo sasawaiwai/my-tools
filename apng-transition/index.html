@@ -825,7 +825,7 @@ function renderFrame(ctx, t, w, h, s) {
 
   const cellW = w / s.cols;
   const cellH = h / s.rows;
-  const maxR = (Math.sqrt(cellW * cellW + cellH * cellH) / 2) * (s.maxSz / 100);
+  const maxR = (Math.sqrt(cellW * cellW + cellH * cellH) / 2) * (s.maxSz / 100) * 3;
   const spread = s.spread;
   const colsM1 = Math.max(s.cols - 1, 1);
   const rowsM1 = Math.max(s.rows - 1, 1);
@@ -844,12 +844,7 @@ function renderFrame(ctx, t, w, h, s) {
       const cx = (c + 0.5) * cellW;
       const cy = (r + 0.5) * cellH;
 
-      if (localT >= 1.0) {
-        // 完全に到達したセルはベタ塗り（図形の形に関わらず隙間なし）
-        ctx.fillRect(c * cellW, r * cellH, cellW, cellH);
-      } else {
-        drawShape(ctx, s.shape, cx, cy, radius);
-      }
+      drawShape(ctx, s.shape, cx, cy, radius);
     }
   }
 
