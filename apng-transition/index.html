@@ -516,6 +516,10 @@
         <label data-tip="図形の最大サイズ（100%で隙間なし）">Shape Size<span class="val" id="maxSzVal">100%</span></label>
         <input type="range" id="maxSz" min="50" max="150" value="100">
       </div>
+      <div class="field">
+        <label data-tip="図形の回転角度">Rotation<span class="val" id="rotationVal">0°</span></label>
+        <input type="range" id="rotation" min="0" max="360" value="0">
+      </div>
     </div>
 
     <!-- アニメーション -->
@@ -640,6 +644,7 @@ const state = {
   shape: 'circle',
   cols: 12, rows: 8,
   maxSz: 100,   // % of diagonal half
+  rotation: 0,
   duration: 1.0, fps: 12,
   spread: 0.6,
   direction: 'uniform',
@@ -693,6 +698,7 @@ function formatVal(key, v) {
   if (key === 'duration') return v.toFixed(1) + 's';
   if (key === 'fps') return v;
   if (key === 'maxSz') return v + '%';
+  if (key === 'rotation') return v + '°';
   if (key === 'spread') return Math.round(v * 100) + '%';
   return v;
 }
@@ -700,6 +706,7 @@ function formatVal(key, v) {
 bindRange('cols', 'cols', 'colsVal', Math.round);
 bindRange('rows', 'rows', 'rowsVal', Math.round);
 bindRange('maxSz', 'maxSz', 'maxSzVal', v => Math.round(v));
+bindRange('rotation', 'rotation', 'rotationVal', Math.round);
 bindRange('duration', 'duration', 'durVal', v => v / 10);
 bindRange('fps', 'fps', 'fpsVal', Math.round);
 bindRange('spread', 'spread', 'spreadVal', v => v / 100);
@@ -792,36 +799,40 @@ function getWeight(c, r, colsM1, rowsM1, dir) {
 }
 
 // ── 図形描画 ──
-function drawShape(ctx, shape, cx, cy, r) {
+function drawShape(ctx, shape, cx, cy, r, rotation) {
   if (r <= 0) return;
+  ctx.save();
+  ctx.translate(cx, cy);
+  if (rotation) ctx.rotate(rotation * Math.PI / 180);
   ctx.beginPath();
   switch(shape) {
     case 'circle':
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fill();
       break;
     case 'square':
-      ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.fillRect(-r, -r, r * 2, r * 2);
       break;
     case 'heart': {
-      ctx.moveTo(cx, cy + r * 0.8);
-      ctx.bezierCurveTo(cx - r * 2, cy - r * 0.2, cx - r, cy - r * 1.2, cx, cy - r * 0.4);
-      ctx.bezierCurveTo(cx + r, cy - r * 1.2, cx + r * 2, cy - r * 0.2, cx, cy + r * 0.8);
+      ctx.moveTo(0, r * 0.8);
+      ctx.bezierCurveTo(-r * 2, -r * 0.2, -r, -r * 1.2, 0, -r * 0.4);
+      ctx.bezierCurveTo(r, -r * 1.2, r * 2, -r * 0.2, 0, r * 0.8);
       ctx.closePath();
       ctx.fill();
       break;
     }
     case 'custom':
-      if (!state.customShapeImg) return;
-      ctx.drawImage(state.customShapeImg, cx - r, cy - r, r * 2, r * 2);
+      if (!state.customShapeImg) { ctx.restore(); return; }
+      ctx.drawImage(state.customShapeImg, -r, -r, r * 2, r * 2);
+      ctx.restore();
       return;
     case 'star': {
       const n = 5;
       for (let i = 0; i < n * 2; i++) {
         const ang = (i * Math.PI / n) - Math.PI / 2;
         const rad = i % 2 === 0 ? r : r * 0.4;
-        i === 0 ? ctx.moveTo(cx + rad * Math.cos(ang), cy + rad * Math.sin(ang))
-                : ctx.lineTo(cx + rad * Math.cos(ang), cy + rad * Math.sin(ang));
+        i === 0 ? ctx.moveTo(rad * Math.cos(ang), rad * Math.sin(ang))
+                : ctx.lineTo(rad * Math.cos(ang), rad * Math.sin(ang));
       }
       ctx.closePath();
       ctx.fill();
@@ -829,26 +840,27 @@ function drawShape(ctx, shape, cx, cy, r) {
     }
     case 'cross': {
       const t = r * 0.38;
-      ctx.fillRect(cx - r, cy - t, r * 2, t * 2);
-      ctx.fillRect(cx - t, cy - r, t * 2, r * 2);
+      ctx.fillRect(-r, -t, r * 2, t * 2);
+      ctx.fillRect(-t, -r, t * 2, r * 2);
       break;
     }
     case 'ring':
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2, true);
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.arc(0, 0, r * 0.55, 0, Math.PI * 2, true);
       ctx.fill('evenodd');
       break;
     case 'hex': {
       for (let i = 0; i < 6; i++) {
         const ang = (i * Math.PI / 3) - Math.PI / 6;
-        i === 0 ? ctx.moveTo(cx + r * Math.cos(ang), cy + r * Math.sin(ang))
-                : ctx.lineTo(cx + r * Math.cos(ang), cy + r * Math.sin(ang));
+        i === 0 ? ctx.moveTo(r * Math.cos(ang), r * Math.sin(ang))
+                : ctx.lineTo(r * Math.cos(ang), r * Math.sin(ang));
       }
       ctx.closePath();
       ctx.fill();
       break;
     }
   }
+  ctx.restore();
 }
 
 function hexToRgba(hex, alpha) {
@@ -882,7 +894,7 @@ function renderFrame(ctx, t, w, h, s) {
         const start = weight * (1 - spread);
         const localT = Math.max(0, Math.min(1, (t - start) / spread));
         const easedT = applyEasing(localT, s.easing);
-        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT);
+        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT, s.rotation);
       }
     }
     ctx.globalCompositeOperation = 'source-over';
@@ -902,7 +914,7 @@ function renderFrame(ctx, t, w, h, s) {
         const start = weight * (1 - spread);
         const localT = Math.max(0, Math.min(1, (t - start) / spread));
         const easedT = applyEasing(localT, s.easing);
-        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT);
+        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT, s.rotation);
       }
     }
 
