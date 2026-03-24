@@ -267,6 +267,21 @@
   .ease-btn:hover { color: var(--text); border-color: var(--text-dim); }
   .ease-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,92,0,.1); }
 
+  .mode-btn {
+    padding: 8px 4px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all .15s;
+  }
+  .mode-btn:hover { color: var(--text); border-color: var(--text-dim); }
+  .mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(255,92,0,.1); }
+
   /* ── カスタムツールチップ ── */
   [data-tip] { position: relative; }
   [data-tip]::after {
@@ -447,6 +462,17 @@
   <!-- ── サイドバー ── -->
   <aside class="sidebar">
 
+    <!-- モード -->
+    <div class="section">
+      <div class="section-title" data-tip="トランジションの種類を選ぶ">Mode</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
+        <div class="mode-btn active" data-mode="transparent_to_shape" data-tip="透明な画面からシェイプ色で塗りつぶす">透明→塗り</div>
+        <div class="mode-btn" data-mode="bg_to_shape" data-tip="背景色からシェイプ色で塗りつぶす">背景→塗り</div>
+        <div class="mode-btn" data-mode="shape_to_transparent" data-tip="シェイプ色から透明な穴が広がる">塗り→透明</div>
+        <div class="mode-btn" data-mode="shape_to_bg" data-tip="シェイプ色から背景色で塗りつぶす">塗り→背景</div>
+      </div>
+    </div>
+
     <!-- キャンバスサイズ -->
     <div class="section">
       <div class="section-title" data-tip="出力画像のサイズ（px）">Canvas Size</div>
@@ -464,24 +490,24 @@
 
     <!-- カラー -->
     <div class="section">
-      <div class="section-title" data-tip="背景色と図形の色・透明度">Colors</div>
+      <div class="section-title" data-tip="シェイプ色・背景色の設定">Colors</div>
       <div class="input-row">
         <div class="field">
-          <label>Background</label>
-          <input type="color" id="bgColor" value="#ffffff">
-        </div>
-        <div class="field">
-          <label>Shape</label>
+          <label>塗り色</label>
           <input type="color" id="shapeColor" value="#000000">
         </div>
-      </div>
-      <div class="field" style="margin-top:8px;">
-        <label>BG Alpha<span class="val" id="bgAlphaVal">100%</span></label>
-        <input type="range" id="bgAlpha" min="0" max="100" value="100">
+        <div class="field" id="bgColorPicker">
+          <label>背景色</label>
+          <input type="color" id="bgColor" value="#ffffff">
+        </div>
       </div>
       <div class="field">
-        <label>Shape Alpha<span class="val" id="shapeAlphaVal">100%</span></label>
+        <label>塗り Alpha<span class="val" id="shapeAlphaVal">100%</span></label>
         <input type="range" id="shapeAlpha" min="0" max="100" value="100">
+      </div>
+      <div class="field" id="bgAlphaRow">
+        <label>背景 Alpha<span class="val" id="bgAlphaVal">100%</span></label>
+        <input type="range" id="bgAlpha" min="0" max="100" value="100">
       </div>
     </div>
 
@@ -571,14 +597,6 @@
       </div>
     </div>
 
-    <!-- モード -->
-    <div class="section">
-      <div class="section-title" data-tip="トランジションの方向モード">Mode</div>
-      <div class="easing-row">
-        <div class="ease-btn active" data-mode="out" data-tip="透明→図形が育って塗りつぶす（フェードアウト）">OUT</div>
-        <div class="ease-btn" data-mode="in" data-tip="図形色で塗りつぶし→透明な穴が育つ（フェードイン）">IN</div>
-      </div>
-    </div>
 
   </aside>
 
@@ -650,7 +668,7 @@ const state = {
   direction: 'uniform',
   easing: 'ease_in',
   loopNum: 0,  // 0=無限, 1=1回
-  mode: 'out', // 'out'=通常, 'in'=反転（destination-out）
+  mode: 'transparent_to_shape',
   customShapeImg: null,
 };
 
@@ -743,7 +761,23 @@ bindSelector('.shape-btn',        'shape',    'shape');
 bindSelector('.dir-btn[data-dir]','direction','dir');
 bindSelector('.ease-btn[data-ease]','easing', 'ease');
 bindSelector('[data-loop]',       'loopNum',  'loop', parseInt, false);
-bindSelector('[data-mode]',       'mode',     'mode', v => v,   true);
+// modeボタンはbindSelectorを使わず手動でバインド（BG表示切り替えを同時に行うため）
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    updateBgVisibility();
+    redraw();
+  });
+});
+function updateBgVisibility() {
+  const hasBg = state.mode === 'bg_to_shape' || state.mode === 'shape_to_bg';
+  ['bgColorPicker', 'bgAlphaRow'].forEach(id => {
+    document.getElementById(id).style.display = hasBg ? '' : 'none';
+  });
+}
+updateBgVisibility();
 
 // ── カスタムシェイプ（画像読み込み） ──
 document.getElementById('customShapeBtn').addEventListener('click', () => {
@@ -880,49 +914,53 @@ function renderFrame(ctx, t, w, h, s) {
   const spread = s.spread;
   const colsM1 = Math.max(s.cols - 1, 1);
   const rowsM1 = Math.max(s.rows - 1, 1);
+  const shapeRgba = hexToRgba(s.shapeColor, s.shapeAlpha);
+  const bgRgba    = hexToRgba(s.bgColor, s.bgAlpha);
 
-  if (s.mode === 'in') {
-    // INモード: 図形色で全面塗りつぶし → 透明な穴を育てる
-    ctx.fillStyle = hexToRgba(s.shapeColor, s.shapeAlpha);
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-    for (let r = 0; r < s.rows; r++) {
-      for (let c = 0; c < s.cols; c++) {
-        const weight = getWeight(c, r, colsM1, rowsM1, s.direction);
+  function drawCells() {
+    for (let row = 0; row < s.rows; row++) {
+      for (let col = 0; col < s.cols; col++) {
+        const weight = getWeight(col, row, colsM1, rowsM1, s.direction);
         const start = weight * (1 - spread);
         const localT = Math.max(0, Math.min(1, (t - start) / spread));
         const easedT = applyEasing(localT, s.easing);
-        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT, s.rotation);
+        drawShape(ctx, s.shape, cx(col, cellW), cy(row, cellH), maxR * easedT, s.rotation);
       }
     }
-    ctx.globalCompositeOperation = 'source-over';
+  }
 
-    // t=1.0 なら完全透明
-    if (t >= 1.0) ctx.clearRect(0, 0, w, h);
+  switch(s.mode) {
+    case 'transparent_to_shape':
+      ctx.fillStyle = shapeRgba;
+      drawCells();
+      if (t >= 1.0) { ctx.fillStyle = shapeRgba; ctx.fillRect(0, 0, w, h); }
+      break;
 
-  } else {
-    // OUTモード（通常）: 背景を塗って図形を育てる
-    ctx.fillStyle = hexToRgba(s.bgColor, s.bgAlpha);
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.fillStyle = hexToRgba(s.shapeColor, s.shapeAlpha);
-    for (let r = 0; r < s.rows; r++) {
-      for (let c = 0; c < s.cols; c++) {
-        const weight = getWeight(c, r, colsM1, rowsM1, s.direction);
-        const start = weight * (1 - spread);
-        const localT = Math.max(0, Math.min(1, (t - start) / spread));
-        const easedT = applyEasing(localT, s.easing);
-        drawShape(ctx, s.shape, cx(c, cellW), cy(r, cellH), maxR * easedT, s.rotation);
-      }
-    }
-
-    // t=1.0 なら完全塗りつぶし
-    if (t >= 1.0) {
-      ctx.fillStyle = hexToRgba(s.shapeColor, s.shapeAlpha);
+    case 'bg_to_shape':
+      ctx.fillStyle = bgRgba;
       ctx.fillRect(0, 0, w, h);
-    }
+      ctx.fillStyle = shapeRgba;
+      drawCells();
+      if (t >= 1.0) { ctx.fillStyle = shapeRgba; ctx.fillRect(0, 0, w, h); }
+      break;
+
+    case 'shape_to_transparent':
+      ctx.fillStyle = shapeRgba;
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      drawCells();
+      ctx.globalCompositeOperation = 'source-over';
+      if (t >= 1.0) ctx.clearRect(0, 0, w, h);
+      break;
+
+    case 'shape_to_bg':
+      ctx.fillStyle = shapeRgba;
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = bgRgba;
+      drawCells();
+      if (t >= 1.0) { ctx.fillStyle = bgRgba; ctx.fillRect(0, 0, w, h); }
+      break;
   }
 }
 
@@ -1164,15 +1202,24 @@ document.getElementById('exportBothBtn').addEventListener('click', async () => {
 
     const base = `transition_${state.shape}_${state.direction}`;
 
-    statusEl.textContent = 'OUTパターンをエンコード中...';
-    await new Promise(r => setTimeout(r, 10));
-    const { frames: outFrames, totalFrames } = generateFrames({ ...state, mode: 'out' });
-    downloadApng(framesToApng(outFrames), `${base}_out.png`);
+    const reverseMode = {
+      transparent_to_shape: 'shape_to_transparent',
+      shape_to_transparent: 'transparent_to_shape',
+      bg_to_shape:          'shape_to_bg',
+      shape_to_bg:          'bg_to_shape',
+    };
+    const modeA = state.mode;
+    const modeB = reverseMode[state.mode];
 
-    statusEl.textContent = 'INパターンをエンコード中...';
+    statusEl.textContent = `${modeA} をエンコード中...`;
     await new Promise(r => setTimeout(r, 10));
-    const { frames: inFrames } = generateFrames({ ...state, mode: 'in' });
-    downloadApng(framesToApng(inFrames), `${base}_in.png`);
+    const { frames: framesA, totalFrames } = generateFrames({ ...state, mode: modeA });
+    downloadApng(framesToApng(framesA), `${base}_${modeA}.png`);
+
+    statusEl.textContent = `${modeB} をエンコード中...`;
+    await new Promise(r => setTimeout(r, 10));
+    const { frames: framesB } = generateFrames({ ...state, mode: modeB });
+    downloadApng(framesToApng(framesB), `${base}_${modeB}.png`);
 
     statusEl.className = 'gen-status done';
     statusEl.textContent = `✓ 2ファイル出力完了 (${totalFrames}f × 2)`;
