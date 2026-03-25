@@ -611,6 +611,31 @@ body {
 /* ────────────────────────────────────────────
    ユーティリティ
 ──────────────────────────────────────────── */
+/* ────────────────────────────────────────────
+   フッター
+──────────────────────────────────────────── */
+.footer {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-sub);
+}
+
+.footer a {
+  color: var(--color-text-sub);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+/* ────────────────────────────────────────────
+   ユーティリティ
+──────────────────────────────────────────── */
 .hidden {
   display: none !important;
 }
