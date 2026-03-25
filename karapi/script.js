@@ -337,6 +337,95 @@ function generatePalettesForOneColor(hex) {
     });
   }
 
+  // 9. サンセットグロウ
+  // 夕焼けのようなピンク〜オレンジの暖色グラデーション
+  {
+    const baseHue = s < 10 ? 15 : h; // 無彩色ならオレンジ基調
+    const c1 = {
+      h: clampHue(baseHue + 345), // ピンク寄り
+      s: clamp(Math.max(s, 55) * 1.1, 55, 85),
+      l: clamp(l > 50 ? 62 : 68, 58, 72)
+    };
+    const c2 = {
+      h: clampHue(baseHue + 20), // オレンジ寄り
+      s: clamp(Math.max(s, 50) * 1.0, 50, 80),
+      l: clamp(l > 50 ? 42 : 48, 38, 55)
+    };
+    palettes.push({
+      label: 'サンセットグロウ',
+      reason: '夕焼けのようなピンク〜オレンジの温かみある配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'ピンク', 'サンセット']
+    });
+  }
+
+  // 10. チェリーブロッサム
+  // 桜のようなローズ〜ペールピンクの柔らかい暖色
+  {
+    const c1 = {
+      h: 340,
+      s: clamp(Math.max(s, 40) * 0.8, 42, 65),
+      l: clamp(78, 72, 85)
+    };
+    const c2 = {
+      h: 350,
+      s: clamp(Math.max(s, 45) * 1.0, 48, 72),
+      l: clamp(45, 38, 52)
+    };
+    palettes.push({
+      label: 'チェリーブロッサム',
+      reason: '桜のような柔らかいピンク〜ローズの配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'ペタル', 'ローズ']
+    });
+  }
+
+  // 11. スパイスマーケット
+  // テラコッタ・アンバー・ボルドーなど深みのある暖色
+  {
+    const c1 = {
+      h: 25,
+      s: clamp(Math.max(s, 45) * 1.0, 50, 75),
+      l: clamp(52, 45, 58)
+    };
+    const c2 = {
+      h: 355,
+      s: clamp(Math.max(s, 40) * 0.9, 40, 65),
+      l: clamp(28, 22, 35)
+    };
+    palettes.push({
+      label: 'スパイスマーケット',
+      reason: 'テラコッタとボルドーの深みある暖色配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'テラコッタ', 'ボルドー']
+    });
+  }
+
+  // 12. トロピカルブリーズ
+  // コーラルの暖色＋ターコイズの寒色で南国のコントラスト
+  {
+    const c1 = {
+      h: 12,
+      s: clamp(Math.max(s, 55) * 1.1, 60, 88),
+      l: clamp(60, 55, 68)
+    };
+    const c2 = {
+      h: 175,
+      s: clamp(Math.max(s, 45) * 1.0, 48, 75),
+      l: clamp(42, 35, 50)
+    };
+    palettes.push({
+      label: 'トロピカルブリーズ',
+      reason: 'コーラルとターコイズの南国的コントラスト配色',
+      colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
+      suggested: [1, 2],
+      colorLabels: ['入力色', 'コーラル', 'ターコイズ']
+    });
+  }
+
   return palettes;
 }
 
