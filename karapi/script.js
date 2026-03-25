@@ -259,7 +259,7 @@ function generatePalettesForOneColor(hex) {
     };
     palettes.push({
       label: 'クラッシュポップ',
-      reason: 'ビビッドとペールを極端にぶつけるファッション的ハズし配色',
+      reason: 'ビビッドとペールを極端にぶつけるハズし配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'ビビッド', 'ペール']
@@ -308,7 +308,7 @@ function generatePalettesForOneColor(hex) {
     };
     palettes.push({
       label: 'ランダムジェム',
-      reason: '宝石のように深く鮮やかな色を大胆に組み合わせる配色',
+      reason: '宝石のように深く鮮やかな色を組み合わせる配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'ジェムA', 'ジェムB']
