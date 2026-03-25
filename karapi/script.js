@@ -597,6 +597,79 @@ function generatePalettesForTwoColors(hex1, hex2) {
     });
   }
 
+  // 9. サンセットブレンド
+  // 2色の中間からピンク〜オレンジ方向へ寄せた夕焼け系
+  {
+    const baseH = sMid < 10 ? 15 : hMid;
+    const sunH = clampHue(baseH + 345);
+    const c = {
+      h: sunH,
+      s: clamp(Math.max(sMid, 50) * 1.1, 52, 82),
+      l: clamp(lMid + 5, 52, 68)
+    };
+    palettes.push({
+      label: 'サンセットブレンド',
+      reason: 'ピンク〜オレンジの温かみを加える夕焼け配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'サンセット']
+    });
+  }
+
+  // 10. チェリーリンク
+  // 2色の中間からピンク〜ローズ方向へ寄せた柔らかい暖色
+  {
+    const pinkH = clampHue(hMid + 330);
+    const c = {
+      h: pinkH,
+      s: clamp(Math.max(sMid, 40) * 0.85, 42, 68),
+      l: clamp(lMid + 15, 65, 80)
+    };
+    palettes.push({
+      label: 'チェリーリンク',
+      reason: '柔らかいピンク〜ローズでつなぐ桜色の配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'チェリー']
+    });
+  }
+
+  // 11. スパイスドロップ
+  // 2色の中間からテラコッタ〜ボルドー方向の深い暖色
+  {
+    const warmH = clampHue(hMid + 15);
+    const c = {
+      h: warmH,
+      s: clamp(Math.max(sMid, 42) * 0.95, 42, 70),
+      l: clamp(lMid - 20, 24, 38)
+    };
+    palettes.push({
+      label: 'スパイスドロップ',
+      reason: 'テラコッタ〜ボルドーの深みある暖色を添える配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'スパイス']
+    });
+  }
+
+  // 12. トロピカルリンク
+  // 2色の中間からコーラル方向の暖色アクセント
+  {
+    const coralH = clampHue(hMid + 5);
+    const c = {
+      h: coralH,
+      s: clamp(Math.max(sMid, 50) * 1.1, 55, 85),
+      l: clamp(lMid + 2, 50, 62)
+    };
+    palettes.push({
+      label: 'トロピカルリンク',
+      reason: '暖色コーラルで南国の明るさを加える配色',
+      colors: [hex1, hex2, hslToHex(c.h, c.s, c.l)],
+      suggested: [2],
+      colorLabels: ['入力色1', '入力色2', 'コーラル']
+    });
+  }
+
   return palettes;
 }
 
