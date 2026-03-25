@@ -361,21 +361,22 @@ function generatePalettesForOneColor(hex) {
   }
 
   // 10. チェリーブロッサム
-  // 桜のようなローズ〜ペールピンクの柔らかい暖色
+  // 入力色からピンク〜ローズ方向へ寄せた柔らかい暖色
   {
+    const pinkDir = clampHue(h + 330); // 入力色から-30°（ピンク方向）
     const c1 = {
-      h: 340,
+      h: pinkDir,
       s: clamp(Math.max(s, 40) * 0.8, 42, 65),
-      l: clamp(78, 72, 85)
+      l: clamp(l + 25, 72, 85)
     };
     const c2 = {
-      h: 350,
+      h: clampHue(pinkDir + 10),
       s: clamp(Math.max(s, 45) * 1.0, 48, 72),
-      l: clamp(45, 38, 52)
+      l: clamp(l - 10, 38, 52)
     };
     palettes.push({
       label: 'チェリーブロッサム',
-      reason: '桜のような柔らかいピンク〜ローズの配色',
+      reason: '入力色からピンク〜ローズ方向へ寄せた柔らかい配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'ペタル', 'ローズ']
@@ -383,21 +384,22 @@ function generatePalettesForOneColor(hex) {
   }
 
   // 11. スパイスマーケット
-  // テラコッタ・アンバー・ボルドーなど深みのある暖色
+  // 入力色からテラコッタ〜ボルドー方向へ寄せた深みのある暖色
   {
+    const warmDir = clampHue(h + 15); // 入力色から+15°（暖色方向）
     const c1 = {
-      h: 25,
+      h: warmDir,
       s: clamp(Math.max(s, 45) * 1.0, 50, 75),
-      l: clamp(52, 45, 58)
+      l: clamp(l - 5, 45, 58)
     };
     const c2 = {
-      h: 355,
+      h: clampHue(warmDir - 30),
       s: clamp(Math.max(s, 40) * 0.9, 40, 65),
-      l: clamp(28, 22, 35)
+      l: clamp(l - 30, 22, 35)
     };
     palettes.push({
       label: 'スパイスマーケット',
-      reason: 'テラコッタとボルドーの深みある暖色配色',
+      reason: '入力色をテラコッタ〜ボルドーの深みある暖色に寄せた配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'テラコッタ', 'ボルドー']
@@ -405,21 +407,22 @@ function generatePalettesForOneColor(hex) {
   }
 
   // 12. トロピカルブリーズ
-  // コーラルの暖色＋ターコイズの寒色で南国のコントラスト
+  // 入力色からコーラル方向＋反対側のターコイズで南国コントラスト
   {
+    const coralDir = clampHue(h + 5); // 入力色からわずかに暖色へ
     const c1 = {
-      h: 12,
+      h: coralDir,
       s: clamp(Math.max(s, 55) * 1.1, 60, 88),
-      l: clamp(60, 55, 68)
+      l: clamp(l + 8, 55, 68)
     };
     const c2 = {
-      h: 175,
+      h: clampHue(coralDir + 163), // コーラルの反対側≒ターコイズ
       s: clamp(Math.max(s, 45) * 1.0, 48, 75),
-      l: clamp(42, 35, 50)
+      l: clamp(l - 12, 35, 50)
     };
     palettes.push({
       label: 'トロピカルブリーズ',
-      reason: 'コーラルとターコイズの南国的コントラスト配色',
+      reason: '入力色から暖色と寒色を対比させた南国的コントラスト配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'コーラル', 'ターコイズ']
