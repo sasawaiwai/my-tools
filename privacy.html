@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プライバシーポリシー — sasadokoro my-tools</title>
+  <meta name="description" content="sasadokoro my-tools のプライバシーポリシー">
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="プライバシーポリシー — sasadokoro my-tools">
+  <meta property="og:description" content="sasadokoro my-tools のプライバシーポリシー">
+  <meta property="og:url"         content="https://tools.sasadokoro.online/privacy.html">
+  <meta name="twitter:card"       content="summary">
+  <link rel="canonical"           href="https://tools.sasadokoro.online/privacy.html">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ZGC2WBJQTP');
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #f7f7f7;
+      --surface:      #ffffff;
+      --border:       #e0e0e0;
+      --text:         #333;
+      --text-muted:   #888;
+      --accent:       #555;
+    }
+
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      height: 52px;
+      padding: 0 28px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-back {
+      font-size: 12px;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      transition: background 0.15s;
+    }
+    .header-back:hover { background: #f0f0f0; }
+    .header-title { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-muted); }
+
+    main {
+      flex: 1;
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .page-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section { margin-bottom: 40px; }
+
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    p { margin-bottom: 12px; color: var(--text); }
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      margin: 8px 0 12px 0;
+      padding-left: 1.4em;
+    }
+    li { margin-bottom: 6px; }
+
+    .highlight-box {
+      background: #f0f0f0;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 14px 18px;
+      margin: 14px 0;
+      font-size: 13px;
+    }
+    .highlight-box strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    a { color: var(--accent); }
+    a:hover { text-decoration: underline; }
+
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 20px 28px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="header-back" href="/">← ツール一覧に戻る</a>
+  <span class="header-title">プライバシーポリシー</span>
+</header>
+
+<main>
+  <h1>プライバシーポリシー</h1>
+  <p class="page-meta">制定日：2026年3月25日　最終更新：2026年3月25日　運営：ササドコロ / 笹塚</p>
+
+  <section class="section">
+    <h2>01 サービス概要</h2>
+    <p>本サイト（tools.sasadokoro.online、以下「本サービス」）は、ブラウザ上で動作する無料ツール集です。</p>
+    <div class="highlight-box">
+      <strong>データについて</strong>
+      各ツールで扱うファイル・データはすべてお使いのブラウザ内でのみ処理されます。外部サーバーへの送信・保存は一切行いません。
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>02 収集する情報（Cookie の使用）</h2>
+    <p>本サービスでは、以下の目的で Cookie および類似技術を使用しています。</p>
+
+    <p><strong>● アクセス解析（Google Analytics）</strong></p>
+    <p>Google LLC が提供する Google Analytics を使用しています。Cookie を通じて以下の情報を収集します。</p>
+    <ul>
+      <li>ページの閲覧数・滞在時間などのアクセス状況</li>
+      <li>使用ブラウザ・OS・デバイスの種類</li>
+      <li>おおよそのアクセス地域</li>
+    </ul>
+    <p>Cookie による情報収集を無効にしたい場合は、<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google アナリティクス オプトアウト アドオン</a>をご利用ください。</p>
+
+    <p><strong>● 広告配信（Google AdSense）</strong></p>
+    <p>本サービスでは、Google LLC が提供する Google AdSense を使用して広告を表示しています。Google AdSense は Cookie を使用して、ユーザーの興味・関心に基づくパーソナライズ広告を配信することがあります。</p>
+    <ul>
+      <li>サイトの閲覧履歴・行動情報</li>
+      <li>広告のクリック・表示に関するデータ</li>
+      <li>興味・関心に関する推定情報</li>
+    </ul>
+    <div class="highlight-box">
+      <strong>広告のパーソナライズをオフにする方法</strong>
+      <a href="https://adssettings.google.com/" target="_blank" rel="noopener">Google 広告設定ページ</a>から、パーソナライズ広告の配信を無効にできます。また、<a href="https://optout.aboutads.info/" target="_blank" rel="noopener">aboutads.info</a> からも業界横断でオプトアウトできます。
+    </div>
+    <p>Google のプライバシーポリシーおよび Cookie の使用については<a href="https://policies.google.com/privacy" target="_blank" rel="noopener">こちら</a>をご参照ください。</p>
+  </section>
+
+  <section class="section">
+    <h2>03 免責事項</h2>
+    <p>本サービスは現状有姿で提供されます。運営者は以下について一切の責任を負いません。</p>
+    <ul>
+      <li>本サービスの利用・利用不能により生じた損害</li>
+      <li>サービスの中断・変更・終了</li>
+      <li>ブラウザ・OS の環境差異による動作の違い</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>04 ポリシーの変更</h2>
+    <p>本ポリシーは予告なく変更される場合があります。変更後のポリシーはこのページに掲載した時点で効力を生じます。</p>
+  </section>
+
+  <section class="section">
+    <h2>05 お問い合わせ</h2>
+    <p>ご質問・ご意見がございましたら、下記までお気軽にお問い合わせください。</p>
+    <p>Twitter / X：<a href="https://x.com/sasa_dokoro" target="_blank" rel="noopener">@sasa_dokoro</a></p>
+  </section>
+
+</main>
+
+<footer>
+  <p>お問い合わせ：<a href="https://x.com/sasa_dokoro" target="_blank" rel="noopener">@sasa_dokoro</a> (X)　|　<a href="https://tools.sasadokoro.online">tools.sasadokoro.online</a></p>
+</footer>
+
+</body>
+</html>
