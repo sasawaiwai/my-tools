@@ -266,7 +266,7 @@ function generatePalettesForOneColor(hex) {
     });
   }
 
-  // 5. テンペラチャークラッシュ
+  // 5. テンペラチャクラッシュ
   // 暖色なら寒色、寒色なら暖色を強制的に提案する色温度の逆突き
   {
     const isWarm = (h >= 0 && h < 70) || h >= 300;
@@ -282,7 +282,7 @@ function generatePalettesForOneColor(hex) {
       l: clamp(l - 18, 22, 42)
     };
     palettes.push({
-      label: 'テンペラチャークラッシュ',
+      label: 'テンペラチャクラッシュ',
       reason: isWarm
         ? '暖色に対して寒色系を大胆にぶつける冒険的配色'
         : '寒色に対して暖色系を大胆にぶつける冒険的配色',
