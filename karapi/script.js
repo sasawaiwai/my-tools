@@ -399,7 +399,7 @@ function generatePalettesForOneColor(hex) {
     };
     palettes.push({
       label: 'スパイスマーケット',
-      reason: '入力色をテラコッタ〜ボルドーの深みある暖色に寄せた配色',
+      reason: 'テラコッタ〜ボルドーの深みある暖色に寄せた配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'テラコッタ', 'ボルドー']
@@ -422,7 +422,7 @@ function generatePalettesForOneColor(hex) {
     };
     palettes.push({
       label: 'トロピカルブリーズ',
-      reason: '入力色から暖色と寒色を対比させた南国的コントラスト配色',
+      reason: '暖色と寒色を対比させた南国的コントラスト配色',
       colors: [hex, hslToHex(c1.h, c1.s, c1.l), hslToHex(c2.h, c2.s, c2.l)],
       suggested: [1, 2],
       colorLabels: ['入力色', 'コーラル', 'ターコイズ']
