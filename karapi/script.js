@@ -603,7 +603,7 @@ function generatePalettesForTwoColors(hex1, hex2) {
 // ────────────────────────────────────────────
 
 /** 提案カード1色分を生成 */
-function buildSuggestionCard(hex, label) {
+function buildSuggestionCard(hex) {
   const card = document.createElement('div');
   card.className = 'suggestion-card';
 
@@ -613,10 +613,6 @@ function buildSuggestionCard(hex, label) {
 
   const info = document.createElement('div');
   info.className = 'suggestion-info';
-
-  const labelEl = document.createElement('span');
-  labelEl.className = 'suggestion-label';
-  labelEl.textContent = label;
 
   const hexRow = document.createElement('div');
   hexRow.className = 'suggestion-hex-row';
@@ -635,7 +631,6 @@ function buildSuggestionCard(hex, label) {
   hexRow.appendChild(hexSpan);
   hexRow.appendChild(copyBtn);
 
-  info.appendChild(labelEl);
   info.appendChild(hexRow);
 
   card.appendChild(swatch);
@@ -671,7 +666,7 @@ function renderSuggestions(palettes) {
 
     palette.suggested.forEach(idx => {
       cardsRow.appendChild(
-        buildSuggestionCard(palette.colors[idx], palette.colorLabels[idx])
+        buildSuggestionCard(palette.colors[idx])
       );
     });
 

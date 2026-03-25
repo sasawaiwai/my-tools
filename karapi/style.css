@@ -432,18 +432,6 @@ body {
   padding: 10px 12px 12px;
 }
 
-.suggestion-label {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--color-primary);
-  background: var(--color-primary-bg);
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
 .suggestion-hex-row {
   display: flex;
   align-items: center;
