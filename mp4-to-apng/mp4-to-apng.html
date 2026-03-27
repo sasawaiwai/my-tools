@@ -3,23 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MP4 → APNG | ここフォリア用コンバーター</title>
-<meta name="description" content="MP4動画をAPNG形式に変換する無料ツールです。インストール不要、ブラウザだけで変換できます。サーバー送信なし。">
-<meta property="og:type"        content="website">
-<meta property="og:title"       content="MP4 → APNG | ここフォリア用コンバーター">
-<meta property="og:description" content="MP4動画をAPNG形式に変換する無料ツールです。インストール不要、ブラウザだけで変換できます。サーバー送信なし。">
-<meta property="og:url"         content="https://tools.sasadokoro.online/mp4-to-apng/">
-<meta property="og:image"       content="https://tools.sasadokoro.online/ogp.png">
-<meta name="twitter:card"       content="summary">
-<link rel="canonical"           href="https://tools.sasadokoro.online/mp4-to-apng/">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-ZGC2WBJQTP');
-</script>
+<title>MP4 → APNG | ココフォリア用コンバーター</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
@@ -253,8 +237,8 @@ footer{
 <body>
 
 <header>
-  <h1 class="logo">MP4<span>→APNG</span></h1>
-  <div class="tagline">アニメーション変換ツール</div>
+  <div class="logo">MP4<span>→APNG</span></div>
+  <div class="tagline">ococofolio用アニメーション変換ツール</div>
   <div class="privacy-badge">NO UPLOAD · LOCAL ONLY</div>
 </header>
 
@@ -407,7 +391,7 @@ footer{
 
 <footer>
   <div class="footer-note">アップロード不要・サーバー処理なし・動画はブラウザ内だけで処理されます</div>
-  <div>MP4 → APNG 変換 v1.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/" style="color: var(--muted);">ツール一覧</a> ｜ <a href="/privacy.html" style="color: var(--muted);">プライバシーポリシー</a> ｜ <a href="/terms.html" style="color: var(--muted);">利用規約</a></div>
+  <div>MP4 → APNG 変換</div>
 </footer>
 
 <canvas id="cvs"></canvas>
@@ -667,39 +651,12 @@ async function convertToAPNG(){
 }
 function seekVideo(v,t){
   return new Promise(res=>{
-    let done=false;
-    const finish=()=>{if(done)return;done=true;res()};
-
-    // requestVideoFrameCallback が使えるブラウザ（Chrome等）はそちらを優先（フレーム精度が高い）
-    if(typeof v.requestVideoFrameCallback==='function'){
-      const onSeeked=()=>{
-        v.removeEventListener('seeked',onSeeked);
-        clearTimeout(timeout);
-        v.requestVideoFrameCallback(finish);
-      };
-      v.addEventListener('seeked',onSeeked);
-      // seeked が発火しない場合に備えたタイムアウト（2秒）
-      const timeout=setTimeout(()=>{
-        v.removeEventListener('seeked',onSeeked);
-        v.requestVideoFrameCallback(finish);
-      },2000);
-      v.currentTime=t;
-      return;
-    }
-
-    // フォールバック: seeked + rAF x4 + タイムアウト
     const onSeeked=()=>{
       v.removeEventListener('seeked',onSeeked);
-      clearTimeout(timeout);
-      // rAF を4回挟んでデコードを待つ
-      requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(finish))));
+      // rAF を2回挟んでブラウザに描画タイミングを与える
+      requestAnimationFrame(()=>requestAnimationFrame(res));
     };
     v.addEventListener('seeked',onSeeked);
-    // seeked が発火しない場合（currentTime変化なし等）のタイムアウト（2秒）
-    const timeout=setTimeout(()=>{
-      v.removeEventListener('seeked',onSeeked);
-      finish();
-    },2000);
     v.currentTime=t;
   });
 }
