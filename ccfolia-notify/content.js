@@ -106,39 +106,23 @@ function extractTabText(btn) {
   return btn.textContent.replace(/\d+/g, '').trim();
 }
 
-function getTabName(element) {
-  const panel = element.closest('[role="tabpanel"]');
-  if (!panel) return null;
-
-  // aria-labelledby からタブボタンを特定
-  const labelId = panel.getAttribute('aria-labelledby');
-  if (labelId) {
-    const btn = document.getElementById(labelId);
-    if (btn) return extractTabText(btn);
-  }
-
-  // fallback: パネルのインデックスからタブを特定
-  const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
-  const idx = panels.indexOf(panel);
-  if (idx >= 0) {
-    const tabs = Array.from(document.querySelectorAll('[role="tablist"] [role="tab"]'));
-    if (tabs[idx]) return extractTabText(tabs[idx]);
-  }
-
-  return null;
+function getActiveTabName() {
+  const activeTab = document.querySelector('[role="tab"][aria-selected="true"]');
+  return activeTab ? extractTabText(activeTab) : null;
 }
 
 // --- 通知するか判定 ---
 function shouldNotify(msgEl) {
   if (!settings.enabled) return false;
 
-  const tabName = getTabName(msgEl);
-
-  // チャットタブ外の要素（マーカーパネル等）は通知しない
-  if (!tabName) return false;
-
-  if (settings.tabFilter === 'main-only' && tabName !== 'メイン') return false;
-  if (settings.tabFilter === 'main-and-chat' && tabName !== 'メイン' && tabName !== '雑談') return false;
+  // 'all' の場合はタブ判定不要（マーカーパネル・シーン含む全通知）
+  if (settings.tabFilter !== 'all') {
+    const tabName = getActiveTabName();
+    if (tabName) {
+      if (settings.tabFilter === 'main-only' && tabName !== 'メイン') return false;
+      if (settings.tabFilter === 'main-and-chat' && tabName !== 'メイン' && tabName !== '雑談') return false;
+    }
+  }
 
   // 自分の発言フィルター
   if (settings.ignoreSelf && settings.selfName) {
@@ -149,6 +133,14 @@ function shouldNotify(msgEl) {
 
   return true;
 }
+
+// --- ユーザー操作検知 ---
+// クリック/タップ直後はタブ切り替えやパネル開いたによるDOM変化なのでスキップする
+let lastUserActionAt = 0;
+const SUPPRESS_AFTER_ACTION_MS = 300;
+
+document.addEventListener('click', () => { lastUserActionAt = Date.now(); }, true);
+document.addEventListener('touchstart', () => { lastUserActionAt = Date.now(); }, true);
 
 // --- MutationObserver ---
 const knownMessages = new WeakSet();
@@ -179,40 +171,30 @@ initObserver.observe(document.body, { childList: true, subtree: true });
 let lastNotifyTime = 0;
 const NOTIFY_COOLDOWN_MS = 500;
 
-// 再レンダリング検知: 一度に大量のメッセージが追加された場合は
-// シーン切替等による再描画とみなし通知をスキップする
-const RERENDER_THRESHOLD = 3;
-
 const observer = new MutationObserver((mutations) => {
   if (!initialized) return;
 
-  // まず今回追加された未知のメッセージを全て収集
   const newMsgs = [];
   for (const mutation of mutations) {
     for (const node of mutation.addedNodes) {
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
-
       const msgs = node.classList?.contains('MuiListItemText-secondary')
         ? [node]
         : Array.from(node.querySelectorAll?.('.MuiListItemText-secondary') ?? []);
-
       for (const msg of msgs) {
-        if (!knownMessages.has(msg)) {
-          newMsgs.push(msg);
-        }
+        if (!knownMessages.has(msg)) newMsgs.push(msg);
       }
     }
   }
 
-  // 全て既知として登録
-  for (const msg of newMsgs) {
-    knownMessages.add(msg);
-  }
+  for (const msg of newMsgs) knownMessages.add(msg);
 
-  // 大量追加 = 再レンダリング（シーン切替等）→ 通知しない
-  if (newMsgs.length >= RERENDER_THRESHOLD) return;
+  if (!newMsgs.length) return;
 
-  // 少数の新着メッセージ → 通知判定
+  // ユーザーが操作した直後はスキップ（タブ切り替え・パネルを開いた等）
+  if (Date.now() - lastUserActionAt < SUPPRESS_AFTER_ACTION_MS) return;
+
+  // 通知判定
   for (const msg of newMsgs) {
     if (shouldNotify(msg)) {
       const now = Date.now();
