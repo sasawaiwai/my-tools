@@ -14,6 +14,14 @@
 <link rel="canonical"           href="https://tools.sasadokoro.online/portfolio-checker/portfolio-checker.html">
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZGC2WBJQTP');
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -311,8 +319,8 @@ footer {
 
   <!-- DROP ZONE -->
   <div class="drop-section">
-    <div class="drop-zone" id="dropZone">
-      <input type="file" id="csvInput" accept=".csv">
+    <div class="drop-zone" id="dropZone" role="button" tabindex="0" aria-label="CSVファイルを選択またはドロップ">
+      <input type="file" id="csvInput" accept=".csv" aria-label="SBI証券の保有一覧CSVファイルを選択">
       <div class="drop-icon">📂</div>
       <div class="drop-title">SBI証券の保有一覧CSVをここにドロップ</div>
       <div class="drop-sub">
@@ -430,6 +438,7 @@ footer {
 const dropZone = document.getElementById('dropZone');
 const csvInput = document.getElementById('csvInput');
 
+dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); csvInput.click(); } });
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
 dropZone.addEventListener('drop', e => {
@@ -455,7 +464,8 @@ function processFile(file) {
         const decoder = new TextDecoder('shift-jis');
         text = decoder.decode(new Uint8Array(arrayBuffer));
       } catch {
-        text = e.target.result;
+        const fallback = new TextDecoder('utf-8');
+        text = fallback.decode(new Uint8Array(arrayBuffer));
       }
       analyze(text);
     } catch(err) {
@@ -472,7 +482,6 @@ function parseSBIcsv(text) {
   const stocks = {}; // code -> {name, value, cost, pl}
 
   let mode = null;
-  let headerIdx = {};
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -483,12 +492,8 @@ function parseSBIcsv(text) {
     if (line.includes('株式（NISA預り') && !line.includes('合計') && !line.includes('評価')) { mode = 'stock'; continue; }
     if (line.includes('投資信託')) { mode = 'trust'; continue; }
 
-    // ヘッダー行
-    if (line.startsWith('銘柄コード') || line.startsWith('"銘柄コード"')) {
-      const cols = parseCsvLine(line);
-      cols.forEach((c, i) => { headerIdx[c.trim()] = i; });
-      continue;
-    }
+    // ヘッダー行スキップ
+    if (line.startsWith('銘柄コード') || line.startsWith('"銘柄コード"')) continue;
 
     if (mode === 'stock') {
       const cols = parseCsvLine(line);
@@ -551,7 +556,6 @@ function analyze(text) {
 
   const totalValue = entries.reduce((s, [,v]) => s + v.value, 0);
   const totalPl = entries.reduce((s, [,v]) => s + v.pl, 0);
-  const totalCost = totalValue - totalPl;
 
   // 構成比計算
   const withPct = entries.map(([code, v]) => ({
