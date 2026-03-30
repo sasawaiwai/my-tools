@@ -2,6 +2,7 @@ ccfolia-notify/.DS_Store
 *.ini
 *.xlsx
 *.csv
+!portfolio-checker/dummy_portfolio.csv
 .DS_Store
 *.clip
 *.zip
