@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ポートフォリオ番人</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e2e0d8;
+  --text: #1c1b18;
+  --muted: #888580;
+  --green: #2d6a4f;
+  --green-bg: #ebf5ef;
+  --red: #b5252a;
+  --red-bg: #fceaea;
+  --amber: #92600a;
+  --amber-bg: #fef3dc;
+  --blue: #1a4f8a;
+  --blue-bg: #e8f0fa;
+  --accent: #c8a84b;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-icon {
+  width: 36px; height: 36px;
+  background: var(--text);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.header-title { font-size: 18px; font-weight: 700; }
+.header-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.security-badge {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 5px;
+  background: var(--green-bg);
+  color: var(--green);
+  border: 1px solid #b7dfc9;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 11px; font-weight: 500;
+}
+
+/* ── MAIN ── */
+main { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
+
+/* ── DROP ZONE ── */
+.drop-section { margin-bottom: 28px; }
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over {
+  border-color: var(--accent);
+  background: #fdfbf4;
+}
+.drop-icon { font-size: 36px; margin-bottom: 12px; }
+.drop-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.drop-sub { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+.hint-box {
+  margin-top: 14px;
+  background: var(--blue-bg);
+  border: 1px solid #c5d8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--blue);
+  line-height: 1.7;
+}
+.hint-box strong { font-weight: 700; }
+
+/* ── DIVIDEND INPUT ── */
+.div-input-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+}
+.div-input-row label { font-size: 13px; font-weight: 500; white-space: nowrap; }
+.div-input-row input {
+  flex: 1; border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; font-size: 14px; font-family: 'DM Mono', monospace;
+  background: var(--bg); color: var(--text);
+  max-width: 160px;
+}
+.div-input-row span { font-size: 13px; color: var(--muted); }
+
+/* ── RESULTS ── */
+#results { display: none; }
+
+/* ── SUMMARY CARDS ── */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+@media (max-width: 640px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+.summary-card .val {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px; font-weight: 500;
+  line-height: 1.2; margin-bottom: 4px;
+}
+.summary-card .lbl { font-size: 11px; color: var(--muted); }
+.val.green { color: var(--green); }
+.val.red { color: var(--red); }
+.val.amber { color: var(--amber); }
+
+/* ── SECTION ── */
+.section { margin-bottom: 24px; }
+.section-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.section-head h2 { font-size: 14px; font-weight: 700; }
+.section-head .badge {
+  font-size: 10px; font-family: 'DM Mono', monospace;
+  padding: 2px 8px; border-radius: 10px;
+  font-weight: 500;
+}
+.badge-red { background: var(--red-bg); color: var(--red); }
+.badge-amber { background: var(--amber-bg); color: var(--amber); }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-blue { background: var(--blue-bg); color: var(--blue); }
+
+/* ── DIVIDEND PROGRESS ── */
+.div-progress-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 20px;
+}
+.div-progress-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+}
+.div-current { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; }
+.div-target { font-size: 12px; color: var(--muted); }
+.progress-bar-wrap {
+  height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; margin-bottom: 8px;
+}
+.progress-bar {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, #2d6a4f, #52b788);
+  transition: width 0.8s ease;
+}
+.div-sub { font-size: 12px; color: var(--muted); }
+
+/* ── ALERT LIST ── */
+.alert-list { display: flex; flex-direction: column; gap: 8px; }
+.alert-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.alert-item.danger { border-color: #f0c0c0; background: #fffafa; }
+.alert-item.warning { border-color: #f0dba0; background: #fffdf5; }
+.alert-item .icon { font-size: 18px; flex-shrink: 0; }
+.alert-item .name { font-weight: 700; font-size: 13px; min-width: 120px; }
+.alert-item .detail { font-size: 12px; color: var(--muted); flex: 1; }
+.alert-item .pct {
+  font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500;
+  text-align: right; min-width: 70px;
+}
+.pct.red { color: var(--red); }
+.pct.amber { color: var(--amber); }
+
+/* ── ALL STOCKS TABLE ── */
+.stocks-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+.stocks-table th {
+  background: var(--surface2);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px; font-weight: 500; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.stocks-table th.right, .stocks-table td.right { text-align: right; }
+.stocks-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.stocks-table tr:last-child td { border-bottom: none; }
+.stocks-table tr:hover td { background: #fafaf7; }
+.mono { font-family: 'DM Mono', monospace; }
+.stock-name-cell { font-weight: 600; }
+.stock-code { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* bar in table */
+.bar-wrap { position: relative; height: 6px; background: var(--surface2); border-radius: 3px; min-width: 80px; }
+.bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; }
+.bar-fill.ok { background: #74c69d; }
+.bar-fill.warn { background: #f4a261; }
+.bar-fill.over { background: var(--red); }
+.bar-label { font-family: 'DM Mono', monospace; font-size: 12px; }
+.bar-label.over { color: var(--red); font-weight: 700; }
+.bar-label.warn { color: var(--amber); }
+
+.rule-badge {
+  display: inline-block; font-size: 10px; font-family: 'DM Mono', monospace;
+  padding: 1px 6px; border-radius: 4px; margin-left: 4px; vertical-align: middle;
+}
+.rule-badge.over { background: var(--red-bg); color: var(--red); }
+.rule-badge.loss { background: var(--red-bg); color: var(--red); }
+.rule-badge.loss-warn { background: var(--amber-bg); color: var(--amber); }
+
+/* ── NO ALERT ── */
+.all-clear {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--green-bg);
+  border: 1px solid #b7dfc9;
+  border-radius: 8px;
+  padding: 14px 18px;
+  font-size: 13px; color: var(--green);
+}
+
+/* ── FOOTER ── */
+footer {
+  max-width: 860px; margin: 0 auto;
+  padding: 0 20px 32px;
+  font-size: 11px; color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ── ANIM ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">📊</div>
+  <div>
+    <div class="header-title">ポートフォリオ番人</div>
+    <div class="header-sub">SBI証券CSVを読み込んで保有ルールを自動チェック</div>
+  </div>
+  <div class="security-badge">🔒 完全ローカル処理</div>
+</header>
+
+<main>
+
+  <!-- DROP ZONE -->
+  <div class="drop-section">
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="csvInput" accept=".csv">
+      <div class="drop-icon">📂</div>
+      <div class="drop-title">SBI証券の保有一覧CSVをここにドロップ</div>
+      <div class="drop-sub">
+        クリックしてファイルを選択することもできます<br>
+        データはブラウザ内のみで処理され、外部には一切送信されません
+      </div>
+    </div>
+    <div class="hint-box">
+      <strong>CSVの取得方法：</strong>SBI証券ログイン →「口座管理」→「保有証券」→ ページ下部「CSVダウンロード」<br>
+      ※株式・投資信託が含まれる全銘柄ファイルを使ってください
+    </div>
+
+    <!-- 配当入力 -->
+    <div class="div-input-row">
+      <label>現在の年間配当収入（税引き前）</label>
+      <input type="number" id="divInput" value="924450" min="0" step="10000">
+      <span>円　／　目標 300万円</span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <!-- SUMMARY -->
+    <div class="summary-grid section fade-up">
+      <div class="summary-card">
+        <div class="val green" id="s-total">—</div>
+        <div class="lbl">総評価額</div>
+      </div>
+      <div class="summary-card">
+        <div class="val green" id="s-pl">—</div>
+        <div class="lbl">含み損益</div>
+      </div>
+      <div class="summary-card">
+        <div class="val" id="s-count">—</div>
+        <div class="lbl">個別株銘柄数（重複除き）</div>
+      </div>
+      <div class="summary-card">
+        <div class="val amber" id="s-alerts">—</div>
+        <div class="lbl">アラート件数</div>
+      </div>
+    </div>
+
+    <!-- 配当進捗 -->
+    <div class="section fade-up">
+      <div class="section-head">
+        <h2>💰 配当目標進捗</h2>
+      </div>
+      <div class="div-progress-wrap">
+        <div class="div-progress-header">
+          <div class="div-current" id="div-current-val">—円</div>
+          <div class="div-target">目標：300万円</div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="div-bar" style="width:0%"></div>
+        </div>
+        <div class="div-sub" id="div-sub-text">—</div>
+      </div>
+    </div>
+
+    <!-- アラート：15%ルール超過 -->
+    <div class="section fade-up" id="over-section">
+      <div class="section-head">
+        <h2>🚨 15%ルール超過</h2>
+        <span class="badge badge-red" id="over-count">0件</span>
+      </div>
+      <div class="alert-list" id="over-list"></div>
+    </div>
+
+    <!-- アラート：含み損 -->
+    <div class="section fade-up" id="loss-section">
+      <div class="section-head">
+        <h2>⚠️ 含み損アラート</h2>
+        <span class="badge badge-amber" id="loss-count">0件</span>
+      </div>
+      <div class="alert-list" id="loss-list"></div>
+    </div>
+
+    <!-- 全銘柄一覧 -->
+    <div class="section fade-up">
+      <div class="section-head">
+        <h2>📋 全個別株 構成比一覧</h2>
+        <span class="badge badge-blue" id="all-count">0銘柄</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="stocks-table">
+          <thead>
+            <tr>
+              <th>銘柄</th>
+              <th class="right">評価額</th>
+              <th class="right">含み損益</th>
+              <th>構成比（個別株内）</th>
+              <th>ルール</th>
+            </tr>
+          </thead>
+          <tbody id="stocks-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /results -->
+
+</main>
+
+<footer>
+  ⚠ 本ツールは投資助言ではありません。売買の判断はご自身の責任で行ってください。<br>
+  データはすべてブラウザ内で処理されます。外部サーバーへの送信は一切行いません。
+</footer>
+
+<script>
+// ── DRAG & DROP ──
+const dropZone = document.getElementById('dropZone');
+const csvInput = document.getElementById('csvInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) processFile(file);
+});
+csvInput.addEventListener('change', e => {
+  if (e.target.files[0]) processFile(e.target.files[0]);
+});
+document.getElementById('divInput').addEventListener('input', () => updateDividend());
+
+// ── FILE PROCESSING ──
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      // Try cp932 via TextDecoder
+      const arrayBuffer = e.target.result;
+      let text;
+      try {
+        const decoder = new TextDecoder('shift-jis');
+        text = decoder.decode(new Uint8Array(arrayBuffer));
+      } catch {
+        text = e.target.result;
+      }
+      analyze(text);
+    } catch(err) {
+      alert('CSVの読み込みに失敗しました。SBI証券からダウンロードしたCSVファイルをお使いください。');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── PARSE SBI CSV ──
+function parseSBIcsv(text) {
+  const lines = text.split(/\r?\n/);
+  const stocks = {}; // code -> {name, value, cost, pl}
+
+  let mode = null;
+  let headerIdx = {};
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // セクション検出
+    if (line.includes('株式（特定預り）') && !line.includes('合計') && !line.includes('評価')) { mode = 'stock'; continue; }
+    if (line.includes('株式（NISA預り') && !line.includes('合計') && !line.includes('評価')) { mode = 'stock'; continue; }
+    if (line.includes('投資信託')) { mode = 'trust'; continue; }
+
+    // ヘッダー行
+    if (line.startsWith('銘柄コード') || line.startsWith('"銘柄コード"')) {
+      const cols = parseCsvLine(line);
+      cols.forEach((c, i) => { headerIdx[c.trim()] = i; });
+      continue;
+    }
+
+    if (mode === 'stock') {
+      const cols = parseCsvLine(line);
+      if (cols.length < 8) continue;
+      const code = cols[0]?.replace(/"/g,'').trim();
+      if (!code || !/^\d{4,6}$/.test(code)) continue;
+
+      const name = cols[1]?.replace(/"/g,'').trim();
+      const shares = parseNum(cols[2]);
+      const cost = parseNum(cols[4]);
+      const price = parseNum(cols[5]);
+      const value = parseNum(cols[7]);
+      const pl = parseNum(cols[8]);
+
+      if (!code || !name || isNaN(value)) continue;
+
+      if (stocks[code]) {
+        stocks[code].value += value;
+        stocks[code].cost += shares * cost;
+        stocks[code].pl += pl;
+      } else {
+        stocks[code] = { name, value, cost: shares * cost, pl };
+      }
+    }
+  }
+
+  return stocks;
+}
+
+function parseCsvLine(line) {
+  const result = [];
+  let current = '';
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuote = !inQuote; continue; }
+    if (line[i] === ',' && !inQuote) { result.push(current); current = ''; continue; }
+    current += line[i];
+  }
+  result.push(current);
+  return result;
+}
+
+function parseNum(s) {
+  if (!s) return 0;
+  const n = parseFloat(s.replace(/"/g,'').replace(/[+,円口]/g,'').trim());
+  return isNaN(n) ? 0 : n;
+}
+
+// ── ANALYZE ──
+let parsedStocks = {};
+
+function analyze(text) {
+  parsedStocks = parseSBIcsv(text);
+  const entries = Object.entries(parsedStocks);
+
+  if (entries.length === 0) {
+    alert('銘柄データが見つかりませんでした。SBI証券の保有一覧CSVをお使いください。');
+    return;
+  }
+
+  const totalValue = entries.reduce((s, [,v]) => s + v.value, 0);
+  const totalPl = entries.reduce((s, [,v]) => s + v.pl, 0);
+  const totalCost = totalValue - totalPl;
+
+  // 構成比計算
+  const withPct = entries.map(([code, v]) => ({
+    code, ...v,
+    pct: totalValue > 0 ? v.value / totalValue * 100 : 0,
+    plPct: v.cost > 0 ? v.pl / v.cost * 100 : 0,
+  })).sort((a, b) => b.value - a.value);
+
+  // サマリー
+  document.getElementById('s-total').textContent = fmtYen(totalValue);
+  const plEl = document.getElementById('s-pl');
+  plEl.textContent = (totalPl >= 0 ? '+' : '') + fmtYen(totalPl);
+  plEl.className = 'val ' + (totalPl >= 0 ? 'green' : 'red');
+  document.getElementById('s-count').textContent = entries.length + '銘柄';
+
+  // 15%超過アラート
+  const overItems = withPct.filter(s => s.pct >= 15);
+  const lossHeavy = withPct.filter(s => s.plPct <= -30);
+  const lossWarn = withPct.filter(s => s.plPct < -20 && s.plPct > -30);
+
+  const totalAlerts = overItems.length + lossHeavy.length;
+  document.getElementById('s-alerts').textContent = totalAlerts + '件';
+  document.getElementById('s-alerts').className = 'val ' + (totalAlerts > 0 ? 'red' : 'green');
+
+  // 15%超リスト
+  document.getElementById('over-count').textContent = overItems.length + '件';
+  document.getElementById('over-count').className = 'badge ' + (overItems.length > 0 ? 'badge-red' : 'badge-green');
+  const overList = document.getElementById('over-list');
+  overList.innerHTML = '';
+  if (overItems.length === 0) {
+    overList.innerHTML = '<div class="all-clear">✅ 15%超の銘柄はありません</div>';
+  } else {
+    overItems.forEach(s => {
+      const excess = s.pct - 15;
+      const excessYen = totalValue * excess / 100;
+      const div = document.createElement('div');
+      div.className = 'alert-item danger';
+      div.innerHTML = `
+        <div class="icon">🔴</div>
+        <div class="name">${s.name}<br><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${s.code}</span></div>
+        <div class="detail">15%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。</div>
+        <div class="pct red">${s.pct.toFixed(1)}%</div>
+      `;
+      overList.appendChild(div);
+    });
+  }
+
+  // 含み損アラート
+  const allLoss = [...lossHeavy, ...lossWarn].sort((a,b) => a.plPct - b.plPct);
+  document.getElementById('loss-count').textContent = allLoss.length + '件';
+  document.getElementById('loss-count').className = 'badge ' + (allLoss.length > 0 ? 'badge-amber' : 'badge-green');
+  const lossList = document.getElementById('loss-list');
+  lossList.innerHTML = '';
+  if (allLoss.length === 0) {
+    lossList.innerHTML = '<div class="all-clear">✅ -20%超の含み損銘柄はありません</div>';
+  } else {
+    allLoss.forEach(s => {
+      const isHeavy = s.plPct <= -30;
+      const div = document.createElement('div');
+      div.className = 'alert-item ' + (isHeavy ? 'danger' : 'warning');
+      div.innerHTML = `
+        <div class="icon">${isHeavy ? '🔴' : '🟡'}</div>
+        <div class="name">${s.name}<br><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${s.code}</span></div>
+        <div class="detail">評価額 ${fmtYen(s.value)}　含み損 ${fmtYen(s.pl)}${isHeavy ? '　<strong>損切り基準（-30%）超過</strong>' : '　損切り基準（-30%）に接近中'}</div>
+        <div class="pct ${isHeavy ? 'red' : 'amber'}">${s.plPct.toFixed(1)}%</div>
+      `;
+      lossList.appendChild(div);
+    });
+  }
+
+  // 全銘柄テーブル
+  document.getElementById('all-count').textContent = withPct.length + '銘柄';
+  const tbody = document.getElementById('stocks-tbody');
+  tbody.innerHTML = '';
+  withPct.forEach(s => {
+    const isOver15 = s.pct >= 15;
+    const isWarn15 = s.pct >= 10 && s.pct < 15;
+    const isLoss30 = s.plPct <= -30;
+    const isLoss20 = s.plPct < -20 && s.plPct > -30;
+    const barCls = isOver15 ? 'over' : (isWarn15 ? 'warn' : 'ok');
+    const barW = Math.min(s.pct / 20 * 100, 100);
+    const lblCls = isOver15 ? 'over' : (isWarn15 ? 'warn' : '');
+
+    const ruleBadges = [
+      isOver15 ? '<span class="rule-badge over">15%超</span>' : '',
+      isLoss30 ? '<span class="rule-badge loss">-30%超</span>' : '',
+      isLoss20 ? '<span class="rule-badge loss-warn">-20%警戒</span>' : '',
+    ].join('');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <div class="stock-name-cell">${s.name}</div>
+        <div class="stock-code">${s.code}</div>
+      </td>
+      <td class="right mono">${fmtYen(s.value)}</td>
+      <td class="right mono" style="color:${s.pl>=0?'var(--green)':'var(--red)'}">${s.pl>=0?'+':''}${fmtYen(s.pl)}<br><span style="font-size:11px">(${s.plPct>=0?'+':''}${s.plPct.toFixed(1)}%)</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%"></div></div>
+          <span class="bar-label ${lblCls}" style="min-width:38px;text-align:right">${s.pct.toFixed(1)}%</span>
+        </div>
+      </td>
+      <td>${ruleBadges || '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // 表示
+  document.getElementById('results').style.display = 'block';
+  updateDividend();
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function updateDividend() {
+  const val = parseInt(document.getElementById('divInput').value) || 0;
+  const target = 3000000;
+  const pct = Math.min(val / target * 100, 100);
+  const remaining = target - val;
+
+  document.getElementById('div-current-val').textContent = fmtYen(val) + '円';
+  document.getElementById('div-bar').style.width = pct.toFixed(1) + '%';
+
+  const subEl = document.getElementById('div-sub-text');
+  if (val >= target) {
+    subEl.innerHTML = '🎉 目標達成！';
+    subEl.style.color = 'var(--green)';
+  } else {
+    const yield4pct = Math.ceil(remaining / 0.04);
+    subEl.innerHTML = `達成率 <strong>${pct.toFixed(1)}%</strong>　不足額 <strong>${fmtYen(remaining)}円</strong>　※利回り4%換算であと<strong>${fmtYen(yield4pct)}円分</strong>の高配当資産が必要`;
+    subEl.style.color = 'var(--muted)';
+  }
+}
+
+function fmtYen(n) {
+  const abs = Math.abs(Math.round(n));
+  if (abs >= 100000000) return (n < 0 ? '-' : '') + (abs / 100000000).toFixed(1) + '億';
+  if (abs >= 10000) return (n < 0 ? '-' : '') + Math.round(abs / 10000) + '万';
+  return (n < 0 ? '-' : '') + abs.toLocaleString();
+}
+</script>
+</body>
+</html>
