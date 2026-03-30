@@ -341,7 +341,7 @@ footer {
     </div>
     <div class="div-input-row">
       <label>配当目標額</label>
-      <input type="number" id="divTarget" value="3000000" min="0" step="100000">
+      <input type="number" id="divTarget" value="0" min="0" step="100000">
       <span>円</span>
     </div>
     <div class="div-input-row">
@@ -769,17 +769,20 @@ function analyze(text) {
 
 function updateDividend() {
   const val = parseInt(document.getElementById('divInput').value) || 0;
-  const target = Math.abs(parseInt(document.getElementById('divTarget').value) || 3000000);
+  const target = Math.abs(parseInt(document.getElementById('divTarget').value) || 0);
   const yieldRate = Math.abs(parseFloat(document.getElementById('divYield').value) || 4) / 100;
   const pct = Math.min(val / target * 100, 100);
   const remaining = target - val;
 
   document.getElementById('div-current-val').textContent = fmtYen(val) + '円';
-  document.getElementById('div-bar').style.width = pct.toFixed(1) + '%';
-  document.getElementById('div-target-label').textContent = '目標：' + fmtYen(target) + '円';
+  document.getElementById('div-target-label').textContent = target > 0 ? '目標：' + fmtYen(target) + '円' : '目標未設定';
+  document.getElementById('div-bar').style.width = (target > 0 ? pct.toFixed(1) : 0) + '%';
 
   const subEl = document.getElementById('div-sub-text');
-  if (val >= target) {
+  if (target === 0) {
+    subEl.innerHTML = '配当目標額を入力すると達成率を表示します';
+    subEl.style.color = 'var(--muted)';
+  } else if (val >= target) {
     subEl.innerHTML = '🎉 目標達成！';
     subEl.style.color = 'var(--green)';
   } else {
