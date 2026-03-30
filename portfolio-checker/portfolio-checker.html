@@ -339,6 +339,23 @@ footer {
       <input type="number" id="divInput" value="0" min="0" step="10000">
       <span>円　／　目標 300万円</span>
     </div>
+
+    <!-- ルール設定 -->
+    <div class="div-input-row">
+      <label>集中リスク閾値</label>
+      <input type="number" id="threshOver" value="15" min="1" max="100" step="1">
+      <span>% 超で🚨アラート</span>
+    </div>
+    <div class="div-input-row">
+      <label>含み損 警戒閾値</label>
+      <input type="number" id="threshWarn" value="20" min="1" max="100" step="1">
+      <span>% 超で🟡警戒</span>
+    </div>
+    <div class="div-input-row">
+      <label>含み損 危険閾値</label>
+      <input type="number" id="threshDanger" value="30" min="1" max="100" step="1">
+      <span>% 超で🔴危険</span>
+    </div>
   </div>
 
   <!-- RESULTS -->
@@ -384,7 +401,7 @@ footer {
     <!-- アラート：15%ルール超過 -->
     <div class="section fade-up" id="over-section">
       <div class="section-head">
-        <h2>🚨 15%ルール超過</h2>
+        <h2 id="over-title">🚨 15%ルール超過</h2>
         <span class="badge badge-red" id="over-count">0件</span>
       </div>
       <div class="alert-list" id="over-list"></div>
@@ -451,6 +468,11 @@ csvInput.addEventListener('change', e => {
   if (e.target.files[0]) processFile(e.target.files[0]);
 });
 document.getElementById('divInput').addEventListener('input', () => updateDividend());
+['threshOver', 'threshWarn', 'threshDanger'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    if (Object.keys(parsedStocks).length > 0) analyze(lastText);
+  });
+});
 
 // ── FILE PROCESSING ──
 function processFile(file) {
@@ -544,8 +566,10 @@ function parseNum(s) {
 
 // ── ANALYZE ──
 let parsedStocks = {};
+let lastText = '';
 
 function analyze(text) {
+  lastText = text;
   parsedStocks = parseSBIcsv(text);
   const entries = Object.entries(parsedStocks);
 
@@ -571,25 +595,31 @@ function analyze(text) {
   plEl.className = 'val ' + (totalPl >= 0 ? 'green' : 'red');
   document.getElementById('s-count').textContent = entries.length + '銘柄';
 
-  // 15%超過アラート
-  const overItems = withPct.filter(s => s.pct >= 15);
-  const lossHeavy = withPct.filter(s => s.plPct <= -30);
-  const lossWarn = withPct.filter(s => s.plPct < -20 && s.plPct > -30);
+  // 閾値取得
+  const tOver   = Math.abs(parseFloat(document.getElementById('threshOver').value)   || 15);
+  const tDanger = Math.abs(parseFloat(document.getElementById('threshDanger').value) || 30);
+  const tWarn   = Math.abs(parseFloat(document.getElementById('threshWarn').value)   || 20);
+
+  // 閾値超過アラート
+  const overItems = withPct.filter(s => s.pct >= tOver);
+  const lossHeavy = withPct.filter(s => s.plPct <= -tDanger);
+  const lossWarn  = withPct.filter(s => s.plPct < -tWarn && s.plPct > -tDanger);
 
   const totalAlerts = overItems.length + lossHeavy.length;
   document.getElementById('s-alerts').textContent = totalAlerts + '件';
   document.getElementById('s-alerts').className = 'val ' + (totalAlerts > 0 ? 'red' : 'green');
 
-  // 15%超リスト
+  // 閾値超リスト
+  document.getElementById('over-title').textContent = `🚨 ${tOver}%ルール超過`;
   document.getElementById('over-count').textContent = overItems.length + '件';
   document.getElementById('over-count').className = 'badge ' + (overItems.length > 0 ? 'badge-red' : 'badge-green');
   const overList = document.getElementById('over-list');
   overList.innerHTML = '';
   if (overItems.length === 0) {
-    overList.innerHTML = '<div class="all-clear">✅ 15%超の銘柄はありません</div>';
+    overList.innerHTML = `<div class="all-clear">✅ ${tOver}%超の銘柄はありません</div>`;
   } else {
     overItems.forEach(s => {
-      const excess = s.pct - 15;
+      const excess = s.pct - tOver;
       const excessYen = totalValue * excess / 100;
       const div = document.createElement('div');
       div.className = 'alert-item danger';
@@ -608,7 +638,7 @@ function analyze(text) {
 
       const detail = document.createElement('div');
       detail.className = 'detail';
-      detail.innerHTML = `15%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。`;
+      detail.innerHTML = `${tOver}%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。`;
 
       const pct = document.createElement('div');
       pct.className = 'pct red';
@@ -629,10 +659,10 @@ function analyze(text) {
   const lossList = document.getElementById('loss-list');
   lossList.innerHTML = '';
   if (allLoss.length === 0) {
-    lossList.innerHTML = '<div class="all-clear">✅ -20%超の含み損銘柄はありません</div>';
+    lossList.innerHTML = `<div class="all-clear">✅ -${tWarn}%超の含み損銘柄はありません</div>`;
   } else {
     allLoss.forEach(s => {
-      const isHeavy = s.plPct <= -30;
+      const isHeavy = s.plPct <= -tDanger;
       const div = document.createElement('div');
       div.className = 'alert-item ' + (isHeavy ? 'danger' : 'warning');
 
@@ -650,7 +680,7 @@ function analyze(text) {
 
       const detail = document.createElement('div');
       detail.className = 'detail';
-      detail.innerHTML = `評価額 ${fmtYen(s.value)}　含み損 ${fmtYen(s.pl)}${isHeavy ? '　<strong>損切り基準（-30%）超過</strong>' : '　損切り基準（-30%）に接近中'}`;
+      detail.innerHTML = `評価額 ${fmtYen(s.value)}　含み損 ${fmtYen(s.pl)}${isHeavy ? `　<strong>損切り基準（-${tDanger}%）超過</strong>` : `　損切り基準（-${tDanger}%）に接近中`}`;
 
       const pct = document.createElement('div');
       pct.className = 'pct ' + (isHeavy ? 'red' : 'amber');
@@ -669,18 +699,18 @@ function analyze(text) {
   const tbody = document.getElementById('stocks-tbody');
   tbody.innerHTML = '';
   withPct.forEach(s => {
-    const isOver15 = s.pct >= 15;
-    const isWarn15 = s.pct >= 10 && s.pct < 15;
-    const isLoss30 = s.plPct <= -30;
-    const isLoss20 = s.plPct < -20 && s.plPct > -30;
+    const isOver15 = s.pct >= tOver;
+    const isWarn15 = s.pct >= tOver * 0.7 && s.pct < tOver;
+    const isLoss30 = s.plPct <= -tDanger;
+    const isLoss20 = s.plPct < -tWarn && s.plPct > -tDanger;
     const barCls = isOver15 ? 'over' : (isWarn15 ? 'warn' : 'ok');
-    const barW = Math.min(s.pct / 20 * 100, 100);
+    const barW = Math.min(s.pct / (tOver * 4 / 3) * 100, 100);
     const lblCls = isOver15 ? 'over' : (isWarn15 ? 'warn' : '');
 
     const ruleBadges = [
-      isOver15 ? '<span class="rule-badge over">15%超</span>' : '',
-      isLoss30 ? '<span class="rule-badge loss">-30%超</span>' : '',
-      isLoss20 ? '<span class="rule-badge loss-warn">-20%警戒</span>' : '',
+      isOver15 ? `<span class="rule-badge over">${tOver}%超</span>` : '',
+      isLoss30 ? `<span class="rule-badge loss">-${tDanger}%超</span>` : '',
+      isLoss20 ? `<span class="rule-badge loss-warn">-${tWarn}%警戒</span>` : '',
     ].join('');
 
     const tr = document.createElement('tr');
