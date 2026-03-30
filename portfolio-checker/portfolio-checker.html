@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ポートフォリオ番人</title>
+<title>ポートフォリオ番人 | SBI証券CSV分析ツール</title>
+<meta name="description" content="SBI証券の保有一覧CSVを読み込み、個別株の構成比・含み損益・配当目標進捗を自動チェック。データはすべてブラウザ内で処理され、外部には送信されません。">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="ポートフォリオ番人 | SBI証券CSV分析ツール">
+<meta property="og:description" content="SBI証券の保有一覧CSVを読み込み、個別株の構成比・含み損益・配当目標進捗を自動チェック。データはすべてブラウザ内で処理されます。">
+<meta property="og:url"         content="https://tools.sasadokoro.online/portfolio-checker/portfolio-checker.html">
+<meta property="og:image"       content="https://tools.sasadokoro.online/ogp.png">
+<meta name="twitter:card"       content="summary">
+<link rel="canonical"           href="https://tools.sasadokoro.online/portfolio-checker/portfolio-checker.html">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -318,7 +328,7 @@ footer {
     <!-- 配当入力 -->
     <div class="div-input-row">
       <label>現在の年間配当収入（税引き前）</label>
-      <input type="number" id="divInput" value="924450" min="0" step="10000">
+      <input type="number" id="divInput" value="0" min="0" step="10000">
       <span>円　／　目標 300万円</span>
     </div>
   </div>
@@ -409,7 +419,10 @@ footer {
 
 <footer>
   ⚠ 本ツールは投資助言ではありません。売買の判断はご自身の責任で行ってください。<br>
-  データはすべてブラウザ内で処理されます。外部サーバーへの送信は一切行いません。
+  データはすべてブラウザ内で処理されます。外部サーバーへの送信は一切行いません。<br><br>
+  <a href="/" style="color:var(--muted);text-decoration:none;">← ツール一覧に戻る</a>　|
+  <a href="/privacy.html" style="color:var(--muted);text-decoration:none;">プライバシーポリシー</a>　|
+  <a href="/terms.html" style="color:var(--muted);text-decoration:none;">利用規約</a>
 </footer>
 
 <script>
@@ -576,12 +589,31 @@ function analyze(text) {
       const excessYen = totalValue * excess / 100;
       const div = document.createElement('div');
       div.className = 'alert-item danger';
-      div.innerHTML = `
-        <div class="icon">🔴</div>
-        <div class="name">${s.name}<br><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${s.code}</span></div>
-        <div class="detail">15%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。</div>
-        <div class="pct red">${s.pct.toFixed(1)}%</div>
-      `;
+
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.textContent = '🔴';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = s.name;
+      const codeSpan = document.createElement('span');
+      codeSpan.style.cssText = "font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:block";
+      codeSpan.textContent = s.code;
+      nameEl.appendChild(codeSpan);
+
+      const detail = document.createElement('div');
+      detail.className = 'detail';
+      detail.innerHTML = `15%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。`;
+
+      const pct = document.createElement('div');
+      pct.className = 'pct red';
+      pct.textContent = s.pct.toFixed(1) + '%';
+
+      div.appendChild(icon);
+      div.appendChild(nameEl);
+      div.appendChild(detail);
+      div.appendChild(pct);
       overList.appendChild(div);
     });
   }
@@ -599,12 +631,31 @@ function analyze(text) {
       const isHeavy = s.plPct <= -30;
       const div = document.createElement('div');
       div.className = 'alert-item ' + (isHeavy ? 'danger' : 'warning');
-      div.innerHTML = `
-        <div class="icon">${isHeavy ? '🔴' : '🟡'}</div>
-        <div class="name">${s.name}<br><span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${s.code}</span></div>
-        <div class="detail">評価額 ${fmtYen(s.value)}　含み損 ${fmtYen(s.pl)}${isHeavy ? '　<strong>損切り基準（-30%）超過</strong>' : '　損切り基準（-30%）に接近中'}</div>
-        <div class="pct ${isHeavy ? 'red' : 'amber'}">${s.plPct.toFixed(1)}%</div>
-      `;
+
+      const icon = document.createElement('div');
+      icon.className = 'icon';
+      icon.textContent = isHeavy ? '🔴' : '🟡';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'name';
+      nameEl.textContent = s.name;
+      const codeSpan = document.createElement('span');
+      codeSpan.style.cssText = "font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:block";
+      codeSpan.textContent = s.code;
+      nameEl.appendChild(codeSpan);
+
+      const detail = document.createElement('div');
+      detail.className = 'detail';
+      detail.innerHTML = `評価額 ${fmtYen(s.value)}　含み損 ${fmtYen(s.pl)}${isHeavy ? '　<strong>損切り基準（-30%）超過</strong>' : '　損切り基準（-30%）に接近中'}`;
+
+      const pct = document.createElement('div');
+      pct.className = 'pct ' + (isHeavy ? 'red' : 'amber');
+      pct.textContent = s.plPct.toFixed(1) + '%';
+
+      div.appendChild(icon);
+      div.appendChild(nameEl);
+      div.appendChild(detail);
+      div.appendChild(pct);
       lossList.appendChild(div);
     });
   }
@@ -629,21 +680,37 @@ function analyze(text) {
     ].join('');
 
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="stock-name-cell">${s.name}</div>
-        <div class="stock-code">${s.code}</div>
-      </td>
-      <td class="right mono">${fmtYen(s.value)}</td>
-      <td class="right mono" style="color:${s.pl>=0?'var(--green)':'var(--red)'}">${s.pl>=0?'+':''}${fmtYen(s.pl)}<br><span style="font-size:11px">(${s.plPct>=0?'+':''}${s.plPct.toFixed(1)}%)</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%"></div></div>
-          <span class="bar-label ${lblCls}" style="min-width:38px;text-align:right">${s.pct.toFixed(1)}%</span>
-        </div>
-      </td>
-      <td>${ruleBadges || '<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-    `;
+
+    const tdName = document.createElement('td');
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'stock-name-cell';
+    nameDiv.textContent = s.name;
+    const codeDiv = document.createElement('div');
+    codeDiv.className = 'stock-code';
+    codeDiv.textContent = s.code;
+    tdName.appendChild(nameDiv);
+    tdName.appendChild(codeDiv);
+
+    const tdValue = document.createElement('td');
+    tdValue.className = 'right mono';
+    tdValue.textContent = fmtYen(s.value);
+
+    const tdPl = document.createElement('td');
+    tdPl.className = 'right mono';
+    tdPl.style.color = s.pl >= 0 ? 'var(--green)' : 'var(--red)';
+    tdPl.innerHTML = `${s.pl>=0?'+':''}${fmtYen(s.pl)}<br><span style="font-size:11px">(${s.plPct>=0?'+':''}${s.plPct.toFixed(1)}%)</span>`;
+
+    const tdBar = document.createElement('td');
+    tdBar.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%"></div></div><span class="bar-label ${lblCls}" style="min-width:38px;text-align:right">${s.pct.toFixed(1)}%</span></div>`;
+
+    const tdRule = document.createElement('td');
+    tdRule.innerHTML = ruleBadges || '<span style="color:var(--muted);font-size:11px">—</span>';
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdValue);
+    tr.appendChild(tdPl);
+    tr.appendChild(tdBar);
+    tr.appendChild(tdRule);
     tbody.appendChild(tr);
   });
 
