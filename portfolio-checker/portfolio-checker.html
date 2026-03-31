@@ -259,11 +259,6 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
 .stock-name-cell { font-weight: 600; }
 .stock-code { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
 
-/* chart grid */
-.chart-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.chart-card-label { font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-.chart-card-label span { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; margin-left: 6px; }
-
 /* bar in table */
 .bar-wrap { position: relative; height: 6px; background: var(--surface2); border-radius: 3px; min-width: 80px; }
 .bar-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; }
@@ -451,15 +446,6 @@ footer {
           <tbody id="stocks-tbody"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- チャート一覧 -->
-    <div class="section fade-up" id="chart-section" style="display:none">
-      <div class="section-head">
-        <h2>📈 チャート一覧</h2>
-        <span class="badge badge-blue" id="chart-count">0銘柄</span>
-      </div>
-      <div class="chart-grid" id="chart-grid"></div>
     </div>
 
   </div><!-- /results -->
@@ -774,47 +760,6 @@ function analyze(text) {
     tr.appendChild(tdRule);
     tbody.appendChild(tr);
   });
-
-  // チャートグリッド
-  const chartGrid = document.getElementById('chart-grid');
-  chartGrid.innerHTML = '';
-  const chartStocks = withPct.filter(s => /^\d{4}$/.test(s.code));
-  document.getElementById('chart-count').textContent = chartStocks.length + '銘柄';
-  if (chartStocks.length > 0) {
-    chartStocks.forEach(s => {
-      const card = document.createElement('div');
-      const label = document.createElement('div');
-      label.className = 'chart-card-label';
-      label.innerHTML = s.name + `<span>${s.code}</span>`;
-      const widgetContainer = document.createElement('div');
-      widgetContainer.className = 'tradingview-widget-container';
-      const widgetDiv = document.createElement('div');
-      widgetDiv.className = 'tradingview-widget-container__widget';
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js';
-      script.async = true;
-      script.innerHTML = JSON.stringify({
-        symbol: `TSE:${s.code}`,
-        width: '100%',
-        height: 200,
-        locale: 'ja',
-        dateRange: '3M',
-        colorTheme: 'light',
-        isTransparent: false,
-        autosize: true,
-        largeChartUrl: ''
-      });
-      widgetContainer.appendChild(widgetDiv);
-      widgetContainer.appendChild(script);
-      card.appendChild(label);
-      card.appendChild(widgetContainer);
-      chartGrid.appendChild(card);
-    });
-    document.getElementById('chart-section').style.display = 'block';
-  } else {
-    document.getElementById('chart-section').style.display = 'none';
-  }
 
   // 表示
   document.getElementById('results').style.display = 'block';
