@@ -258,6 +258,8 @@ main { max-width: 860px; margin: 0 auto; padding: 28px 20px; }
 .mono { font-family: 'DM Mono', monospace; }
 .stock-name-cell { font-weight: 600; }
 .stock-code { font-size: 10px; color: var(--muted); font-family: 'DM Mono', monospace; }
+.stock-code a { color: inherit; text-decoration: none; }
+.stock-code a:hover { text-decoration: underline; cursor: pointer; }
 
 /* bar in table */
 .bar-wrap { position: relative; height: 6px; background: var(--surface2); border-radius: 3px; min-width: 80px; }
@@ -734,7 +736,16 @@ function analyze(text) {
     nameDiv.textContent = s.name;
     const codeDiv = document.createElement('div');
     codeDiv.className = 'stock-code';
-    codeDiv.textContent = s.code;
+    if (/^\d{4}$/.test(s.code)) {
+      const link = document.createElement('a');
+      link.href = `https://www.tradingview.com/chart/?symbol=TSE:${s.code}`;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = s.code;
+      codeDiv.appendChild(link);
+    } else {
+      codeDiv.textContent = s.code;
+    }
     tdName.appendChild(nameDiv);
     tdName.appendChild(codeDiv);
 
