@@ -646,7 +646,7 @@ function analyze(text) {
       nameEl.textContent = s.name;
       const codeSpan = document.createElement('span');
       codeSpan.style.cssText = "font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:block";
-      codeSpan.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${s.code}</a>`;
+      codeSpan.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${s.code}</a>`;
       nameEl.appendChild(codeSpan);
 
       const detail = document.createElement('div');
@@ -688,7 +688,7 @@ function analyze(text) {
       nameEl.textContent = s.name;
       const codeSpan = document.createElement('span');
       codeSpan.style.cssText = "font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:block";
-      codeSpan.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${s.code}</a>`;
+      codeSpan.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${s.code}</a>`;
       nameEl.appendChild(codeSpan);
 
       const detail = document.createElement('div');
@@ -734,7 +734,7 @@ function analyze(text) {
     nameDiv.textContent = s.name;
     const codeDiv = document.createElement('div');
     codeDiv.className = 'stock-code';
-    codeDiv.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">${s.code}</a>`;
+    codeDiv.innerHTML = `<a href="https://minkabu.jp/stock/${s.code}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline">${s.code}</a>`;
     tdName.appendChild(nameDiv);
     tdName.appendChild(codeDiv);
 
