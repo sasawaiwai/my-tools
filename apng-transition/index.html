@@ -269,6 +269,7 @@
   .dir-btn.active { border-color: var(--accent); background: rgba(255,92,0,.1); color: var(--accent); }
   .dir-btn.center { font-size: 12px; }
   .dir-btn.empty { background: transparent; border-color: transparent; cursor: default; }
+  .dir-btn.disabled { opacity: 0.25; pointer-events: none; }
 
   /* ── イージング ── */
   .easing-row {
@@ -685,7 +686,7 @@
 </div>
 
 <footer>
-  <span>APNG Transition Generator v2.2.5</span>
+  <span>APNG Transition Generator v2.2.6</span>
   <span>｜</span>
   <span>© ササドコロ / 笹塚</span>
   <span>｜</span>
@@ -770,6 +771,26 @@ function formatVal(key, v) {
 
 bindRange('cols', 'cols', 'colsVal', Math.round);
 bindRange('rows', 'rows', 'rowsVal', Math.round);
+
+function updateDirButtons() {
+  const hDisabled = state.cols === 1;
+  const vDisabled = state.rows === 1;
+  document.querySelectorAll('.dir-btn[data-dir]').forEach(btn => {
+    const dir = btn.dataset.dir;
+    const disable = (hDisabled && (dir === 'left_to_right' || dir === 'right_to_left'))
+                 || (vDisabled && (dir === 'top_to_bottom' || dir === 'bottom_to_top'));
+    btn.classList.toggle('disabled', disable);
+    if (disable && btn.classList.contains('active')) {
+      btn.classList.remove('active');
+      document.querySelector('.dir-btn[data-dir="uniform"]').classList.add('active');
+      state.direction = 'uniform';
+      redraw();
+    }
+  });
+}
+
+document.getElementById('cols').addEventListener('input', updateDirButtons);
+document.getElementById('rows').addEventListener('input', updateDirButtons);
 bindRange('maxSz', 'maxSz', 'maxSzVal', v => Math.round(v));
 bindRange('rotation', 'rotation', 'rotationVal', Math.round);
 bindRange('blur', 'blur', 'blurVal', Math.round);
@@ -1320,6 +1341,7 @@ applyTheme(localStorage.getItem('apng-theme') === 'light');
 // ── 初期化 ──
 setupCanvas();
 renderFrame(previewCtx, 0.0, state.canvasW, state.canvasH, {...state});
+updateDirButtons();
 </script>
 </body>
 </html>
