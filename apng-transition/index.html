@@ -580,6 +580,10 @@
         <label data-tip="図形の回転角度">Rotation<span class="val" id="rotationVal">0°</span></label>
         <input type="range" id="rotation" min="0" max="360" value="0">
       </div>
+      <div class="field">
+        <label data-tip="図形のエッジにぼかしをかける">Blur<span class="val" id="blurVal">0px</span></label>
+        <input type="range" id="blur" min="0" max="20" value="0">
+      </div>
     </div>
 
     <!-- アニメーション -->
@@ -704,6 +708,7 @@ const state = {
   cols: 12, rows: 8,
   maxSz: 100,   // % of diagonal half
   rotation: 0,
+  blur: 0,
   duration: 1.0, fps: 12,
   spread: 0.6,
   direction: 'uniform',
@@ -759,6 +764,7 @@ function formatVal(key, v) {
   if (key === 'maxSz') return v + '%';
   if (key === 'rotation') return v + '°';
   if (key === 'spread') return Math.round(v * 100) + '%';
+  if (key === 'blur') return v + 'px';
   return v;
 }
 
@@ -766,6 +772,7 @@ bindRange('cols', 'cols', 'colsVal', Math.round);
 bindRange('rows', 'rows', 'rowsVal', Math.round);
 bindRange('maxSz', 'maxSz', 'maxSzVal', v => Math.round(v));
 bindRange('rotation', 'rotation', 'rotationVal', Math.round);
+bindRange('blur', 'blur', 'blurVal', Math.round);
 bindRange('duration', 'duration', 'durVal', v => v / 10);
 bindRange('fps', 'fps', 'fpsVal', Math.round);
 bindRange('spread', 'spread', 'spreadVal', v => v / 100);
@@ -882,11 +889,12 @@ function getWeight(c, r, colsM1, rowsM1, dir) {
 }
 
 // ── 図形描画 ──
-function drawShape(ctx, shape, cx, cy, r, rotation) {
+function drawShape(ctx, shape, cx, cy, r, rotation, blur = 0) {
   if (r <= 0) return;
   ctx.save();
   ctx.translate(cx, cy);
   if (rotation) ctx.rotate(rotation * Math.PI / 180);
+  if (blur > 0) ctx.filter = `blur(${blur}px)`;
   ctx.beginPath();
   switch(shape) {
     case 'circle':
@@ -985,7 +993,7 @@ function renderFrame(ctx, t, w, h, s) {
         const start = weight * (1 - spread);
         const localT = Math.max(0, Math.min(1, (t - start) / spread));
         const easedT = applyEasing(localT, s.easing);
-        drawShape(ctx, s.shape, cx(col, cellW), cy(row, cellH), maxR * easedT, s.rotation);
+        drawShape(ctx, s.shape, cx(col, cellW), cy(row, cellH), maxR * easedT, s.rotation, s.blur);
       }
     }
   }
