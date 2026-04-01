@@ -1195,11 +1195,11 @@ function setExportBtns(disabled) {
 }
 
 // ── フレーム配列→APNGバイナリ変換（共通処理） ──
-function framesToApng(frames) {
-  const msPerFrame = Math.round(1000 / state.fps);
+function framesToApng(frames, s = state) {
+  const msPerFrame = Math.round(1000 / s.fps);
   const delays = frames.map(() => msPerFrame);
   const rawFrames = frames.map(fd => fd.data.buffer.slice(fd.data.byteOffset, fd.data.byteOffset + fd.data.byteLength));
-  return patchApngLoop(UPNG.encode(rawFrames, state.canvasW, state.canvasH, 0, delays), state.loopNum);
+  return patchApngLoop(UPNG.encode(rawFrames, s.canvasW, s.canvasH, 0, delays), s.loopNum);
 }
 
 // ── APNGをダウンロード ──
@@ -1231,7 +1231,7 @@ document.getElementById('exportApngBtn').addEventListener('click', async () => {
     statusEl.textContent = 'APNGエンコード中...';
     await new Promise(r => setTimeout(r, 10));
 
-    const apngBuf = framesToApng(frames);
+    const apngBuf = framesToApng(frames, state);
     downloadApng(apngBuf, `transition_${state.shape}_${state.direction}.png`);
 
     const kb = (apngBuf.byteLength / 1024).toFixed(1);
@@ -1274,13 +1274,16 @@ document.getElementById('exportBothBtn').addEventListener('click', async () => {
 
     statusEl.textContent = `${modeA} をエンコード中...`;
     await new Promise(r => setTimeout(r, 10));
-    const { frames: framesA, totalFrames } = generateFrames({ ...state, mode: modeA });
-    downloadApng(framesToApng(framesA), `${base}_${modeA}.png`);
+    const stateA = { ...state, mode: modeA };
+    const stateB = { ...state, mode: modeB };
+
+    const { frames: framesA, totalFrames } = generateFrames(stateA);
+    downloadApng(framesToApng(framesA, stateA), `${base}_${modeA}.png`);
 
     statusEl.textContent = `${modeB} をエンコード中...`;
     await new Promise(r => setTimeout(r, 10));
-    const { frames: framesB } = generateFrames({ ...state, mode: modeB });
-    downloadApng(framesToApng(framesB), `${base}_${modeB}.png`);
+    const { frames: framesB } = generateFrames(stateB);
+    downloadApng(framesToApng(framesB, stateB), `${base}_${modeB}.png`);
 
     statusEl.className = 'gen-status done';
     statusEl.textContent = `✓ 2ファイル出力完了 (${totalFrames}f × 2)`;
