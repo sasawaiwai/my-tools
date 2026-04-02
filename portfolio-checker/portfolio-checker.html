@@ -512,7 +512,6 @@ footer {
       <div class="sector-chart-wrap">
         <canvas id="sector-chart" width="280" height="280"></canvas>
       </div>
-      <div class="chart-tooltip" id="chart-tooltip"></div>
       <div style="overflow-x:auto;">
         <table class="sector-table">
           <thead>
@@ -1098,5 +1097,6 @@ function fmtYen(n) {
   return (n < 0 ? '-' : '') + abs.toLocaleString();
 }
 </script>
+<div class="chart-tooltip" id="chart-tooltip"></div>
 </body>
 </html>
