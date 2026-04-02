@@ -515,6 +515,33 @@ footer {
       <div class="sector-note">※ 構成比20%超のセクターは赤でハイライト（シクリカル集中警告）　※ セクターは証券コード範囲から自動判定</div>
     </div>
 
+    <!-- ディフェンシブ/シクリカル分類 -->
+    <div class="section fade-up" id="defensive-section">
+      <div class="section-head">
+        <h2>🛡️ ディフェンシブ / シクリカル分類</h2>
+        <span class="badge badge-blue" id="defensive-count">0カテゴリ</span>
+      </div>
+      <div class="sector-chart-wrap">
+        <canvas id="defensive-chart" width="280" height="280"></canvas>
+      </div>
+      <div id="defensive-label" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:12px;color:var(--muted)">— グラフにマウスを乗せてください —</div>
+      <div style="overflow-x:auto;">
+        <table class="sector-table">
+          <thead>
+            <tr>
+              <th style="width:12px"></th>
+              <th>カテゴリ</th>
+              <th class="right">銘柄数</th>
+              <th class="right">評価額合計</th>
+              <th>構成比（個別株内）</th>
+            </tr>
+          </thead>
+          <tbody id="defensive-tbody"></tbody>
+        </table>
+      </div>
+      <div class="sector-note">※ ディフェンシブ：食料品・医薬品・電気ガス・通信　景気敏感：化学・機械・素材・輸送機器　金融不動産：銀行・証券・保険・不動産　IT通信：情報通信・ソフトウェア　内需・生活：建設・小売・サービス・運輸など</div>
+    </div>
+
   </div><!-- /results -->
 
 </main>
@@ -830,6 +857,7 @@ function analyze(text) {
 
   // セクター別
   renderSectors(withPct);
+  renderDefensiveChart(withPct);
 
   // 表示
   document.getElementById('results').style.display = 'block';
@@ -1052,6 +1080,182 @@ function setupChartHover() {
     let a = Math.atan2(dy, dx) + Math.PI / 2;
     if (a < 0) a += Math.PI * 2;
     const hit = _sectorSlices.find(s => {
+      let start = s.start + Math.PI / 2;
+      let end   = s.end   + Math.PI / 2;
+      if (start < 0) start += Math.PI * 2;
+      if (end   < 0) end   += Math.PI * 2;
+      return start <= end ? (a >= start && a < end) : (a >= start || a < end);
+    });
+
+    if (hit) {
+      label.style.color = 'var(--text)';
+      label.textContent = `${hit.name}　${hit.pct.toFixed(1)}%`;
+    }
+  };
+
+  canvas.onmouseleave = () => {
+    label.style.color = 'var(--muted)';
+    label.textContent = '— グラフにマウスを乗せてください —';
+  };
+}
+
+// ── DEFENSIVE / CYCLICAL CLASSIFICATION ──
+const DEFENSIVE_COLORS = {
+  'ディフェンシブ':  '#4472c4',
+  '景気敏感':       '#ed7d31',
+  '内需・生活関連':  '#70ad47',
+  '金融・不動産':   '#ffc000',
+  'IT・通信':       '#7030a0',
+};
+const DEFENSIVE_ORDER = ['ディフェンシブ','景気敏感','内需・生活関連','金融・不動産','IT・通信'];
+
+const DEFENSIVE_OVERRIDES = {
+  '4661': '内需・生活関連', // OLC
+  '4689': 'IT・通信',      // LINEヤフー
+  '4901': '景気敏感',      // 富士フイルム
+  '4902': '景気敏感',      // コニカミノルタ
+  '4911': '内需・生活関連',// 資生堂
+  '4919': '内需・生活関連',// ミルボン
+  '6098': '内需・生活関連',// リクルート
+  '6178': 'ディフェンシブ',// 日本郵政
+  '7182': 'ディフェンシブ',// ゆうちょ銀行
+  '9984': 'IT・通信',      // ソフトバンクグループ
+  '2432': 'IT・通信',      // DeNA
+  '3632': 'IT・通信',      // グリー
+};
+
+function getDefensiveCat(code) {
+  if (DEFENSIVE_OVERRIDES[code]) return DEFENSIVE_OVERRIDES[code];
+  const n = parseInt(code);
+  if ((n >= 2000 && n <= 2499) || (n >= 4500 && n <= 4699) || (n >= 9400 && n <= 9499) || (n >= 9500 && n <= 9599)) return 'ディフェンシブ';
+  if (n >= 4700 && n <= 4999) return 'IT・通信';
+  if (n >= 8300 && n <= 8999) return '金融・不動産';
+  if ((n >= 1400 && n <= 1499) || (n >= 3700 && n <= 4499) || (n >= 5000 && n <= 6999) || (n >= 7000 && n <= 7299) || (n >= 9100 && n <= 9199)) return '景気敏感';
+  return '内需・生活関連';
+}
+
+let _defensiveSlices = [];
+
+function renderDefensiveChart(withPct) {
+  const THRESH = 20;
+  const totalValue = withPct.reduce((s, v) => s + v.value, 0);
+
+  const catMap = {};
+  withPct.forEach(s => {
+    const cat = getDefensiveCat(s.code);
+    if (!catMap[cat]) catMap[cat] = { count: 0, value: 0 };
+    catMap[cat].count++;
+    catMap[cat].value += s.value;
+  });
+
+  const cats = DEFENSIVE_ORDER
+    .filter(name => catMap[name])
+    .map(name => ({ name, ...catMap[name], pct: totalValue > 0 ? catMap[name].value / totalValue * 100 : 0, color: DEFENSIVE_COLORS[name] }));
+
+  document.getElementById('defensive-count').textContent = cats.length + 'カテゴリ';
+
+  drawDefensiveChart(cats);
+  setupDefensiveHover();
+
+  const tbody = document.getElementById('defensive-tbody');
+  tbody.innerHTML = '';
+  cats.forEach(cat => {
+    const isAlert = cat.pct >= THRESH;
+    const barW = Math.min(cat.pct / (THRESH * 2) * 100, 100);
+    const barCls = isAlert ? 'over' : (cat.pct >= THRESH * 0.7 ? 'warn' : 'ok');
+
+    const tr = document.createElement('tr');
+    if (isAlert) tr.className = 'sector-row-alert';
+
+    const tdDot = document.createElement('td');
+    tdDot.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${cat.color}"></span>`;
+
+    const tdName = document.createElement('td');
+    tdName.style.fontWeight = isAlert ? '700' : '';
+    tdName.textContent = (isAlert ? '🔴 ' : '') + cat.name;
+
+    const tdCount = document.createElement('td');
+    tdCount.className = 'right mono';
+    tdCount.textContent = cat.count + '銘柄';
+
+    const tdValue = document.createElement('td');
+    tdValue.className = 'right mono';
+    tdValue.textContent = fmtYen(cat.value);
+
+    const tdBar = document.createElement('td');
+    tdBar.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%;background:${cat.color}"></div></div><span class="bar-label ${isAlert ? 'over' : ''}" style="min-width:38px;text-align:right">${cat.pct.toFixed(1)}%</span></div>`;
+
+    tr.appendChild(tdDot);
+    tr.appendChild(tdName);
+    tr.appendChild(tdCount);
+    tr.appendChild(tdValue);
+    tr.appendChild(tdBar);
+    tbody.appendChild(tr);
+  });
+}
+
+function drawDefensiveChart(cats) {
+  const canvas = document.getElementById('defensive-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const r = Math.min(w, h) / 2 * 0.86;
+
+  ctx.clearRect(0, 0, w, h);
+
+  _defensiveSlices = [];
+  let angle = -Math.PI / 2;
+  cats.forEach(cat => {
+    const slice = (cat.pct / 100) * Math.PI * 2;
+    _defensiveSlices.push({ name: cat.name, pct: cat.pct, start: angle, end: angle + slice, r, cx, cy });
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = cat.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    angle += slice;
+  });
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.fillStyle = '#888580';
+  ctx.font = '11px "Noto Sans JP", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('景気感応度', cx, cy - 8);
+  ctx.fillText('分類', cx, cy + 8);
+}
+
+function setupDefensiveHover() {
+  const canvas = document.getElementById('defensive-chart');
+  const label  = document.getElementById('defensive-label');
+  if (!canvas || !label) return;
+
+  canvas.onmousemove = e => {
+    if (_defensiveSlices.length === 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width  / rect.width);
+    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
+    const { cx, cy, r } = _defensiveSlices[0];
+    const dx = mx - cx, dy = my - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < r * 0.45 || dist > r) {
+      label.style.color = 'var(--muted)';
+      label.textContent = '— グラフにマウスを乗せてください —';
+      return;
+    }
+
+    let a = Math.atan2(dy, dx) + Math.PI / 2;
+    if (a < 0) a += Math.PI * 2;
+    const hit = _defensiveSlices.find(s => {
       let start = s.start + Math.PI / 2;
       let end   = s.end   + Math.PI / 2;
       if (start < 0) start += Math.PI * 2;
