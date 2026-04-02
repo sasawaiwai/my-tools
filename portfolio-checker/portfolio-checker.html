@@ -509,7 +509,7 @@ footer {
       <div class="sector-chart-wrap">
         <canvas id="sector-chart" width="280" height="280"></canvas>
       </div>
-      <div id="sector-label" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:12px;color:var(--muted)">— グラフにマウスを乗せてください —</div>
+      <div id="sector-label" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:12px;color:var(--muted)">— グラフにタップしてください —</div>
       <div style="overflow-x:auto;">
         <table class="sector-table">
           <thead>
@@ -536,7 +536,7 @@ footer {
       <div class="sector-chart-wrap">
         <canvas id="defensive-chart" width="280" height="280"></canvas>
       </div>
-      <div id="defensive-label" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:12px;color:var(--muted)">— グラフにマウスを乗せてください —</div>
+      <div id="defensive-label" style="text-align:center;font-size:13px;min-height:20px;margin-bottom:12px;color:var(--muted)">— グラフにタップしてください —</div>
       <div style="overflow-x:auto;">
         <table class="sector-table">
           <thead>
@@ -638,7 +638,7 @@ function parseSBIcsv(text) {
 
     if (mode === 'stock') {
       const cols = parseCsvLine(line);
-      if (cols.length < 8) continue;
+      if (cols.length < 9) continue;
       const code = cols[0]?.replace(/"/g,'').trim();
       if (!code || !/^\d{4,6}$/.test(code)) continue;
 
@@ -1032,45 +1032,48 @@ function drawSectorChart(sectors) {
   ctx.fillText('構成比', cx, cy + 8);
 }
 
+function hitTestChart(canvas, slices, clientX, clientY, label) {
+  if (slices.length === 0) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = (clientX - rect.left) * (canvas.width  / rect.width);
+  const my = (clientY - rect.top)  * (canvas.height / rect.height);
+  const { cx, cy, r } = slices[0];
+  const dx = mx - cx, dy = my - cy;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist < r * 0.45 || dist > r) {
+    label.style.color = 'var(--muted)';
+    label.textContent = '— グラフにタップしてください —';
+    return;
+  }
+
+  let a = Math.atan2(dy, dx);
+  if (a < -Math.PI / 2) a += 2 * Math.PI;
+  const hit = slices.find(s => a >= s.start && a < s.end);
+
+  if (hit) {
+    label.style.color = 'var(--text)';
+    label.textContent = `${hit.name}　${hit.pct.toFixed(1)}%`;
+  }
+}
+
 function setupChartHover() {
   const canvas = document.getElementById('sector-chart');
   const label  = document.getElementById('sector-label');
   if (!canvas || !label) return;
 
-  canvas.onmousemove = e => {
-    if (_sectorSlices.length === 0) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width  / rect.width);
-    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
-    const { cx, cy, r } = _sectorSlices[0];
-    const dx = mx - cx, dy = my - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < r * 0.45 || dist > r) {
-      label.style.color = 'var(--muted)';
-      label.textContent = '— グラフにマウスを乗せてください —';
-      return;
-    }
-
-    let a = Math.atan2(dy, dx) + Math.PI / 2;
-    if (a < 0) a += Math.PI * 2;
-    const hit = _sectorSlices.find(s => {
-      let start = s.start + Math.PI / 2;
-      let end   = s.end   + Math.PI / 2;
-      if (start < 0) start += Math.PI * 2;
-      if (end   < 0) end   += Math.PI * 2;
-      return start <= end ? (a >= start && a < end) : (a >= start || a < end);
-    });
-
-    if (hit) {
-      label.style.color = 'var(--text)';
-      label.textContent = `${hit.name}　${hit.pct.toFixed(1)}%`;
-    }
-  };
-
+  canvas.onmousemove = e => hitTestChart(canvas, _sectorSlices, e.clientX, e.clientY, label);
   canvas.onmouseleave = () => {
     label.style.color = 'var(--muted)';
-    label.textContent = '— グラフにマウスを乗せてください —';
+    label.textContent = '— グラフにタップしてください —';
+  };
+  canvas.ontouchmove = e => {
+    e.preventDefault();
+    hitTestChart(canvas, _sectorSlices, e.touches[0].clientX, e.touches[0].clientY, label);
+  };
+  canvas.ontouchend = () => {
+    label.style.color = 'var(--muted)';
+    label.textContent = '— グラフにタップしてください —';
   };
 }
 
@@ -1231,40 +1234,18 @@ function setupDefensiveHover() {
   const label  = document.getElementById('defensive-label');
   if (!canvas || !label) return;
 
-  canvas.onmousemove = e => {
-    if (_defensiveSlices.length === 0) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width  / rect.width);
-    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
-    const { cx, cy, r } = _defensiveSlices[0];
-    const dx = mx - cx, dy = my - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < r * 0.45 || dist > r) {
-      label.style.color = 'var(--muted)';
-      label.textContent = '— グラフにマウスを乗せてください —';
-      return;
-    }
-
-    let a = Math.atan2(dy, dx) + Math.PI / 2;
-    if (a < 0) a += Math.PI * 2;
-    const hit = _defensiveSlices.find(s => {
-      let start = s.start + Math.PI / 2;
-      let end   = s.end   + Math.PI / 2;
-      if (start < 0) start += Math.PI * 2;
-      if (end   < 0) end   += Math.PI * 2;
-      return start <= end ? (a >= start && a < end) : (a >= start || a < end);
-    });
-
-    if (hit) {
-      label.style.color = 'var(--text)';
-      label.textContent = `${hit.name}　${hit.pct.toFixed(1)}%`;
-    }
-  };
-
+  canvas.onmousemove = e => hitTestChart(canvas, _defensiveSlices, e.clientX, e.clientY, label);
   canvas.onmouseleave = () => {
     label.style.color = 'var(--muted)';
-    label.textContent = '— グラフにマウスを乗せてください —';
+    label.textContent = '— グラフにタップしてください —';
+  };
+  canvas.ontouchmove = e => {
+    e.preventDefault();
+    hitTestChart(canvas, _defensiveSlices, e.touches[0].clientX, e.touches[0].clientY, label);
+  };
+  canvas.ontouchend = () => {
+    label.style.color = 'var(--muted)';
+    label.textContent = '— グラフにタップしてください —';
   };
 }
 
