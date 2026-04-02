@@ -304,7 +304,23 @@ footer {
 }
 #sector-chart {
   max-width: 100%;
+  cursor: default;
 }
+.chart-tooltip {
+  position: fixed;
+  background: var(--text);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: 'Noto Sans JP', sans-serif;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+.chart-tooltip.visible { opacity: 1; }
 
 /* ── SECTOR TABLE ── */
 .sector-table {
@@ -496,6 +512,7 @@ footer {
       <div class="sector-chart-wrap">
         <canvas id="sector-chart" width="280" height="280"></canvas>
       </div>
+      <div class="chart-tooltip" id="chart-tooltip"></div>
       <div style="overflow-x:auto;">
         <table class="sector-table">
           <thead>
@@ -984,6 +1001,8 @@ function renderSectors(withPct) {
   });
 }
 
+let _sectorSlices = [];
+
 function drawSectorChart(sectors) {
   const canvas = document.getElementById('sector-chart');
   if (!canvas) return;
@@ -994,9 +1013,11 @@ function drawSectorChart(sectors) {
 
   ctx.clearRect(0, 0, w, h);
 
+  _sectorSlices = [];
   let angle = -Math.PI / 2;
   sectors.forEach((sec, i) => {
     const slice = (sec.pct / 100) * Math.PI * 2;
+    _sectorSlices.push({ name: sec.name, pct: sec.pct, start: angle, end: angle + slice, r, cx, cy, color: CHART_COLORS[i % CHART_COLORS.length] });
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, r, angle, angle + slice);
@@ -1021,6 +1042,54 @@ function drawSectorChart(sectors) {
   ctx.fillText('セクター別', cx, cy - 8);
   ctx.fillText('構成比', cx, cy + 8);
 }
+
+(function setupChartTooltip() {
+  const tooltip = document.getElementById('chart-tooltip');
+  // canvas は results 表示後に存在するので document レベルで委譲
+  document.addEventListener('mousemove', e => {
+    const canvas = document.getElementById('sector-chart');
+    if (!canvas || _sectorSlices.length === 0) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (canvas.width  / rect.width);
+    const my = (e.clientY - rect.top)  * (canvas.height / rect.height);
+
+    const { cx, cy, r } = _sectorSlices[0];
+    const dx = mx - cx, dy = my - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < r * 0.45 || dist > r) {
+      tooltip.classList.remove('visible');
+      return;
+    }
+
+    let a = Math.atan2(dy, dx) + Math.PI / 2;
+    if (a < 0) a += Math.PI * 2;
+
+    const hit = _sectorSlices.find(s => {
+      let start = s.start + Math.PI / 2;
+      let end   = s.end   + Math.PI / 2;
+      if (start < 0) start += Math.PI * 2;
+      if (end   < 0) end   += Math.PI * 2;
+      if (start <= end) return a >= start && a < end;
+      return a >= start || a < end; // 0をまたぐスライス
+    });
+
+    if (hit) {
+      tooltip.textContent = `${hit.name}　${hit.pct.toFixed(1)}%`;
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top  = (e.clientY - 10) + 'px';
+      tooltip.classList.add('visible');
+    } else {
+      tooltip.classList.remove('visible');
+    }
+  });
+
+  document.addEventListener('mouseleave', () => {
+    const tooltip = document.getElementById('chart-tooltip');
+    if (tooltip) tooltip.classList.remove('visible');
+  });
+})();
 
 function fmtYen(n) {
   const abs = Math.abs(Math.round(n));
