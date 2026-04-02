@@ -656,7 +656,7 @@ function parseSBIcsv(text) {
         stocks[code].cost += shares * cost;
         stocks[code].pl += pl;
       } else {
-        stocks[code] = { name, value, cost: shares * cost, pl };
+        stocks[code] = { name, value, cost: shares * cost, pl, price };
       }
     }
   }
@@ -757,7 +757,9 @@ function analyze(text) {
 
       const detail = document.createElement('div');
       detail.className = 'detail';
-      detail.innerHTML = `${tOver}%を${excess.toFixed(1)}%超過。目安として<strong>${fmtYen(excessYen)}分</strong>の売却でルール内に収まります。`;
+      const sharesNeeded = s.price > 0 ? Math.ceil(excessYen / s.price) : null;
+      const sharesText = sharesNeeded ? `（約${sharesNeeded.toLocaleString()}株相当）` : '';
+      detail.innerHTML = `${tOver}%を${excess.toFixed(1)}%超過。ルール内に収めるために必要な売却：<strong>${fmtYen(excessYen)}円</strong>${sharesText}`;
 
       const pct = document.createElement('div');
       pct.className = 'pct red';
