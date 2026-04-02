@@ -296,6 +296,35 @@ footer {
   line-height: 1.7;
 }
 
+/* ── SECTOR TABLE ── */
+.sector-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+.sector-table th {
+  background: var(--surface2);
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 11px; font-weight: 500; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.sector-table th.right, .sector-table td.right { text-align: right; }
+.sector-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.sector-table tr:last-child td { border-bottom: none; }
+.sector-table tr.sector-row-alert td { background: var(--red-bg); }
+.sector-table tr:not(.sector-row-alert):hover td { background: #fafaf7; }
+.sector-note { margin-top: 8px; font-size: 11px; color: var(--muted); }
+
 /* ── ANIM ── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
@@ -446,6 +475,28 @@ footer {
           <tbody id="stocks-tbody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- セクター別構成比 -->
+    <div class="section fade-up" id="sector-section">
+      <div class="section-head">
+        <h2>🏭 セクター別構成比</h2>
+        <span class="badge badge-blue" id="sector-count">0セクター</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="sector-table">
+          <thead>
+            <tr>
+              <th>セクター</th>
+              <th class="right">銘柄数</th>
+              <th class="right">評価額合計</th>
+              <th>構成比（個別株内）</th>
+            </tr>
+          </thead>
+          <tbody id="sector-tbody"></tbody>
+        </table>
+      </div>
+      <div class="sector-note">※ 構成比20%超のセクターは赤でハイライト（シクリカル集中警告）　※ セクターは証券コード範囲から自動判定</div>
     </div>
 
   </div><!-- /results -->
@@ -761,6 +812,9 @@ function analyze(text) {
     tbody.appendChild(tr);
   });
 
+  // セクター別
+  renderSectors(withPct);
+
   // 表示
   document.getElementById('results').style.display = 'block';
   updateDividend();
@@ -791,6 +845,115 @@ function updateDividend() {
     subEl.innerHTML = `達成率 <strong>${pct.toFixed(1)}%</strong>　不足額 <strong>${fmtYen(remaining)}円</strong>　※利回り${yieldPct}%換算であと<strong>${fmtYen(yieldNeeded)}円分</strong>の高配当資産が必要`;
     subEl.style.color = 'var(--muted)';
   }
+}
+
+// ── SECTOR CLASSIFICATION ──
+const SECTOR_OVERRIDES = {
+  '4661': 'サービス業',   // オリエンタルランド
+  '4689': '情報・通信',   // LINEヤフー
+  '4901': '化学',         // 富士フイルム
+  '4902': '電気機器',     // コニカミノルタ
+  '4911': '化学',         // 資生堂
+  '4919': '化学',         // ミルボン
+  '4971': '化学',         // メック
+  '9984': '情報・通信',   // ソフトバンクグループ
+  '2432': '情報・通信',   // DeNA
+  '3632': '情報・通信',   // グリー
+  '6098': 'サービス業',   // リクルート
+  '6178': '銀行業',       // 日本郵政
+  '7182': '銀行業',       // ゆうちょ銀行
+};
+
+function getSector(code) {
+  if (SECTOR_OVERRIDES[code]) return SECTOR_OVERRIDES[code];
+  const n = parseInt(code);
+  if (n >= 1300 && n <= 1399) return '水産・農林業';
+  if (n >= 1400 && n <= 1499) return '鉱業';
+  if (n >= 1500 && n <= 1999) return '建設業';
+  if (n >= 2000 && n <= 2499) return '食料品';
+  if (n >= 2500 && n <= 3299) return '繊維製品';
+  if (n >= 3300 && n <= 3699) return 'パルプ・紙・化成品';
+  if (n >= 3700 && n <= 4499) return '化学';
+  if (n >= 4500 && n <= 4699) return '医薬品';
+  if (n >= 4700 && n <= 4999) return '情報・通信';
+  if (n >= 5000 && n <= 5099) return '石油・石炭';
+  if (n >= 5100 && n <= 5199) return 'ゴム製品';
+  if (n >= 5200 && n <= 5399) return 'ガラス・土石';
+  if (n >= 5400 && n <= 5599) return '鉄鋼';
+  if (n >= 5600 && n <= 5799) return '非鉄金属';
+  if (n >= 5800 && n <= 5999) return '金属製品';
+  if (n >= 6000 && n <= 6399) return '機械';
+  if (n >= 6400 && n <= 6999) return '電気機器';
+  if (n >= 7000 && n <= 7299) return '輸送用機器';
+  if (n >= 7300 && n <= 7699) return 'その他製品';
+  if (n >= 7700 && n <= 7799) return '精密機器';
+  if (n >= 7800 && n <= 7999) return 'その他製品';
+  if (n >= 8000 && n <= 8099) return '卸売業';
+  if (n >= 8100 && n <= 8299) return '小売業';
+  if (n >= 8300 && n <= 8399) return '銀行業';
+  if (n >= 8400 && n <= 8599) return 'その他金融';
+  if (n >= 8600 && n <= 8699) return '証券業';
+  if (n >= 8700 && n <= 8799) return '保険業';
+  if (n >= 8800 && n <= 8999) return '不動産業';
+  if (n >= 9000 && n <= 9099) return '陸運業';
+  if (n >= 9100 && n <= 9199) return '海運業';
+  if (n >= 9200 && n <= 9299) return '空運業';
+  if (n >= 9300 && n <= 9399) return '倉庫・運輸';
+  if (n >= 9400 && n <= 9499) return '情報・通信';
+  if (n >= 9500 && n <= 9599) return '電気・ガス業';
+  if (n >= 9600 && n <= 9999) return 'サービス業';
+  return 'その他';
+}
+
+function renderSectors(withPct) {
+  const THRESH = 20;
+  const totalValue = withPct.reduce((s, v) => s + v.value, 0);
+
+  const sectorMap = {};
+  withPct.forEach(s => {
+    const sec = getSector(s.code);
+    if (!sectorMap[sec]) sectorMap[sec] = { count: 0, value: 0 };
+    sectorMap[sec].count++;
+    sectorMap[sec].value += s.value;
+  });
+
+  const sectors = Object.entries(sectorMap)
+    .map(([name, d]) => ({ name, ...d, pct: totalValue > 0 ? d.value / totalValue * 100 : 0 }))
+    .sort((a, b) => b.pct - a.pct);
+
+  document.getElementById('sector-count').textContent = sectors.length + 'セクター';
+
+  const tbody = document.getElementById('sector-tbody');
+  tbody.innerHTML = '';
+  sectors.forEach(sec => {
+    const isAlert = sec.pct >= THRESH;
+    const barW = Math.min(sec.pct / (THRESH * 2) * 100, 100);
+    const barCls = isAlert ? 'over' : (sec.pct >= THRESH * 0.7 ? 'warn' : 'ok');
+
+    const tr = document.createElement('tr');
+    if (isAlert) tr.className = 'sector-row-alert';
+
+    const tdName = document.createElement('td');
+    tdName.style.fontWeight = isAlert ? '700' : '';
+    tdName.textContent = (isAlert ? '🔴 ' : '') + sec.name;
+
+    const tdCount = document.createElement('td');
+    tdCount.className = 'right mono';
+    tdCount.textContent = sec.count + '銘柄';
+
+    const tdValue = document.createElement('td');
+    tdValue.className = 'right mono';
+    tdValue.textContent = fmtYen(sec.value);
+
+    const tdBar = document.createElement('td');
+    tdBar.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%"></div></div><span class="bar-label ${isAlert ? 'over' : ''}" style="min-width:38px;text-align:right">${sec.pct.toFixed(1)}%</span></div>`;
+
+    tr.appendChild(tdName);
+    tr.appendChild(tdCount);
+    tr.appendChild(tdValue);
+    tr.appendChild(tdBar);
+    tbody.appendChild(tr);
+  });
 }
 
 function fmtYen(n) {
