@@ -296,6 +296,16 @@ footer {
   line-height: 1.7;
 }
 
+/* ── SECTOR CHART ── */
+.sector-chart-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+#sector-chart {
+  max-width: 100%;
+}
+
 /* ── SECTOR TABLE ── */
 .sector-table {
   width: 100%;
@@ -483,10 +493,14 @@ footer {
         <h2>🏭 セクター別構成比</h2>
         <span class="badge badge-blue" id="sector-count">0セクター</span>
       </div>
+      <div class="sector-chart-wrap">
+        <canvas id="sector-chart" width="280" height="280"></canvas>
+      </div>
       <div style="overflow-x:auto;">
         <table class="sector-table">
           <thead>
             <tr>
+              <th style="width:12px"></th>
               <th>セクター</th>
               <th class="right">銘柄数</th>
               <th class="right">評価額合計</th>
@@ -905,6 +919,13 @@ function getSector(code) {
   return 'その他';
 }
 
+const CHART_COLORS = [
+  '#4e79a7','#f28e2b','#59a14f','#e15759','#76b7b2',
+  '#edc948','#b07aa1','#ff9da7','#9c755f','#86bcb6',
+  '#499894','#f1ce63','#a0cbe8','#ffbe7d','#8cd17d',
+  '#b6992d','#d4a6c8','#bab0ac','#ff9d9a','#79706e',
+];
+
 function renderSectors(withPct) {
   const THRESH = 20;
   const totalValue = withPct.reduce((s, v) => s + v.value, 0);
@@ -923,15 +944,21 @@ function renderSectors(withPct) {
 
   document.getElementById('sector-count').textContent = sectors.length + 'セクター';
 
+  drawSectorChart(sectors);
+
   const tbody = document.getElementById('sector-tbody');
   tbody.innerHTML = '';
-  sectors.forEach(sec => {
+  sectors.forEach((sec, i) => {
     const isAlert = sec.pct >= THRESH;
     const barW = Math.min(sec.pct / (THRESH * 2) * 100, 100);
     const barCls = isAlert ? 'over' : (sec.pct >= THRESH * 0.7 ? 'warn' : 'ok');
+    const color = CHART_COLORS[i % CHART_COLORS.length];
 
     const tr = document.createElement('tr');
     if (isAlert) tr.className = 'sector-row-alert';
+
+    const tdDot = document.createElement('td');
+    tdDot.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>`;
 
     const tdName = document.createElement('td');
     tdName.style.fontWeight = isAlert ? '700' : '';
@@ -948,12 +975,51 @@ function renderSectors(withPct) {
     const tdBar = document.createElement('td');
     tdBar.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div class="bar-wrap" style="flex:1"><div class="bar-fill ${barCls}" style="width:${barW}%"></div></div><span class="bar-label ${isAlert ? 'over' : ''}" style="min-width:38px;text-align:right">${sec.pct.toFixed(1)}%</span></div>`;
 
+    tr.appendChild(tdDot);
     tr.appendChild(tdName);
     tr.appendChild(tdCount);
     tr.appendChild(tdValue);
     tr.appendChild(tdBar);
     tbody.appendChild(tr);
   });
+}
+
+function drawSectorChart(sectors) {
+  const canvas = document.getElementById('sector-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2;
+  const r = Math.min(w, h) / 2 * 0.86;
+
+  ctx.clearRect(0, 0, w, h);
+
+  let angle = -Math.PI / 2;
+  sectors.forEach((sec, i) => {
+    const slice = (sec.pct / 100) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = CHART_COLORS[i % CHART_COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    angle += slice;
+  });
+
+  // 中央ラベル（ドーナツ風の穴）
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.fillStyle = '#888580';
+  ctx.font = '11px "Noto Sans JP", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('セクター別', cx, cy - 8);
+  ctx.fillText('構成比', cx, cy + 8);
 }
 
 function fmtYen(n) {
