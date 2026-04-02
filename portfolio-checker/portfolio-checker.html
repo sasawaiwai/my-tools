@@ -8,10 +8,10 @@
 <meta property="og:type"        content="website">
 <meta property="og:title"       content="ポートフォリオ番人 | SBI証券CSV分析ツール">
 <meta property="og:description" content="SBI証券の保有一覧CSVを読み込み、個別株の構成比・含み損益・配当目標進捗を自動チェック。データはすべてブラウザ内で処理されます。">
-<meta property="og:url"         content="https://tools.sasadokoro.online/portfolio-checker/portfolio-checker.html">
+<meta property="og:url"         content="https://tools.sasadokoro.online/portfolio-checker/">
 <meta property="og:image"       content="https://tools.sasadokoro.online/ogp.png">
 <meta name="twitter:card"       content="summary">
-<link rel="canonical"           href="https://tools.sasadokoro.online/portfolio-checker/portfolio-checker.html">
+<link rel="canonical"           href="https://tools.sasadokoro.online/portfolio-checker/">
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <!-- Google tag (gtag.js) -->
@@ -380,6 +380,7 @@ footer {
         データはブラウザ内のみで処理され、外部には一切送信されません
       </div>
     </div>
+    <div id="csv-error" style="display:none;margin-top:10px;background:var(--red-bg);border:1px solid #f0c0c0;border-radius:8px;padding:12px 16px;font-size:13px;color:var(--red)"></div>
     <div class="hint-box">
       <strong>CSVの取得方法：</strong>SBI証券ログイン →「口座管理」→「保有証券」→ ページ下部「CSVダウンロード」<br>
       ※株式・投資信託が含まれる全銘柄ファイルを使ってください
@@ -421,7 +422,11 @@ footer {
   </div>
 
   <!-- RESULTS -->
-  <div id="results">
+  <div id="results" aria-live="polite">
+
+    <div style="background:var(--amber-bg);border:1px solid #f0dba0;border-radius:8px;padding:10px 16px;font-size:12px;color:var(--amber);margin-bottom:20px">
+      ⚠ 本ツールは投資の参考情報を提供するものです。情報の正確性・最新性を保証するものではなく、売買の判断・損害についての責任は負いません。
+    </div>
 
     <!-- SUMMARY -->
     <div class="summary-grid section fade-up">
@@ -524,7 +529,7 @@ footer {
           <tbody id="sector-tbody"></tbody>
         </table>
       </div>
-      <div class="sector-note">※ 構成比20%超のセクターは赤でハイライト（シクリカル集中警告）　※ セクターは証券コード範囲から自動判定</div>
+      <div class="sector-note">※ 構成比20%超のセクターは赤でハイライト（シクリカル集中警告）　※ セクターデータ出典：<a href="https://www.jpx.co.jp/markets/statistics-equities/misc/01.html" target="_blank" rel="noopener noreferrer" style="color:inherit">日本取引所グループ（JPX）上場銘柄一覧</a></div>
     </div>
 
     <!-- ディフェンシブ/シクリカル分類 -->
@@ -561,7 +566,7 @@ footer {
 <footer>
   ⚠ 本ツールは投資助言ではありません。売買の判断はご自身の責任で行ってください。<br>
   データはすべてブラウザ内で処理されます。外部サーバーへの送信は一切行いません。<br><br>
-  © ササドコロ / 笹塚　|
+  v1.0.0　|　© ササドコロ / 笹塚　|
   <a href="/" style="color:var(--muted);text-decoration:none;">← ツール一覧に戻る</a>　|
   <a href="/privacy.html" style="color:var(--muted);text-decoration:none;">プライバシーポリシー</a>　|
   <a href="/terms.html" style="color:var(--muted);text-decoration:none;">利用規約</a>
@@ -610,8 +615,7 @@ function processFile(file) {
       }
       analyze(text);
     } catch(err) {
-      alert('CSVの読み込みに失敗しました。SBI証券からダウンロードしたCSVファイルをお使いください。');
-      console.error(err);
+      showError('CSVの読み込みに失敗しました。SBI証券からダウンロードしたCSVファイルをお使いください。');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -688,12 +692,13 @@ let parsedStocks = {};
 let lastText = '';
 
 function analyze(text) {
+  clearError();
   lastText = text;
   parsedStocks = parseSBIcsv(text);
   const entries = Object.entries(parsedStocks);
 
   if (entries.length === 0) {
-    alert('銘柄データが見つかりませんでした。SBI証券の保有一覧CSVをお使いください。');
+    showError('銘柄データが見つかりませんでした。SBI証券の保有一覧CSVをお使いください。');
     return;
   }
 
@@ -985,7 +990,7 @@ function renderSectors(withPct) {
       dr.className = 'sector-detail-row';
       const td = document.createElement('td');
       td.colSpan = 5;
-      td.innerHTML = sec.stocks.map(n => `<span class="stock-chip">${n}</span>`).join('');
+      td.innerHTML = sec.stocks.map(n => `<span class="stock-chip">${esc(n)}</span>`).join('');
       dr.appendChild(td);
       tr.after(dr);
     });
@@ -1249,6 +1254,21 @@ function setupDefensiveHover() {
     label.style.color = 'var(--muted)';
     label.textContent = '— グラフにタップしてください —';
   };
+}
+
+function showError(msg) {
+  const el = document.getElementById('csv-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function clearError() {
+  document.getElementById('csv-error').style.display = 'none';
+}
+
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
 }
 
 function fmtYen(n) {
