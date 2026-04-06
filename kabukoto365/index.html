@@ -257,8 +257,8 @@
     }
     .fortune-disclaimer {
         padding: 8px 16px;
-        font-size: 10px;
-        color: rgba(255,255,255,0.3);
+        font-size: 12px;
+        color: rgba(255,255,255,0.55);
         text-align: center;
         border-top: 1px solid rgba(80,80,80,0.2);
     }
@@ -281,8 +281,8 @@
                         <div class="fortune-emoji">${f.emoji}</div>
                         <div class="fortune-sign">${f.sign}</div>
                         <div class="fortune-stars">${stars}</div>
-                        <div class="fortune-sector">${f.lucky_sector}</div>
                         <div class="fortune-msg">${f.message}</div>
+                        <div class="fortune-sector">注目：${f.lucky_sector}</div>
                     </div>`;
                 }).join('');
                 document.getElementById('fortune-container').style.display = 'block';
