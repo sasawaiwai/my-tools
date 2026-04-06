@@ -1,0 +1,19 @@
+{
+  "date": "2026-04-06",
+  "generated_at": "2026-04-06T06:00:00+09:00",
+  "daily_theme": "慎重なポジション管理が鍵。守りながら好機を待て",
+  "fortunes": [
+    { "sign": "おひつじ座", "emoji": "♈", "lucky_sector": "半導体", "rating": 4, "message": "積極的な姿勢が好転を呼ぶ。新興銘柄に注目を。" },
+    { "sign": "おうし座",   "emoji": "♉", "lucky_sector": "食品・生活", "rating": 3, "message": "安定志向が吉。ディフェンシブ銘柄が味方に。" },
+    { "sign": "ふたご座",   "emoji": "♊", "lucky_sector": "通信・IT", "rating": 5, "message": "情報収集が宝の山に変わる日。アンテナを張れ。" },
+    { "sign": "かに座",     "emoji": "♋", "lucky_sector": "不動産", "rating": 3, "message": "焦りは禁物。じっくり待つ姿勢が利益を生む。" },
+    { "sign": "しし座",     "emoji": "♌", "lucky_sector": "エンタメ・観光", "rating": 4, "message": "大胆な一手が功を奏す。直感を信じて動け。" },
+    { "sign": "おとめ座",   "emoji": "♍", "lucky_sector": "医薬・ヘルスケア", "rating": 3, "message": "細部の確認が明暗を分ける。焦らず精査せよ。" },
+    { "sign": "てんびん座", "emoji": "♎", "lucky_sector": "金融・保険", "rating": 4, "message": "バランス感覚が冴える日。分散投資が光る。" },
+    { "sign": "さそり座",   "emoji": "♏", "lucky_sector": "エネルギー", "rating": 5, "message": "深掘りした情報が大きなリターンをもたらす。" },
+    { "sign": "いて座",     "emoji": "♐", "lucky_sector": "海外・輸出", "rating": 3, "message": "視野を広く持て。海外市場に好機あり。" },
+    { "sign": "やぎ座",     "emoji": "♑", "lucky_sector": "素材・化学", "rating": 4, "message": "着実な積み上げが結実する。長期目線を忘れずに。" },
+    { "sign": "みずがめ座", "emoji": "♒", "lucky_sector": "テクノロジー", "rating": 5, "message": "革新的なテーマに乗れ。時代の波が追い風に。" },
+    { "sign": "うお座",     "emoji": "♓", "lucky_sector": "小売・EC", "rating": 3, "message": "直感より数字を信じる日。データを丁寧に読め。" }
+  ]
+}
