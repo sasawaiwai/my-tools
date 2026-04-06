@@ -270,7 +270,7 @@
         fetch(FORTUNE_URL)
             .then(r => r.json())
             .then(data => {
-                const today = new Date().toISOString().slice(0, 10);
+                const today = new Date(Date.now() + 9*60*60*1000).toISOString().slice(0, 10); // JST基準
                 if (data.date !== today) return; // 日付が違う場合は非表示
                 document.getElementById('fortune-date').textContent = data.date;
                 document.getElementById('fortune-theme').textContent = '📊 ' + data.daily_theme;
