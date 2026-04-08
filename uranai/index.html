@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STELLAR ORACLE — 12星座占い</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --black:        #000000;
+            --white:        #f0f0fa;
+            --white-dim:    rgba(240,240,250,0.88);
+            --white-muted:  rgba(240,240,250,0.75);
+            --white-subtle: rgba(240,240,250,0.10);
+            --white-faint:  rgba(240,240,250,0.05);
+            --font: 'Barlow Condensed', sans-serif;
+        }
+
+        html, body {
+            min-height: 100%;
+            background: var(--black);
+            color: var(--white);
+            font-family: var(--font);
+            overflow-x: hidden;
+        }
+
+        /* ── Star canvas ── */
+        #stars-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── Layout ── */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 48px;
+        }
+
+        /* ════════════════════════
+           HOME
+        ════════════════════════ */
+        #view-home { min-height: 100vh; }
+
+        .site-header {
+            padding: 72px 0 48px;
+            text-align: center;
+        }
+
+        .site-eyebrow {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-bottom: 24px;
+        }
+
+        .site-title {
+            font-size: clamp(56px, 10vw, 112px);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            line-height: 0.9;
+        }
+
+        .site-subtitle {
+            font-size: clamp(16px, 2.5vw, 22px);
+            font-weight: 300;
+            letter-spacing: 0.6em;
+            text-transform: uppercase;
+            color: var(--white-dim);
+            margin-top: 20px;
+        }
+
+        .site-date {
+            font-size: 13px;
+            font-weight: 400;
+            letter-spacing: 5px;
+            color: var(--white-muted);
+            margin-top: 36px;
+        }
+
+        .hair-line {
+            width: 1px;
+            height: 48px;
+            background: var(--white-muted);
+            margin: 36px auto;
+        }
+
+        /* ── Grid ── */
+        .zodiac-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--white-subtle);
+            border: 1px solid var(--white-subtle);
+            margin-bottom: 100px;
+        }
+
+        .zodiac-card {
+            background: var(--black);
+            padding: 40px 20px 36px;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.25s;
+        }
+
+        .zodiac-card:hover { background: var(--white-faint); }
+
+        .card-symbol {
+            font-size: 44px;
+            line-height: 1;
+            display: block;
+            margin-bottom: 14px;
+            transition: transform 0.25s;
+        }
+        .zodiac-card:hover .card-symbol { transform: scale(1.12); }
+
+        .card-name-ja {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .card-name-en {
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .card-period {
+            font-size: 11px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            color: var(--white-muted);
+        }
+
+        /* ════════════════════════
+           DETAIL
+        ════════════════════════ */
+        #view-detail { display: none; min-height: 100vh; }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: transparent;
+            border: 1px solid var(--white-muted);
+            color: var(--white);
+            font-family: var(--font);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            padding: 14px 28px;
+            cursor: pointer;
+            margin: 48px 0;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .back-btn:hover { background: var(--white-subtle); border-color: var(--white); }
+
+        /* ── Sign hero ── */
+        .sign-hero {
+            text-align: center;
+            padding: 40px 0 48px;
+        }
+
+        .sign-hero-symbol {
+            font-size: clamp(88px, 16vw, 160px);
+            line-height: 1;
+            display: block;
+            opacity: 0.88;
+        }
+
+        .sign-hero-name-ja {
+            font-size: clamp(40px, 7vw, 80px);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            margin-top: 20px;
+            display: block;
+        }
+
+        .sign-hero-name-en {
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-top: 10px;
+            display: block;
+        }
+
+        .sign-hero-period {
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 5px;
+            color: var(--white-muted);
+            margin-top: 12px;
+        }
+
+        /* ── Tabs ── */
+        .tab-bar {
+            display: flex;
+            border-bottom: 1px solid var(--white-subtle);
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--white-muted);
+            font-family: var(--font);
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            padding: 22px 16px;
+            cursor: pointer;
+            margin-bottom: -1px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tab-btn:hover { color: var(--white-dim); }
+        .tab-btn.active { color: var(--white); border-bottom-color: var(--white); }
+
+        /* ── Fortune content ── */
+        .fortune-content { padding: 64px 0 120px; }
+
+        /* Overall */
+        .overall-section { margin-bottom: 64px; }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 7px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-bottom: 16px;
+        }
+
+        .star-rating {
+            font-size: 32px;
+            letter-spacing: 6px;
+            margin-bottom: 24px;
+            color: var(--white);
+        }
+
+        .fortune-text {
+            font-size: clamp(18px, 2.5vw, 24px);
+            font-weight: 300;
+            line-height: 1.75;
+            color: var(--white-dim);
+            max-width: 680px;
+        }
+
+        /* Category grid */
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background: var(--white-subtle);
+            border: 1px solid var(--white-subtle);
+            margin-bottom: 64px;
+        }
+
+        .cat-item {
+            background: var(--black);
+            padding: 32px 36px;
+            transition: background 0.2s;
+        }
+        .cat-item:hover { background: var(--white-faint); }
+
+        .cat-name {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-bottom: 12px;
+        }
+
+        .cat-stars {
+            font-size: 22px;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .cat-text {
+            font-size: 17px;
+            font-weight: 300;
+            color: var(--white-dim);
+            line-height: 1.55;
+        }
+
+        /* Lucky */
+        .lucky-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--white-subtle);
+            border: 1px solid var(--white-subtle);
+        }
+
+        .lucky-item {
+            background: var(--black);
+            padding: 32px 28px;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .lucky-item:hover { background: var(--white-faint); }
+
+        .lucky-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: var(--white-muted);
+            margin-bottom: 14px;
+        }
+
+        .lucky-value {
+            font-size: clamp(20px, 3vw, 28px);
+            font-weight: 700;
+            letter-spacing: 3px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .zodiac-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .container { padding: 0 24px; }
+            .zodiac-grid { grid-template-columns: repeat(2, 1fr); }
+            .categories { grid-template-columns: 1fr; }
+            .lucky-section { grid-template-columns: 1fr; }
+            .tab-btn { letter-spacing: 3px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+
+<!-- ════ HOME ════ -->
+<div id="view-home">
+    <div class="container">
+        <header class="site-header">
+            <div class="site-eyebrow">Stellar Oracle</div>
+            <h1 class="site-title">Zodiac</h1>
+            <p class="site-subtitle">12星座占い</p>
+            <div class="site-date" id="today-label"></div>
+        </header>
+        <div class="hair-line"></div>
+        <div class="zodiac-grid" id="zodiac-grid"></div>
+    </div>
+</div>
+
+<!-- ════ DETAIL ════ -->
+<div id="view-detail">
+    <div class="container">
+        <button class="back-btn" id="back-btn">← Back</button>
+        <div class="sign-hero">
+            <span class="sign-hero-symbol" id="d-symbol"></span>
+            <span class="sign-hero-name-ja" id="d-name-ja"></span>
+            <span class="sign-hero-name-en" id="d-name-en"></span>
+            <div class="sign-hero-period" id="d-period"></div>
+        </div>
+        <div class="tab-bar">
+            <button class="tab-btn active" data-period="today">今日</button>
+            <button class="tab-btn" data-period="week">今週</button>
+            <button class="tab-btn" data-period="month">今月</button>
+        </div>
+        <div class="fortune-content" id="fortune-content"></div>
+    </div>
+</div>
+
+<script>
+/* ════════════════════════════════
+   STAR FIELD
+════════════════════════════════ */
+const cv = document.getElementById('stars-canvas');
+const cx = cv.getContext('2d');
+let stars = [], shoots = [];
+
+function resize() {
+    cv.width  = window.innerWidth;
+    cv.height = window.innerHeight;
+}
+
+function mkStars() {
+    stars = [];
+    const n = Math.floor(cv.width * cv.height / 2800);
+    for (let i = 0; i < n; i++) stars.push({
+        x: Math.random() * cv.width,
+        y: Math.random() * cv.height,
+        r: Math.random() * 1.4 + 0.2,
+        a: Math.random(),
+        d: (Math.random() - 0.5) * 0.008,
+    });
+}
+
+function draw() {
+    cx.clearRect(0, 0, cv.width, cv.height);
+
+    // Twinkle stars
+    for (const s of stars) {
+        s.a += s.d;
+        if (s.a < 0.08 || s.a > 1) s.d *= -1;
+        s.a = Math.max(0.08, Math.min(1, s.a));
+        cx.beginPath();
+        cx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        cx.fillStyle = `rgba(240,240,250,${s.a * 0.75})`;
+        cx.fill();
+    }
+
+    // Spawn shooting star occasionally
+    if (shoots.length < 2 && Math.random() < 0.004) {
+        shoots.push({
+            x: Math.random() * cv.width * 0.7,
+            y: Math.random() * cv.height * 0.45,
+            len: 90 + Math.random() * 100,
+            spd: 7 + Math.random() * 7,
+            a: 1,
+            ang: Math.PI / 5 + (Math.random() - 0.5) * 0.3,
+        });
+    }
+
+    shoots = shoots.filter(s => s.a > 0.02);
+    for (const s of shoots) {
+        const g = cx.createLinearGradient(
+            s.x, s.y,
+            s.x - Math.cos(s.ang) * s.len,
+            s.y - Math.sin(s.ang) * s.len
+        );
+        g.addColorStop(0, `rgba(240,240,250,${s.a})`);
+        g.addColorStop(1, 'rgba(240,240,250,0)');
+        cx.beginPath();
+        cx.moveTo(s.x, s.y);
+        cx.lineTo(s.x - Math.cos(s.ang) * s.len, s.y - Math.sin(s.ang) * s.len);
+        cx.strokeStyle = g;
+        cx.lineWidth = 1.5;
+        cx.stroke();
+        s.x += Math.cos(s.ang) * s.spd;
+        s.y += Math.sin(s.ang) * s.spd;
+        s.a -= 0.014;
+    }
+
+    requestAnimationFrame(draw);
+}
+
+window.addEventListener('resize', () => { resize(); mkStars(); });
+resize(); mkStars(); draw();
+
+/* ════════════════════════════════
+   DATA
+════════════════════════════════ */
+const SIGNS = [
+    { sym:'♈', ja:'牡羊座', en:'ARIES',       period:'3.21 — 4.19' },
+    { sym:'♉', ja:'牡牛座', en:'TAURUS',      period:'4.20 — 5.20' },
+    { sym:'♊', ja:'双子座', en:'GEMINI',      period:'5.21 — 6.21' },
+    { sym:'♋', ja:'蟹座',   en:'CANCER',      period:'6.22 — 7.22' },
+    { sym:'♌', ja:'獅子座', en:'LEO',         period:'7.23 — 8.22' },
+    { sym:'♍', ja:'乙女座', en:'VIRGO',       period:'8.23 — 9.22' },
+    { sym:'♎', ja:'天秤座', en:'LIBRA',       period:'9.23 — 10.23' },
+    { sym:'♏', ja:'蠍座',   en:'SCORPIO',     period:'10.24 — 11.21' },
+    { sym:'♐', ja:'射手座', en:'SAGITTARIUS', period:'11.22 — 12.21' },
+    { sym:'♑', ja:'山羊座', en:'CAPRICORN',   period:'12.22 — 1.19' },
+    { sym:'♒', ja:'水瓶座', en:'AQUARIUS',    period:'1.20 — 2.18' },
+    { sym:'♓', ja:'魚座',   en:'PISCES',      period:'2.19 — 3.20' },
+];
+
+const T_OVERALL = [
+    "新しい出会いが運命の扉を開く。積極的な行動が吉となる一日。",
+    "静かに内省する時間が、隠れていた答えを呼び起こす。",
+    "予期せぬ幸運が舞い込む可能性あり。チャンスを見逃すな。",
+    "コミュニケーションが豊かな時。言葉に宿る力を大切に。",
+    "焦りは禁物。じっくり取り組むことで大きな成果が生まれる。",
+    "創造性が最高潮に達する。芸術的な活動が運気を高める。",
+    "人との繋がりを大切にすると、思わぬ形で幸運が返ってくる。",
+    "変化を恐れず、流れに身を任せることで道が開ける。",
+    "直感を信じて行動せよ。第一印象が正解への鍵を握る。",
+    "今日の努力は未来の糧となる。地道な積み重ねが花を咲かせる。",
+    "自分の内なる声に耳を傾けると、正しい選択が見えてくる。",
+    "周囲への思いやりが、自分自身にも幸運をもたらす。",
+    "知識を深める絶好の機会。学びが新たな扉を開く。",
+    "充電することで明日への力が湧いてくる。休息も重要な仕事だ。",
+    "大胆な決断が吉。迷いを捨て、前に進む勇気を持て。",
+    "過去の執着を手放すことで、新しいエネルギーが流れ込んでくる。",
+    "夢に見た未来が現実に近づいている。一歩一歩を丁寧に。",
+    "内なる光が周囲を照らし出す。あなたの存在が誰かの道標となる。",
+    "宇宙のリズムに乗ることで、最大の運気を引き寄せられる。",
+    "嵐の前の静けさ。内側を整えることで次の飛躍に備えよ。",
+];
+
+const T_LOVE = [
+    "温かい言葉が心の距離を縮める",
+    "素直な気持ちを伝えるとき",
+    "新しい出会いの予感が漂う",
+    "既存の関係に深みが増す",
+    "一人の時間が次の出会いを育む",
+    "共通の趣味が絆を強くする",
+    "誠実さが最大の魅力になる日",
+    "思い切った一歩が吉と出る",
+    "相手の言葉の裏を読む洞察力が鍵",
+    "焦らず、自然な流れに任せて",
+];
+
+const T_WORK = [
+    "アイデアが泉のように湧き出る",
+    "チームワークが最大の武器になる",
+    "細部への注意が成功を呼ぶ",
+    "大きなビジョンを描く日",
+    "粘り強さが周囲を動かす",
+    "新しい提案が高く評価される",
+    "過去の経験が今日の羅針盤",
+    "集中と休息を上手く切り替えて",
+    "信頼関係を築くことが最優先",
+    "完璧を求めすぎず前進すること",
+];
+
+const T_MONEY = [
+    "小さな節約が大きな貯蓄に繋がる",
+    "思い切った投資が実を結ぶとき",
+    "臨時収入の兆しあり",
+    "今は力を蓄えるとき",
+    "人への施しが巡り巡って返ってくる",
+    "欲張りすぎず適切な利益で満足を",
+    "長期的な視点で判断すると吉",
+    "価値あるものへの出費は惜しまないで",
+    "金銭トラブルに注意。契約は慎重に",
+    "財布の紐を引き締める日",
+];
+
+const T_HEALTH = [
+    "身体を動かすことで気力が湧いてくる",
+    "十分な睡眠が最高の薬",
+    "食事のバランスに気をつける日",
+    "ストレスは早めに発散すること",
+    "自然の中での散歩が心身を癒す",
+    "無理をせず、体の声に従って",
+    "深呼吸と瞑想が心を整える",
+    "水分を意識して摂ることが大切",
+    "慢性的な疲れを見直すとき",
+    "活力に満ちた一日になりそう",
+];
+
+const COLORS  = ["ミッドナイトブルー","コーラルレッド","フォレストグリーン","ゴールデン","パールホワイト","ディープパープル","ターコイズ","バーガンディ","スカイブルー","ローズゴールド","エメラルド","シルバー","オレンジ","アイボリー","インディゴ"];
+const KEYWORDS = ["調和","勇気","直感","誠実","変化","創造","忍耐","感謝","挑戦","静寂","前進","絆","自由","信頼","革新"];
+
+/* ── Seeded random ── */
+function hash(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) + str.charCodeAt(i) | 0;
+    return Math.abs(h);
+}
+const pick = (arr, k) => arr[hash(k) % arr.length];
+const rInt = (min, max, k) => min + hash(k) % (max - min + 1);
+const stars5 = k => { const n = rInt(1, 5, k); return '★'.repeat(n) + '☆'.repeat(5-n); };
+
+/* ── Date keys ── */
+const now = new Date();
+const dStr = now.toISOString().slice(0, 10);
+const mStr = dStr.slice(0, 7);
+function weekKey(d) {
+    const t = new Date(d); t.setDate(t.getDate() + 4 - (t.getDay() || 7));
+    return `${t.getFullYear()}-W${Math.ceil(((t - new Date(t.getFullYear(),0,1)) / 86400000 + 1) / 7)}`;
+}
+const wStr = weekKey(now);
+
+const DAYS = ['日','月','火','水','木','金','土'];
+document.getElementById('today-label').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}  ${DAYS[now.getDay()]}曜日`;
+
+/* ════════════════════════════════
+   BUILD GRID
+════════════════════════════════ */
+const grid = document.getElementById('zodiac-grid');
+SIGNS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'zodiac-card';
+    el.innerHTML = `
+        <span class="card-symbol">${s.sym}</span>
+        <span class="card-name-ja">${s.ja}</span>
+        <span class="card-name-en">${s.en}</span>
+        <span class="card-period">${s.period}</span>`;
+    el.addEventListener('click', () => showDetail(i));
+    grid.appendChild(el);
+});
+
+/* ════════════════════════════════
+   FORTUNE RENDER
+════════════════════════════════ */
+function fortune(signIdx, period) {
+    const dk = period === 'today' ? dStr : period === 'week' ? wStr : mStr;
+    const bk = `${signIdx}-${dk}`;
+    return {
+        overall: { stars: stars5(bk+'-ov'), text: pick(T_OVERALL, bk+'-ov-t') },
+        love:    { stars: stars5(bk+'-lv'), text: pick(T_LOVE,    bk+'-lv-t') },
+        work:    { stars: stars5(bk+'-wk'), text: pick(T_WORK,    bk+'-wk-t') },
+        money:   { stars: stars5(bk+'-mn'), text: pick(T_MONEY,   bk+'-mn-t') },
+        health:  { stars: stars5(bk+'-hl'), text: pick(T_HEALTH,  bk+'-hl-t') },
+        color:  pick(COLORS,   bk+'-col'),
+        number: rInt(1, 99,    bk+'-num'),
+        word:   pick(KEYWORDS, bk+'-kw'),
+    };
+}
+
+function renderFortune(signIdx, period) {
+    const f = fortune(signIdx, period);
+    document.getElementById('fortune-content').innerHTML = `
+        <div class="overall-section">
+            <div class="section-label">総合運</div>
+            <div class="star-rating">${f.overall.stars}</div>
+            <div class="fortune-text">${f.overall.text}</div>
+        </div>
+        <div class="categories">
+            <div class="cat-item">
+                <div class="cat-name">恋愛運</div>
+                <div class="cat-stars">${f.love.stars}</div>
+                <div class="cat-text">${f.love.text}</div>
+            </div>
+            <div class="cat-item">
+                <div class="cat-name">仕事運</div>
+                <div class="cat-stars">${f.work.stars}</div>
+                <div class="cat-text">${f.work.text}</div>
+            </div>
+            <div class="cat-item">
+                <div class="cat-name">金運</div>
+                <div class="cat-stars">${f.money.stars}</div>
+                <div class="cat-text">${f.money.text}</div>
+            </div>
+            <div class="cat-item">
+                <div class="cat-name">健康運</div>
+                <div class="cat-stars">${f.health.stars}</div>
+                <div class="cat-text">${f.health.text}</div>
+            </div>
+        </div>
+        <div class="lucky-section">
+            <div class="lucky-item">
+                <div class="lucky-label">Lucky Color</div>
+                <div class="lucky-value">${f.color}</div>
+            </div>
+            <div class="lucky-item">
+                <div class="lucky-label">Lucky Number</div>
+                <div class="lucky-value">${f.number}</div>
+            </div>
+            <div class="lucky-item">
+                <div class="lucky-label">Lucky Word</div>
+                <div class="lucky-value">${f.word}</div>
+            </div>
+        </div>`;
+}
+
+/* ════════════════════════════════
+   ROUTING
+════════════════════════════════ */
+let curSign = 0, curPeriod = 'today';
+
+function showDetail(idx) {
+    curSign = idx; curPeriod = 'today';
+    const s = SIGNS[idx];
+    document.getElementById('d-symbol').textContent  = s.sym;
+    document.getElementById('d-name-ja').textContent = s.ja;
+    document.getElementById('d-name-en').textContent = s.en;
+    document.getElementById('d-period').textContent  = s.period;
+
+    document.querySelectorAll('.tab-btn').forEach(t =>
+        t.classList.toggle('active', t.dataset.period === 'today'));
+
+    renderFortune(idx, 'today');
+    document.getElementById('view-home').style.display   = 'none';
+    document.getElementById('view-detail').style.display = 'block';
+    window.scrollTo(0, 0);
+}
+
+document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('view-home').style.display   = 'block';
+    document.getElementById('view-detail').style.display = 'none';
+    window.scrollTo(0, 0);
+});
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        curPeriod = btn.dataset.period;
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        renderFortune(curSign, curPeriod);
+    });
+});
+</script>
+</body>
+</html>
