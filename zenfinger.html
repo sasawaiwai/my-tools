@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>ZENfinger</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       width: 100vw;
@@ -57,10 +53,7 @@
       transition: color 0.2s, border-color 0.2s;
     }
 
-    #clear-btn:active {
-      color: #666;
-      border-color: #999;
-    }
+    #clear-btn:active { color: #666; border-color: #999; }
   </style>
 </head>
 <body>
@@ -70,114 +63,153 @@
 
   <script>
     const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx    = canvas.getContext('2d');
 
-    // offsets for parallel raking lines (px from center path)
-    const OFFSETS = [-24, -18, -12, -6, 6, 12, 18, 24];
-    const LINE_WIDTH = 0.9;
-    const ALPHA = 0.55;
-    const WOBBLE = 1.8;   // max pixel wobble amplitude
-    const WOBBLE_FREQ = 0.18; // how fast wobble oscillates
+    // ── Rake parameters ──────────────────────────────────────────
+    const BG           = '#f5f2ec';
+    const TINE_COUNT   = 7;       // number of grooves per stamp
+    const TINE_SPACING = 8;       // px between grooves (perpendicular to motion)
+    const TOOTH_HALF   = 14;      // half-length of each groove (along motion)
+    const STAMP_DIST   = 5;       // px between consecutive stamps
+    const LINE_W       = 1.0;
+    const LINE_ALPHA   = 0.60;
+    const WOBBLE_AMP   = 1.1;     // max px wobble on groove endpoints
+    const DIR_SMOOTH   = 0.30;    // direction lerp factor (lower = smoother turn)
 
-    let drawing = false;
+    // Width of the "re-settle" erase rectangle around each stamp
+    const ERASE_ALPHA  = 0.42;    // how aggressively to overwrite old marks
+    // ─────────────────────────────────────────────────────────────
+
+    let drawing  = false;
     let prevX = 0, prevY = 0;
-    let tickCount = 0; // used for wobble phase
+    let distAcc  = 0;             // accumulated distance since last stamp
+    let smoothUx = 1, smoothUy = 0; // smoothed unit direction vector
 
-    // resize canvas to match device pixels
     function resize() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
+      canvas.width  = window.innerWidth  * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.scale(dpr, dpr);
-      // fill background
-      ctx.fillStyle = '#f5f2ec';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = BG;
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     }
 
-    // draw raked sand lines between two points
-    function drawSegment(x1, y1, x2, y2) {
-      const dx = x2 - x1;
-      const dy = y2 - y1;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len < 1) return;
+    // Stamp the rake at (cx, cy) heading in unit direction (ux, uy)
+    function stampRake(cx, cy, ux, uy) {
+      // Normal vector — perpendicular to motion, spans rake width
+      const nx = -uy;
+      const ny =  ux;
 
-      // unit normal (perpendicular to movement)
-      const nx = -dy / len;
-      const ny =  dx / len;
+      const halfRake = (TINE_COUNT - 1) / 2 * TINE_SPACING;
+      const eraseW   = (TOOTH_HALF + 3) * 2;
+      const eraseH   = (halfRake  + TINE_SPACING * 0.6) * 2;
 
-      ctx.lineCap = 'round';
-      ctx.lineWidth = LINE_WIDTH;
-      ctx.strokeStyle = `rgba(42, 38, 30, ${ALPHA})`;
+      // Re-settle sand: draw rotated semi-transparent BG rect over the stamp area.
+      // This fades old conflicting marks so the new direction reads cleanly.
+      ctx.save();
+      ctx.globalAlpha = ERASE_ALPHA;
+      ctx.fillStyle   = BG;
+      ctx.translate(cx, cy);
+      ctx.rotate(Math.atan2(uy, ux));
+      ctx.fillRect(-eraseW / 2, -eraseH / 2, eraseW, eraseH);
+      ctx.restore();
 
-      for (const offset of OFFSETS) {
-        // small wobble per offset line to mimic natural sand
-        const wobble = WOBBLE * Math.sin(tickCount * WOBBLE_FREQ + offset * 0.3)
-                     + (Math.random() - 0.5) * 0.6;
+      // Draw each groove line
+      ctx.save();
+      ctx.strokeStyle = `rgba(42, 38, 30, ${LINE_ALPHA})`;
+      ctx.lineWidth   = LINE_W;
+      ctx.lineCap     = 'round';
 
-        const ox = nx * (offset + wobble);
-        const oy = ny * (offset + wobble);
+      for (let i = 0; i < TINE_COUNT; i++) {
+        const t  = i - (TINE_COUNT - 1) / 2;   // e.g. -3…+3 for 7 tines
+        const bx = cx + nx * t * TINE_SPACING;
+        const by = cy + ny * t * TINE_SPACING;
+
+        // Position-based wobble: consistent per tine, unique per location
+        const phase = (cx + cy) * 0.04 + i * 1.7;
+        const w1 = Math.sin(phase)        * WOBBLE_AMP;
+        const w2 = Math.sin(phase + 0.9)  * WOBBLE_AMP;
 
         ctx.beginPath();
-        ctx.moveTo(x1 + ox, y1 + oy);
-        ctx.lineTo(x2 + ox, y2 + oy);
+        ctx.moveTo(bx - ux * TOOTH_HALF + nx * w1,
+                   by - uy * TOOTH_HALF + ny * w1);
+        ctx.lineTo(bx + ux * TOOTH_HALF + nx * w2,
+                   by + uy * TOOTH_HALF + ny * w2);
         ctx.stroke();
       }
 
-      tickCount++;
+      ctx.restore();
     }
 
-    // --- mouse events ---
-    canvas.addEventListener('mousedown', (e) => {
+    // Interpolate stamps between prevX/Y and current x/y so fast swipes
+    // never skip stamps entirely
+    function handleMove(x, y) {
+      const dx   = x - prevX;
+      const dy   = y - prevY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < 0.5) return;
+
+      // Smooth the heading direction
+      const rawUx = dx / dist;
+      const rawUy = dy / dist;
+      smoothUx = smoothUx + (rawUx - smoothUx) * DIR_SMOOTH;
+      smoothUy = smoothUy + (rawUy - smoothUy) * DIR_SMOOTH;
+      const sLen = Math.sqrt(smoothUx * smoothUx + smoothUy * smoothUy);
+      const ux = smoothUx / sLen;
+      const uy = smoothUy / sLen;
+
+      distAcc += dist;
+
+      // Stamp at fixed intervals; interpolate position along segment
+      while (distAcc >= STAMP_DIST) {
+        const ratio = 1 - (distAcc - STAMP_DIST) / dist;
+        const sx = prevX + dx * ratio;
+        const sy = prevY + dy * ratio;
+        stampRake(sx, sy, ux, uy);
+        distAcc -= STAMP_DIST;
+      }
+
+      prevX = x;
+      prevY = y;
+    }
+
+    function startDraw(x, y) {
       drawing = true;
-      prevX = e.clientX;
-      prevY = e.clientY;
-    });
+      prevX   = x;
+      prevY   = y;
+      distAcc = 0;
+    }
 
-    canvas.addEventListener('mousemove', (e) => {
-      if (!drawing) return;
-      drawSegment(prevX, prevY, e.clientX, e.clientY);
-      prevX = e.clientX;
-      prevY = e.clientY;
-    });
+    // ── Mouse ────────────────────────────────────────────────────
+    canvas.addEventListener('mousedown',  e => startDraw(e.clientX, e.clientY));
+    canvas.addEventListener('mousemove',  e => { if (drawing) handleMove(e.clientX, e.clientY); });
+    canvas.addEventListener('mouseup',    () => { drawing = false; });
+    canvas.addEventListener('mouseleave', () => { drawing = false; });
 
-    canvas.addEventListener('mouseup',   () => { drawing = false; });
-    canvas.addEventListener('mouseleave',() => { drawing = false; });
-
-    // --- touch events ---
-    canvas.addEventListener('touchstart', (e) => {
+    // ── Touch ────────────────────────────────────────────────────
+    canvas.addEventListener('touchstart', e => {
       e.preventDefault();
-      const t = e.touches[0];
-      drawing = true;
-      prevX = t.clientX;
-      prevY = t.clientY;
+      startDraw(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
 
-    canvas.addEventListener('touchmove', (e) => {
+    canvas.addEventListener('touchmove', e => {
       e.preventDefault();
-      if (!drawing) return;
-      const t = e.touches[0];
-      drawSegment(prevX, prevY, t.clientX, t.clientY);
-      prevX = t.clientX;
-      prevY = t.clientY;
+      if (drawing) handleMove(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
 
-    canvas.addEventListener('touchend',   (e) => { e.preventDefault(); drawing = false; }, { passive: false });
-    canvas.addEventListener('touchcancel',(e) => { e.preventDefault(); drawing = false; }, { passive: false });
+    canvas.addEventListener('touchend',    e => { e.preventDefault(); drawing = false; }, { passive: false });
+    canvas.addEventListener('touchcancel', e => { e.preventDefault(); drawing = false; }, { passive: false });
 
-    // --- clear ---
+    // ── Clear ────────────────────────────────────────────────────
     document.getElementById('clear-btn').addEventListener('click', () => {
-      ctx.fillStyle = '#f5f2ec';
+      ctx.fillStyle = BG;
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-      tickCount = 0;
     });
 
-    // --- init ---
+    // ── Init ─────────────────────────────────────────────────────
     resize();
-    window.addEventListener('resize', () => {
-      // preserve drawing on resize as best effort by redrawing bg
-      // (canvas clears on resize — acceptable trade-off for simplicity)
-      resize();
-    });
+    window.addEventListener('resize', resize);
   </script>
 </body>
 </html>
