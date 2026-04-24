@@ -82,6 +82,21 @@
     function fill() {
       ctx.fillStyle = BG;
       ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+      // Sand grain: pixel noise on BG. Precomputed table + prime step = no visible tiling.
+      const N  = 2048;
+      const ns = new Int8Array(N);
+      for (let k = 0; k < N; k++) ns[k] = ((Math.random() * 28) | 0) - 14;
+
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d   = img.data;
+      for (let pi = 0, i = 0; i < d.length; i += 4, pi++) {
+        const n = ns[(pi * 1597) & 2047];
+        d[i]   = d[i]   + n < 0 ? 0 : d[i]   + n > 255 ? 255 : d[i]   + n;
+        d[i+1] = d[i+1] + n < 0 ? 0 : d[i+1] + n > 255 ? 255 : d[i+1] + n;
+        d[i+2] = d[i+2] + n < 0 ? 0 : d[i+2] + n > 255 ? 255 : d[i+2] + n;
+      }
+      ctx.putImageData(img, 0, 0);
     }
 
     // ── Rake stamp ───────────────────────────────────────────────
