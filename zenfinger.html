@@ -6,21 +6,21 @@
   <title>ZENfinger</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; overflow: hidden; touch-action: none; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; touch-action: none; background: #f0ede6; }
     canvas { display: block; width: 100vw; height: 100dvh; touch-action: none; }
 
     #title {
       position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
       font-family: system-ui, -apple-system, sans-serif;
-      font-size: 13px; letter-spacing: 0.18em; color: #b5b2ac;
+      font-size: 13px; letter-spacing: 0.18em; color: #c2bfb9;
       pointer-events: none; user-select: none;
     }
 
     #clear-btn {
       position: fixed; bottom: 20px; right: 20px;
       font-family: system-ui, -apple-system, sans-serif;
-      font-size: 12px; letter-spacing: 0.1em; color: #aaa;
-      background: rgba(255,255,255,0.65); border: 1px solid #ccc;
+      font-size: 12px; letter-spacing: 0.1em; color: #bbb;
+      background: rgba(255,255,255,0.60); border: 1px solid #ccc;
       border-radius: 20px; padding: 8px 18px; cursor: pointer;
       user-select: none; backdrop-filter: blur(4px);
       transition: color 0.2s, border-color 0.2s;
@@ -38,169 +38,105 @@
     const ctx    = canvas.getContext('2d');
 
     // ── Visual ───────────────────────────────────────────────────
-    const BG         = '#f5f2ec';
-    const LINE_W     = 0.80;
-    const CELL       = 7;       // px per grid cell / line length
-    const BASE_ALPHA = 0.20;    // untouched line alpha  (A: wider contrast)
-    const PEAK_ALPHA = 0.72;    // fully groomed line alpha
+    const BG           = '#f0ede6';
 
-    // Pre-build 32-level alpha lookup to avoid per-cell string allocation
-    const ALPHA_STEPS = 32;
-    const alphaLUT = Array.from({ length: ALPHA_STEPS }, (_, i) => {
-      const a = BASE_ALPHA + (i / (ALPHA_STEPS - 1)) * (PEAK_ALPHA - BASE_ALPHA);
-      return `rgba(48,44,36,${a.toFixed(3)})`;
-    });
+    // Each groove = shadow line (carved trough) + ridge highlight (raised edge)
+    const GROOVE_COLOR = 'rgba(28, 24, 16, 0.54)';
+    const GROOVE_W     = 1.2;
+    const RIDGE_COLOR  = 'rgba(255, 252, 244, 0.64)';
+    const RIDGE_W      = 0.8;
+    const RIDGE_OFF    = -1.6; // px offset in tine-normal direction (simulated light from left)
 
-    // ── Speed → radius mapping ───────────────────────────────────
-    const MIN_R       = 18;   // px — slow groom radius
-    const MAX_R       = 80;   // px — fast groom radius
-    const SPEED_LOW   = 0.12; // px/ms threshold for slow
-    const SPEED_HIGH  = 1.80; // px/ms threshold for fast
-    const RADIUS_LERP = 0.20; // how fast the radius responds
+    // Before each stamp, faint BG fill "re-settles" old grooves beneath new ones
+    const SETTLE_A     = 0.50;
 
-    // ── Grooming ─────────────────────────────────────────────────
-    const ANGLE_STR  = 0.26;  // angle lerp strength per stamp
-    const INTEN_GAIN = 0.15;  // intensity gain per stamp at center
-    const STAMP_DIST = 5;     // px between stamps
-    const DIR_SMOOTH = 0.28;  // direction smoothing factor
+    // ── Rake ─────────────────────────────────────────────────────
+    const TINES        = 7;
+    const SP_SLOW      = 7;   // px between tines at low speed
+    const SP_FAST      = 15;  // px between tines at high speed
+    const TINE_HL      = 16;  // half-length of each tine segment (along motion)
+    const STAMP_DIST   = 7;   // px between stamps
 
+    // ── Speed / direction ────────────────────────────────────────
+    const SPEED_LO     = 0.12; // px/ms
+    const SPEED_HI     = 1.80; // px/ms
+    const SP_LERP      = 0.22; // spacing smoothing
+    const DIR_LERP     = 0.28; // direction smoothing
     // ─────────────────────────────────────────────────────────────
 
-    let cols = 0, rows = 0;
-    let field;      // Float32Array — undirected angle [0, π)
-    let intensity;  // Float32Array — groomed-ness [0, 1]
-
-    // Interaction state
     let active      = false;
-    let prevX = 0, prevY = 0, prevTime = 0, distAcc = 0;
-    let groomDir    = 0;
-    let brushRadius = MIN_R;
+    let prevX = 0,  prevY = 0, prevTime = 0, distAcc = 0;
+    let smoothUx    = 1, smoothUy = 0;
+    let tineSpacing = SP_SLOW;
 
-    // Dirty region (cell coords)
-    let dirty = false;
-    let dC0 = 0, dR0 = 0, dC1 = 0, dR1 = 0;
+    // ── Canvas ───────────────────────────────────────────────────
 
-    // ── Field init ───────────────────────────────────────────────
-
-    function buildField() {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const v = Math.sin(c * 0.16 + r * 0.09) * 0.60  // A: larger variation ≈ ±70°
-                  + Math.sin(c * 0.06 - r * 0.13) * 0.36
-                  + Math.cos(c * 0.11 + r * 0.20) * 0.23;
-          field[r * cols + c] = ((v % Math.PI) + Math.PI) % Math.PI;
-        }
-      }
-      intensity.fill(0);
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = window.innerWidth  * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      fill();
     }
 
-    // ── Rendering ────────────────────────────────────────────────
-
-    function drawCell(c, r) {
-      const idx   = r * cols + c;
-      const angle = field[idx];
-      const inten = intensity[idx];
-
-      // A: alpha from LUT
-      ctx.strokeStyle = alphaLUT[Math.round(inten * (ALPHA_STEPS - 1))];
-
-      const cx   = c * CELL + CELL * 0.5;
-      const cy   = r * CELL + CELL * 0.5;
-      const cosA = Math.cos(angle);
-      const sinA = Math.sin(angle);
-
-      // B: line grows from 20% → 90% of cell as intensity rises
-      const hl = CELL * (0.20 + inten * 0.25);
-
-      // C: perpendicular noise fades out as intensity rises
-      //    deterministic hash → no flickering on re-render
-      const noiseAmp = (1 - inten) * 1.8;
-      const h1 = Math.sin(c * 127.1 + r * 311.7) * 43758.5453;
-      const h2 = Math.sin(c * 269.5 + r *  83.3) * 43758.5453;
-      const n1 = (h1 - Math.floor(h1) - 0.5) * 2 * noiseAmp;
-      const n2 = (h2 - Math.floor(h2) - 0.5) * 2 * noiseAmp;
-      const nx = -sinA;  // perpendicular direction
-      const ny =  cosA;
-
-      ctx.beginPath();
-      ctx.moveTo(cx - cosA * hl + nx * n1, cy - sinA * hl + ny * n1);
-      ctx.lineTo(cx + cosA * hl + nx * n2, cy + sinA * hl + ny * n2);
-      ctx.stroke();
-    }
-
-    function renderRegion(c0, r0, c1, r1) {
+    function fill() {
       ctx.fillStyle = BG;
-      ctx.fillRect(c0 * CELL, r0 * CELL, (c1 - c0 + 1) * CELL, (r1 - r0 + 1) * CELL);
-      ctx.lineWidth = LINE_W;
-      ctx.lineCap   = 'round';
-      for (let r = r0; r <= r1; r++)
-        for (let c = c0; c <= c1; c++) drawCell(c, r);
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     }
 
-    function renderFull() { renderRegion(0, 0, cols - 1, rows - 1); }
+    // ── Rake stamp ───────────────────────────────────────────────
 
-    function flushDirty() {
-      if (!dirty) return;
-      const p = 1;
-      renderRegion(
-        Math.max(0, dC0 - p), Math.max(0, dR0 - p),
-        Math.min(cols - 1, dC1 + p), Math.min(rows - 1, dR1 + p)
+    // (cx, cy) = stamp center, (ux, uy) = unit motion direction, sp = tine spacing
+    function stampRake(cx, cy, ux, uy, sp) {
+      const nx       = -uy;   // unit normal (perpendicular to motion)
+      const ny       =  ux;
+      const halfRake = (TINES - 1) / 2 * sp;
+
+      // Re-settle: fade previous marks under the stamp area
+      ctx.save();
+      ctx.globalAlpha = SETTLE_A;
+      ctx.fillStyle   = BG;
+      ctx.translate(cx, cy);
+      ctx.rotate(Math.atan2(uy, ux));
+      ctx.fillRect(
+        -(TINE_HL + 2),           -(halfRake + sp * 0.65),
+         (TINE_HL + 2) * 2,        (halfRake + sp * 0.65) * 2
       );
-      dirty = false;
-    }
+      ctx.restore();
 
-    function markDirty(c0, r0, c1, r1) {
-      if (!dirty) { dC0 = c0; dR0 = r0; dC1 = c1; dR1 = r1; dirty = true; return; }
-      if (c0 < dC0) dC0 = c0;  if (r0 < dR0) dR0 = r0;
-      if (c1 > dC1) dC1 = c1;  if (r1 > dR1) dR1 = r1;
-    }
+      ctx.lineCap = 'round';
 
-    // ── Grooming ─────────────────────────────────────────────────
+      for (let i = 0; i < TINES; i++) {
+        const t  = i - (TINES - 1) / 2;  // −3 … +3
+        const bx = cx + nx * t * sp;
+        const by = cy + ny * t * sp;
 
-    // Shortest-path lerp for undirected angles [0, π)
-    function lerpAngle(a, b, t) {
-      let d = b - a;
-      if (d >  Math.PI * 0.5) d -= Math.PI;
-      if (d < -Math.PI * 0.5) d += Math.PI;
-      return ((a + d * t) % Math.PI + Math.PI) % Math.PI;
-    }
+        const x0 = bx - ux * TINE_HL,  y0 = by - uy * TINE_HL;
+        const x1 = bx + ux * TINE_HL,  y1 = by + uy * TINE_HL;
 
-    function groomStamp(fx, fy, angle, radius) {
-      const cr = Math.ceil(radius / CELL);
-      const fc = fx / CELL, fr = fy / CELL;
-      const R2 = radius * radius;
-      const k  = 3.0 / R2; // Gaussian: ~0.05 influence at edge
+        // Shadow — the groove itself
+        ctx.strokeStyle = GROOVE_COLOR;
+        ctx.lineWidth   = GROOVE_W;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
 
-      let c0 = cols, r0 = rows, c1 = -1, r1 = -1;
-
-      for (let dr = -cr; dr <= cr; dr++) {
-        for (let dc = -cr; dc <= cr; dc++) {
-          const c = Math.round(fc) + dc;
-          const r = Math.round(fr) + dr;
-          if (c < 0 || c >= cols || r < 0 || r >= rows) continue;
-
-          const cx = c * CELL + CELL * 0.5;
-          const cy = r * CELL + CELL * 0.5;
-          const d2 = (cx - fx) ** 2 + (cy - fy) ** 2;
-          if (d2 > R2) continue;
-
-          const infl = Math.exp(-d2 * k);
-          const idx  = r * cols + c;
-          field[idx]     = lerpAngle(field[idx], angle, ANGLE_STR * infl);
-          intensity[idx] = Math.min(1.0, intensity[idx] + INTEN_GAIN * infl);
-
-          if (c < c0) c0 = c;  if (r < r0) r0 = r;
-          if (c > c1) c1 = c;  if (r > r1) r1 = r;
-        }
+        // Highlight — raised ridge on one side of the groove
+        ctx.strokeStyle = RIDGE_COLOR;
+        ctx.lineWidth   = RIDGE_W;
+        ctx.beginPath();
+        ctx.moveTo(x0 + nx * RIDGE_OFF, y0 + ny * RIDGE_OFF);
+        ctx.lineTo(x1 + nx * RIDGE_OFF, y1 + ny * RIDGE_OFF);
+        ctx.stroke();
       }
-      if (c1 >= 0) markDirty(c0, r0, c1, r1);
     }
 
     // ── Input ────────────────────────────────────────────────────
 
     function onMove(x, y) {
       const now  = performance.now();
-      const dt   = Math.min(now - prevTime, 80); // cap on pause/resume
+      const dt   = Math.min(now - prevTime, 80);
       prevTime   = now;
 
       const dx   = x - prevX;
@@ -208,76 +144,58 @@
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < 0.5) return;
 
-      // Speed → smooth brush radius
-      const speed   = dt > 2 ? dist / dt : SPEED_HIGH;
-      const t       = Math.min(1, Math.max(0, (speed - SPEED_LOW) / (SPEED_HIGH - SPEED_LOW)));
-      const targetR = MIN_R + (MAX_R - MIN_R) * t;
-      brushRadius  += (targetR - brushRadius) * RADIUS_LERP;
+      // Speed → tine spacing
+      const speed    = dt > 2 ? dist / dt : SPEED_HI;
+      const st       = Math.min(1, Math.max(0, (speed - SPEED_LO) / (SPEED_HI - SPEED_LO)));
+      const targetSp = SP_SLOW + (SP_FAST - SP_SLOW) * st;
+      tineSpacing   += (targetSp - tineSpacing) * SP_LERP;
 
-      // Undirected direction with smoothing
-      const raw = ((Math.atan2(dy, dx) % Math.PI) + Math.PI) % Math.PI;
-      let diff  = raw - groomDir;
-      if (diff >  Math.PI * 0.5) diff -= Math.PI;
-      if (diff < -Math.PI * 0.5) diff += Math.PI;
-      groomDir = ((groomDir + diff * DIR_SMOOTH) % Math.PI + Math.PI) % Math.PI;
+      // Direction smoothing
+      smoothUx += (dx / dist - smoothUx) * DIR_LERP;
+      smoothUy += (dy / dist - smoothUy) * DIR_LERP;
+      const sLen = Math.sqrt(smoothUx * smoothUx + smoothUy * smoothUy);
+      const ux = smoothUx / sLen,  uy = smoothUy / sLen;
 
-      // Interpolated stamps along movement vector
+      // Place stamps at fixed intervals, interpolated along the segment
       distAcc += dist;
       while (distAcc >= STAMP_DIST) {
         const s  = 1 - (distAcc - STAMP_DIST) / dist;
-        groomStamp(prevX + dx * s, prevY + dy * s, groomDir, brushRadius);
+        stampRake(prevX + dx * s, prevY + dy * s, ux, uy, tineSpacing);
         distAcc -= STAMP_DIST;
       }
 
-      prevX = x; prevY = y;
+      prevX = x;  prevY = y;
     }
 
     function onStart(x, y) {
-      active = true; prevX = x; prevY = y;
-      distAcc = 0; prevTime = performance.now();
+      active   = true;
+      prevX    = x;  prevY = y;
+      distAcc  = 0;  prevTime = performance.now();
     }
 
     function onEnd() { active = false; }
 
+    // Mouse
     canvas.addEventListener('mousedown',  e => onStart(e.clientX, e.clientY));
     canvas.addEventListener('mousemove',  e => { if (active) onMove(e.clientX, e.clientY); });
     canvas.addEventListener('mouseup',    onEnd);
     canvas.addEventListener('mouseleave', onEnd);
 
+    // Touch
     canvas.addEventListener('touchstart', e => {
-      e.preventDefault(); onStart(e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault();  onStart(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
     canvas.addEventListener('touchmove', e => {
-      e.preventDefault(); if (active) onMove(e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault();  if (active) onMove(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
     canvas.addEventListener('touchend',    e => { e.preventDefault(); onEnd(); }, { passive: false });
     canvas.addEventListener('touchcancel', e => { e.preventDefault(); onEnd(); }, { passive: false });
 
-    document.getElementById('clear-btn').addEventListener('click', () => {
-      buildField(); renderFull(); dirty = false;
-    });
+    document.getElementById('clear-btn').addEventListener('click', fill);
 
-    // ── Bootstrap ────────────────────────────────────────────────
-
-    function resize() {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width  = window.innerWidth  * dpr;
-      canvas.height = window.innerHeight * dpr;
-      ctx.scale(dpr, dpr);
-      cols      = Math.ceil(window.innerWidth  / CELL) + 1;
-      rows      = Math.ceil(window.innerHeight / CELL) + 1;
-      field     = new Float32Array(cols * rows);
-      intensity = new Float32Array(cols * rows);
-      buildField();
-      renderFull();
-      dirty = false;
-    }
-
-    function loop() { flushDirty(); requestAnimationFrame(loop); }
-
+    // ── Init ─────────────────────────────────────────────────────
     resize();
     window.addEventListener('resize', resize);
-    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
