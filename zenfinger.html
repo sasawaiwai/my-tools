@@ -41,8 +41,8 @@
     const BG         = '#f5f2ec';
     const LINE_W     = 0.80;
     const CELL       = 7;       // px per grid cell / line length
-    const BASE_ALPHA = 0.32;    // untouched line alpha
-    const PEAK_ALPHA = 0.64;    // fully groomed line alpha
+    const BASE_ALPHA = 0.20;    // untouched line alpha  (A: wider contrast)
+    const PEAK_ALPHA = 0.72;    // fully groomed line alpha
 
     // Pre-build 32-level alpha lookup to avoid per-cell string allocation
     const ALPHA_STEPS = 32;
@@ -85,9 +85,9 @@
     function buildField() {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const v = Math.sin(c * 0.16 + r * 0.09) * 0.44
-                  + Math.sin(c * 0.06 - r * 0.13) * 0.27
-                  + Math.cos(c * 0.11 + r * 0.20) * 0.17;
+          const v = Math.sin(c * 0.16 + r * 0.09) * 0.60  // A: larger variation ≈ ±70°
+                  + Math.sin(c * 0.06 - r * 0.13) * 0.36
+                  + Math.cos(c * 0.11 + r * 0.20) * 0.23;
           field[r * cols + c] = ((v % Math.PI) + Math.PI) % Math.PI;
         }
       }
@@ -99,14 +99,32 @@
     function drawCell(c, r) {
       const idx   = r * cols + c;
       const angle = field[idx];
-      const ai    = Math.round(intensity[idx] * (ALPHA_STEPS - 1));
-      ctx.strokeStyle = alphaLUT[ai];
-      const cx = c * CELL + CELL * 0.5;
-      const cy = r * CELL + CELL * 0.5;
-      const hl = CELL * 0.50;
+      const inten = intensity[idx];
+
+      // A: alpha from LUT
+      ctx.strokeStyle = alphaLUT[Math.round(inten * (ALPHA_STEPS - 1))];
+
+      const cx   = c * CELL + CELL * 0.5;
+      const cy   = r * CELL + CELL * 0.5;
+      const cosA = Math.cos(angle);
+      const sinA = Math.sin(angle);
+
+      // B: line grows from 20% → 90% of cell as intensity rises
+      const hl = CELL * (0.20 + inten * 0.25);
+
+      // C: perpendicular noise fades out as intensity rises
+      //    deterministic hash → no flickering on re-render
+      const noiseAmp = (1 - inten) * 1.8;
+      const h1 = Math.sin(c * 127.1 + r * 311.7) * 43758.5453;
+      const h2 = Math.sin(c * 269.5 + r *  83.3) * 43758.5453;
+      const n1 = (h1 - Math.floor(h1) - 0.5) * 2 * noiseAmp;
+      const n2 = (h2 - Math.floor(h2) - 0.5) * 2 * noiseAmp;
+      const nx = -sinA;  // perpendicular direction
+      const ny =  cosA;
+
       ctx.beginPath();
-      ctx.moveTo(cx - Math.cos(angle) * hl, cy - Math.sin(angle) * hl);
-      ctx.lineTo(cx + Math.cos(angle) * hl, cy + Math.sin(angle) * hl);
+      ctx.moveTo(cx - cosA * hl + nx * n1, cy - sinA * hl + ny * n1);
+      ctx.lineTo(cx + cosA * hl + nx * n2, cy + sinA * hl + ny * n2);
       ctx.stroke();
     }
 
