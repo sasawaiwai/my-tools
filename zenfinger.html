@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ZENfinger</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100dvh;
+      overflow: hidden;
+      background: #f5f2ec;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100dvh;
+      touch-action: none;
+    }
+
+    #title {
+      position: fixed;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      color: #aaa9a3;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    #clear-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: #aaa;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      padding: 8px 18px;
+      cursor: pointer;
+      user-select: none;
+      backdrop-filter: blur(4px);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    #clear-btn:active {
+      color: #666;
+      border-color: #999;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div id="title">ZENfinger</div>
+  <button id="clear-btn">Clear</button>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // offsets for parallel raking lines (px from center path)
+    const OFFSETS = [-24, -18, -12, -6, 6, 12, 18, 24];
+    const LINE_WIDTH = 0.9;
+    const ALPHA = 0.55;
+    const WOBBLE = 1.8;   // max pixel wobble amplitude
+    const WOBBLE_FREQ = 0.18; // how fast wobble oscillates
+
+    let drawing = false;
+    let prevX = 0, prevY = 0;
+    let tickCount = 0; // used for wobble phase
+
+    // resize canvas to match device pixels
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      // fill background
+      ctx.fillStyle = '#f5f2ec';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // draw raked sand lines between two points
+    function drawSegment(x1, y1, x2, y2) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 1) return;
+
+      // unit normal (perpendicular to movement)
+      const nx = -dy / len;
+      const ny =  dx / len;
+
+      ctx.lineCap = 'round';
+      ctx.lineWidth = LINE_WIDTH;
+      ctx.strokeStyle = `rgba(42, 38, 30, ${ALPHA})`;
+
+      for (const offset of OFFSETS) {
+        // small wobble per offset line to mimic natural sand
+        const wobble = WOBBLE * Math.sin(tickCount * WOBBLE_FREQ + offset * 0.3)
+                     + (Math.random() - 0.5) * 0.6;
+
+        const ox = nx * (offset + wobble);
+        const oy = ny * (offset + wobble);
+
+        ctx.beginPath();
+        ctx.moveTo(x1 + ox, y1 + oy);
+        ctx.lineTo(x2 + ox, y2 + oy);
+        ctx.stroke();
+      }
+
+      tickCount++;
+    }
+
+    // --- mouse events ---
+    canvas.addEventListener('mousedown', (e) => {
+      drawing = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!drawing) return;
+      drawSegment(prevX, prevY, e.clientX, e.clientY);
+      prevX = e.clientX;
+      prevY = e.clientY;
+    });
+
+    canvas.addEventListener('mouseup',   () => { drawing = false; });
+    canvas.addEventListener('mouseleave',() => { drawing = false; });
+
+    // --- touch events ---
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      const t = e.touches[0];
+      drawing = true;
+      prevX = t.clientX;
+      prevY = t.clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!drawing) return;
+      const t = e.touches[0];
+      drawSegment(prevX, prevY, t.clientX, t.clientY);
+      prevX = t.clientX;
+      prevY = t.clientY;
+    }, { passive: false });
+
+    canvas.addEventListener('touchend',   (e) => { e.preventDefault(); drawing = false; }, { passive: false });
+    canvas.addEventListener('touchcancel',(e) => { e.preventDefault(); drawing = false; }, { passive: false });
+
+    // --- clear ---
+    document.getElementById('clear-btn').addEventListener('click', () => {
+      ctx.fillStyle = '#f5f2ec';
+      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+      tickCount = 0;
+    });
+
+    // --- init ---
+    resize();
+    window.addEventListener('resize', () => {
+      // preserve drawing on resize as best effort by redrawing bg
+      // (canvas clears on resize — acceptable trade-off for simplicity)
+      resize();
+    });
+  </script>
+</body>
+</html>
