@@ -1,0 +1,874 @@
+<!-- Uses pako (MIT © Vitaly Puzrin), UPNG.js (MIT © photopea) -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>チカチカ点滅APNG素材メーカー | ブラウザ完結・無料</title>
+<meta name="description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。色・速度・フェード・サイズ・複数配置などをカスタマイズできます。">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
+<meta property="og:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
+<meta property="og:url"         content="https://tools.sasadokoro.online/chika-chika/">
+<meta property="og:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
+<meta name="twitter:card"       content="summary">
+<link rel="canonical"           href="https://tools.sasadokoro.online/chika-chika/">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZGC2WBJQTP');
+</script>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5953104148824709" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/gh/photopea/UPNG.js@88f504b/UPNG.js" integrity="sha384-4QTYxnoAxW4BYAHibs6PAoFSq6jn8k7skzJ34CpbjkAiBy+S5g2z7yQu0ugATpde" crossorigin="anonymous"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #0e0e0e;
+  --surface: #1a1a1a;
+  --surface2: #242424;
+  --border: #2e2e2e;
+  --accent: #ff5c8a;
+  --accent2: #ff8cb4;
+  --text: #e8e8e8;
+  --text-dim: #c8c8c8;
+  --text-dimmer: #888;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Noto Sans JP', sans-serif;
+  --radius: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ヘッダー ── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+header .ver {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dimmer);
+}
+header a {
+  margin-left: auto;
+  color: var(--text-dimmer);
+  text-decoration: none;
+  font-size: 12px;
+}
+header a:hover { color: var(--text-dim); }
+
+/* ── メインレイアウト ── */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── サイドバー ── */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ctrl-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ctrl-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dimmer);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.ctrl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ctrl-label {
+  color: var(--text-dim);
+  flex-shrink: 0;
+  min-width: 80px;
+  font-size: 12px;
+}
+.ctrl-label.full { min-width: unset; width: 100%; }
+.ctrl-val {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent2);
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── ボタングループ ── */
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.btn-group button {
+  flex: 1;
+  min-width: 48px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  padding: 6px 4px;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  font-family: inherit;
+}
+.btn-group button:hover {
+  background: #333;
+  color: var(--text);
+}
+.btn-group button.active {
+  background: #3a1224;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-group.text button {
+  font-size: 12px;
+  padding: 5px 6px;
+  min-width: 56px;
+}
+
+/* ── スライダー ── */
+input[type=range] {
+  flex: 1;
+  accent-color: var(--accent);
+  height: 4px;
+}
+
+/* ── カラーインプット ── */
+input[type=color] {
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px;
+  background: var(--surface2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── チェックボックス ── */
+input[type=checkbox] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── セレクト ── */
+select {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ── アウトライン設定 ── */
+.outline-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 20px;
+}
+.outline-extra.hidden { display: none; }
+
+/* ── プレビューエリア ── */
+.preview-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  gap: 16px;
+  background: var(--bg);
+  overflow: auto;
+}
+
+.preview-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.preview-wrap {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.preview-wrap canvas {
+  display: block;
+  width: 256px;
+  height: 256px;
+  image-rendering: pixelated;
+}
+
+.preview-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+#generateBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 11px 32px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: background 0.15s, opacity 0.15s;
+  letter-spacing: 0.04em;
+}
+#generateBtn:hover { background: var(--accent2); }
+#generateBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+#status {
+  font-size: 12px;
+  color: var(--text-dimmer);
+  font-family: var(--mono);
+  min-height: 18px;
+  text-align: center;
+}
+
+/* ── フッター ── */
+footer {
+  text-align: center;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--text-dimmer);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+footer a { color: var(--text-dimmer); text-decoration: none; }
+footer a:hover { color: var(--text-dim); }
+
+/* ── レスポンシブ ── */
+@media (max-width: 640px) {
+  main { flex-direction: column; overflow: visible; }
+  .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); overflow-y: visible; }
+  .preview-area { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✨ チカチカ点滅APNG素材メーカー</h1>
+  <span class="ver">v1.0.0</span>
+  <a href="/index.html">← ツール一覧</a>
+</header>
+
+<main>
+  <!-- ── サイドバー ── -->
+  <aside class="sidebar">
+
+    <!-- 図形 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title">図形</div>
+      <div class="btn-group" id="shapeGroup">
+        <button data-shape="heart"     class="active" title="ハート">❤</button>
+        <button data-shape="star"      title="星">⭐</button>
+        <button data-shape="circle"    title="円">⚫</button>
+        <button data-shape="diamond"   title="ひし形">🔷</button>
+        <button data-shape="lightning" title="稲妻">⚡</button>
+        <button data-shape="flower"    title="花">🌸</button>
+      </div>
+    </div>
+
+    <!-- カラー -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title">カラー</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">メイン色</span>
+        <input type="color" id="mainColor" value="#ff6b9d">
+      </div>
+      <div class="ctrl-row">
+        <input type="checkbox" id="outlineEnabled">
+        <span class="ctrl-label" style="min-width:unset;">縁取り</span>
+      </div>
+      <div class="outline-extra hidden" id="outlineExtra">
+        <div class="ctrl-row">
+          <span class="ctrl-label">縁取り色</span>
+          <input type="color" id="outlineColor" value="#ffffff">
+        </div>
+        <div class="ctrl-row">
+          <span class="ctrl-label">縁取り幅</span>
+          <input type="range" id="outlineWidth" min="1" max="12" value="2" step="1">
+          <span class="ctrl-val" id="outlineWidthVal">2px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- アニメーション -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title">アニメーション</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label full">点滅パターン</span>
+      </div>
+      <div class="btn-group text" id="patternGroup">
+        <button data-pattern="snap"  title="バツッと切り替わる">バツッと</button>
+        <button data-pattern="fade"  class="active" title="じわっとフェード">じわっと</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">間隔</span>
+        <input type="range" id="interval" min="200" max="3000" value="800" step="100">
+        <span class="ctrl-val" id="intervalVal">800ms</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">フレーム数</span>
+        <input type="range" id="frameCount" min="4" max="30" value="12" step="1">
+        <span class="ctrl-val" id="frameCountVal">12f</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">最小透明度</span>
+        <input type="range" id="minOpacity" min="0" max="90" value="0" step="5">
+        <span class="ctrl-val" id="minOpacityVal">0%</span>
+      </div>
+    </div>
+
+    <!-- 配置 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title">配置</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">図形の数</span>
+        <input type="range" id="count" min="1" max="9" value="1" step="1">
+        <span class="ctrl-val" id="countVal">1個</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label full">レイアウト</span>
+      </div>
+      <div class="btn-group text" id="layoutGroup">
+        <button data-layout="grid"   class="active">グリッド</button>
+        <button data-layout="random"             >ランダム</button>
+        <button data-layout="circle"             >円形</button>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">図形サイズ</span>
+        <input type="range" id="shapeSize" min="10" max="90" value="60" step="5">
+        <span class="ctrl-val" id="shapeSizeVal">60%</span>
+      </div>
+    </div>
+
+    <!-- 出力 -->
+    <div class="ctrl-section">
+      <div class="ctrl-section-title">出力</div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">出力サイズ</span>
+        <select id="outputSize">
+          <option value="64">64 × 64 px</option>
+          <option value="128" selected>128 × 128 px</option>
+          <option value="256">256 × 256 px</option>
+          <option value="512">512 × 512 px</option>
+        </select>
+      </div>
+      <div class="ctrl-row">
+        <input type="checkbox" id="loopEnabled" checked>
+        <span class="ctrl-label" style="min-width:unset;">ループ再生</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── プレビューエリア ── -->
+  <div class="preview-area">
+    <div class="preview-top">
+      <span>プレビュー背景色</span>
+      <input type="color" id="previewBg" value="#1a1a1a">
+      <span style="color:var(--text-dimmer)">（出力APNGは透過です）</span>
+    </div>
+    <div class="preview-wrap" id="previewWrap">
+      <canvas id="previewCanvas"></canvas>
+    </div>
+    <div class="preview-bottom">
+      <button id="generateBtn">APNGを生成・ダウンロード</button>
+      <div id="status"></div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>
+    チカチカ点滅APNG素材メーカー v1.0.0 ／
+    <a href="/index.html">ツール一覧</a> ／
+    <a href="/privacy.html">プライバシーポリシー</a> ／
+    <a href="/terms.html">利用規約</a> ／
+    不具合報告: <a href="https://x.com/sasa_dokoro" target="_blank" rel="noopener">@sasa_dokoro</a>
+  </p>
+</footer>
+
+<script>
+'use strict';
+
+// ── 状態 ──────────────────────────────────────────────────
+const state = {
+  shape: 'heart',
+  color: '#ff6b9d',
+  outlineEnabled: false,
+  outlineColor: '#ffffff',
+  outlineWidth: 2,
+  pattern: 'fade',
+  interval: 800,
+  frameCount: 12,
+  minOpacity: 0,
+  count: 1,
+  layout: 'grid',
+  shapeSize: 60,
+  outputSize: 128,
+  loop: true,
+};
+
+let previewBgColor = '#1a1a1a';
+let randomSeeds = generateSeeds(9);
+let animRaf = null;
+let animStartTime = null;
+
+// ── ランダム位置（シード固定） ────────────────────────────
+function generateSeeds(n) {
+  const seeds = [];
+  const rng = mulberry32(0xdeadbeef);
+  for (let i = 0; i < n; i++) seeds.push({ rx: rng(), ry: rng() });
+  return seeds;
+}
+function mulberry32(seed) {
+  return function() {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ── 図形の位置計算 ─────────────────────────────────────────
+function getPositions(count, layout, canvasSize, shapeRadius) {
+  const positions = [];
+  const margin = shapeRadius;
+
+  if (layout === 'grid') {
+    const cols = Math.ceil(Math.sqrt(count));
+    const rows = Math.ceil(count / cols);
+    const cellW = canvasSize / cols;
+    const cellH = canvasSize / rows;
+    for (let i = 0; i < count; i++) {
+      positions.push({
+        x: cellW * (i % cols + 0.5),
+        y: cellH * (Math.floor(i / cols) + 0.5),
+        phase: i / count,
+      });
+    }
+  } else if (layout === 'random') {
+    const usable = canvasSize - shapeRadius * 2;
+    for (let i = 0; i < count; i++) {
+      const s = randomSeeds[i] || { rx: 0.5, ry: 0.5 };
+      positions.push({
+        x: margin + s.rx * usable,
+        y: margin + s.ry * usable,
+        phase: i / count,
+      });
+    }
+  } else { // circle
+    const cx = canvasSize / 2;
+    const cy = canvasSize / 2;
+    const r = count === 1 ? 0 : (canvasSize / 2 - shapeRadius * 1.1);
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+      positions.push({
+        x: cx + r * Math.cos(angle),
+        y: cy + r * Math.sin(angle),
+        phase: i / count,
+      });
+    }
+  }
+  return positions;
+}
+
+// ── 透明度計算 ─────────────────────────────────────────────
+function getOpacity(globalT, phase, pattern, minOpacity) {
+  let t = (globalT + phase) % 1;
+  const minA = minOpacity / 100;
+  if (pattern === 'snap') {
+    return t < 0.5 ? 1.0 : minA;
+  }
+  // fade: sine easing
+  if (t < 0.5) {
+    const p = t / 0.5;
+    return 1.0 - (1.0 - minA) * (0.5 - 0.5 * Math.cos(p * Math.PI));
+  } else {
+    const p = (t - 0.5) / 0.5;
+    return minA + (1.0 - minA) * (0.5 - 0.5 * Math.cos(p * Math.PI));
+  }
+}
+
+// ── 図形描画 ───────────────────────────────────────────────
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${alpha.toFixed(3)})`;
+}
+
+function buildPath(ctx, shape, cx, cy, size) {
+  const r = size / 2;
+  ctx.beginPath();
+  switch (shape) {
+    case 'heart': {
+      const sc = r / 16;
+      const steps = 120;
+      for (let i = 0; i <= steps; i++) {
+        const t = (i / steps) * Math.PI * 2;
+        const x = cx + sc * 16 * Math.pow(Math.sin(t), 3);
+        const y = cy - sc * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      break;
+    }
+    case 'star': {
+      const outerR = r;
+      const innerR = r * 0.38;
+      const pts = 5;
+      for (let i = 0; i < pts * 2; i++) {
+        const rad = i % 2 === 0 ? outerR : innerR;
+        const angle = (i / (pts * 2)) * Math.PI * 2 - Math.PI / 2;
+        const x = cx + rad * Math.cos(angle);
+        const y = cy + rad * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      break;
+    }
+    case 'circle': {
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      break;
+    }
+    case 'diamond': {
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx + r * 0.65, cy);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r * 0.65, cy);
+      ctx.closePath();
+      break;
+    }
+    case 'lightning': {
+      ctx.moveTo(cx + r * 0.28, cy - r);
+      ctx.lineTo(cx - r * 0.08, cy - r * 0.08);
+      ctx.lineTo(cx + r * 0.28, cy - r * 0.08);
+      ctx.lineTo(cx - r * 0.28, cy + r);
+      ctx.lineTo(cx + r * 0.08, cy + r * 0.08);
+      ctx.lineTo(cx - r * 0.28, cy + r * 0.08);
+      ctx.closePath();
+      break;
+    }
+    default: break; // flower handled separately
+  }
+}
+
+function renderShape(ctx, shape, cx, cy, size, fillColor, strokeColor, strokeWidth, opacity) {
+  if (opacity <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = 1; // manage color alpha ourselves
+
+  const fill = hexToRgba(fillColor, opacity);
+  const stroke = strokeColor ? hexToRgba(strokeColor, opacity) : null;
+
+  if (shape === 'flower') {
+    const petals = 6;
+    const petalR = size * 0.25;
+    const dist = size * 0.26;
+    const positions = [];
+    for (let i = 0; i < petals; i++) {
+      const angle = (i / petals) * Math.PI * 2;
+      positions.push({ px: cx + dist * Math.cos(angle), py: cy + dist * Math.sin(angle) });
+    }
+    ctx.fillStyle = fill;
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = strokeWidth; }
+    for (const { px, py } of positions) {
+      ctx.beginPath();
+      ctx.arc(px, py, petalR, 0, Math.PI * 2);
+      ctx.fill();
+      if (stroke) ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, petalR * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    if (stroke) ctx.stroke();
+  } else {
+    buildPath(ctx, shape, cx, cy, size);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = strokeWidth;
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// ── フレーム描画 ─────────────────────────────────────────────
+function drawFrame(ctx, canvasSize, globalT) {
+  const s = state;
+  const shapeRadius = canvasSize * (s.shapeSize / 100) * 0.5;
+  const shapeSize   = shapeRadius * 2;
+  const positions   = getPositions(s.count, s.layout, canvasSize, shapeRadius);
+
+  ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+  const stroke = s.outlineEnabled ? s.outlineColor : null;
+
+  for (const pos of positions) {
+    const opacity = getOpacity(globalT, pos.phase, s.pattern, s.minOpacity);
+    renderShape(ctx, s.shape, pos.x, pos.y, shapeSize, s.color, stroke, s.outlineWidth, opacity);
+  }
+}
+
+// ── プレビューアニメーション ──────────────────────────────────
+const previewCanvas = document.getElementById('previewCanvas');
+const previewCtx    = previewCanvas.getContext('2d');
+
+function syncPreviewSize() {
+  previewCanvas.width  = state.outputSize;
+  previewCanvas.height = state.outputSize;
+}
+
+function animLoop(ts) {
+  if (animStartTime === null) animStartTime = ts;
+  const elapsed = ts - animStartTime;
+  const globalT = (elapsed % state.interval) / state.interval;
+
+  const bg = document.getElementById('previewBg').value;
+  previewCtx.fillStyle = bg;
+  previewCtx.fillRect(0, 0, state.outputSize, state.outputSize);
+  drawFrame(previewCtx, state.outputSize, globalT);
+
+  animRaf = requestAnimationFrame(animLoop);
+}
+
+function restartAnim() {
+  if (animRaf) cancelAnimationFrame(animRaf);
+  animStartTime = null;
+  animRaf = requestAnimationFrame(animLoop);
+}
+
+// ── APNG生成 ───────────────────────────────────────────────
+const crc32Table = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c;
+  }
+  return t;
+})();
+
+function crc32(buf, offset, length) {
+  let crc = 0xFFFFFFFF;
+  for (let i = offset; i < offset + length; i++) {
+    crc = crc32Table[(crc ^ buf[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function patchApngLoop(apngBuf, numPlays) {
+  const buf  = new Uint8Array(apngBuf);
+  const view = new DataView(buf.buffer);
+  let i = 8;
+  while (i < buf.length) {
+    const length = view.getUint32(i);
+    const type   = String.fromCharCode(buf[i+4], buf[i+5], buf[i+6], buf[i+7]);
+    if (type === 'acTL') {
+      view.setUint32(i + 8 + 4, numPlays);
+      const newCrc = crc32(buf, i + 4, 4 + length);
+      view.setUint32(i + 8 + length, newCrc);
+      break;
+    }
+    i += 4 + 4 + length + 4;
+  }
+  return buf.buffer;
+}
+
+function downloadApng(buf, filename) {
+  const blob = new Blob([buf], { type: 'image/png' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const btn    = document.getElementById('generateBtn');
+  const status = document.getElementById('status');
+
+  if (typeof UPNG === 'undefined') {
+    status.textContent = '⚠ UPNG.jsの読み込みに失敗しました。ネット接続を確認してください。';
+    return;
+  }
+
+  btn.disabled = true;
+  status.textContent = '生成中...';
+
+  setTimeout(() => {
+    try {
+      const s          = state;
+      const size       = s.outputSize;
+      const fc         = s.frameCount;
+      const msPerFrame = Math.round(s.interval / fc);
+
+      const offCanvas  = document.createElement('canvas');
+      offCanvas.width  = size;
+      offCanvas.height = size;
+      const offCtx     = offCanvas.getContext('2d');
+
+      const rawFrames = [];
+      const delays    = [];
+
+      for (let f = 0; f < fc; f++) {
+        const globalT = f / fc;
+        offCtx.clearRect(0, 0, size, size);
+        drawFrame(offCtx, size, globalT);
+        const id = offCtx.getImageData(0, 0, size, size);
+        rawFrames.push(id.data.buffer.slice(id.data.byteOffset, id.data.byteOffset + id.data.byteLength));
+        delays.push(msPerFrame);
+      }
+
+      const numPlays = s.loop ? 0 : 1;
+      const apngBuf  = patchApngLoop(UPNG.encode(rawFrames, size, size, 0, delays), numPlays);
+
+      const kb       = (apngBuf.byteLength / 1024).toFixed(1);
+      const loopStr  = s.loop ? '無限ループ' : '1回再生';
+      status.textContent = `✓ 完了 (${fc}f / ${kb}KB / ${loopStr})`;
+
+      downloadApng(apngBuf, `chika-chika_${s.shape}_${size}px.png`);
+    } catch(e) {
+      status.textContent = `⚠ エラー: ${e.message}`;
+    }
+    btn.disabled = false;
+  }, 30);
+});
+
+// ── コントロール バインド ─────────────────────────────────────
+function bindGroup(groupId, stateKey, resetAnim = true) {
+  document.getElementById(groupId).addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    document.querySelectorAll(`#${groupId} button`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state[stateKey] = btn.dataset[stateKey];
+    if (resetAnim) restartAnim();
+  });
+}
+
+function bindSlider(id, stateKey, suffix, transform = v => v) {
+  const el  = document.getElementById(id);
+  const val = document.getElementById(id + 'Val');
+  el.addEventListener('input', () => {
+    const v = parseInt(el.value);
+    state[stateKey] = v;
+    if (val) val.textContent = transform(v) + suffix;
+    restartAnim();
+  });
+}
+
+bindGroup('shapeGroup',   'shape');
+bindGroup('patternGroup', 'pattern');
+bindGroup('layoutGroup',  'layout');
+
+bindSlider('interval',    'interval',    'ms');
+bindSlider('frameCount',  'frameCount',  'f');
+bindSlider('minOpacity',  'minOpacity',  '%');
+bindSlider('count',       'count',       '個');
+bindSlider('shapeSize',   'shapeSize',   '%');
+bindSlider('outlineWidth','outlineWidth','px');
+
+document.getElementById('mainColor').addEventListener('input', e => {
+  state.color = e.target.value;
+});
+document.getElementById('outlineColor').addEventListener('input', e => {
+  state.outlineColor = e.target.value;
+});
+document.getElementById('outlineEnabled').addEventListener('change', e => {
+  state.outlineEnabled = e.target.checked;
+  document.getElementById('outlineExtra').classList.toggle('hidden', !e.target.checked);
+});
+document.getElementById('outputSize').addEventListener('change', e => {
+  state.outputSize = parseInt(e.target.value);
+  syncPreviewSize();
+  restartAnim();
+});
+document.getElementById('loopEnabled').addEventListener('change', e => {
+  state.loop = e.target.checked;
+});
+document.getElementById('previewBg').addEventListener('input', () => {});
+
+// countが変わったときだけランダム位置を再生成
+document.getElementById('count').addEventListener('change', () => {
+  randomSeeds = generateSeeds(9);
+});
+
+// ── 初期化 ───────────────────────────────────────────────────
+syncPreviewSize();
+restartAnim();
+</script>
+</body>
+</html>
