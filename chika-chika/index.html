@@ -671,8 +671,6 @@ function drawFrame(ctx, canvasSize, globalT) {
   const shapeSize   = shapeRadius * 2;
   const positions   = getPositions(s.count, s.layout, canvasSize, shapeRadius);
 
-  ctx.clearRect(0, 0, canvasSize, canvasSize);
-
   const stroke = s.outlineEnabled ? s.outlineColor : null;
 
   for (const pos of positions) {
@@ -696,6 +694,7 @@ function animLoop(ts) {
   const globalT = (elapsed % state.interval) / state.interval;
 
   const bg = document.getElementById('previewBg').value;
+  previewCtx.clearRect(0, 0, state.outputSize, state.outputSize);
   previewCtx.fillStyle = bg;
   previewCtx.fillRect(0, 0, state.outputSize, state.outputSize);
   drawFrame(previewCtx, state.outputSize, globalT);
