@@ -44,6 +44,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+.hidden { display: none !important; }
 
 body {
   background: var(--bg);
@@ -314,7 +315,7 @@ footer a:hover { color: var(--text-dim); }
 
 <header>
   <h1>✨ チカチカ点滅APNG素材メーカー</h1>
-  <span class="ver">v1.0.1</span>
+  <span class="ver">v1.1.0</span>
   <a href="/index.html">← ツール一覧</a>
 </header>
 
@@ -332,6 +333,13 @@ footer a:hover { color: var(--text-dim); }
         <button data-shape="diamond"   title="ひし形">🔷</button>
         <button data-shape="lightning" title="稲妻">⚡</button>
         <button data-shape="flower"    title="花">🌸</button>
+        <button data-shape="custom"    title="カスタム画像をアップロード" id="customBtn">📁</button>
+      </div>
+      <input type="file" id="customFileInput" accept="image/png,image/webp,image/gif" style="display:none">
+      <div id="customThumbRow" class="hidden ctrl-row" style="gap:8px;align-items:center;">
+        <img id="customThumb" style="width:36px;height:36px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:repeating-conic-gradient(#333 0% 25%,#444 0% 50%) 0 0/8px 8px;flex-shrink:0;">
+        <span id="customFileName" style="font-size:11px;color:var(--text-dimmer);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <label for="customFileInput" style="margin-left:auto;font-size:11px;color:var(--accent);cursor:pointer;flex-shrink:0;">変更</label>
       </div>
     </div>
 
@@ -341,6 +349,10 @@ footer a:hover { color: var(--text-dim); }
       <div class="ctrl-row">
         <span class="ctrl-label">メイン色</span>
         <input type="color" id="mainColor" value="#ff6b9d">
+      </div>
+      <div class="ctrl-row hidden" id="tintRow">
+        <input type="checkbox" id="tintEnabled">
+        <span class="ctrl-label" style="min-width:unset;">色を適用</span>
       </div>
       <div class="ctrl-row">
         <input type="checkbox" id="outlineEnabled">
@@ -448,7 +460,7 @@ footer a:hover { color: var(--text-dim); }
 
 <footer>
   <p>
-    チカチカ点滅APNG素材メーカー v1.0.1 ／
+    チカチカ点滅APNG素材メーカー v1.1.0 ／
     <a href="/index.html">ツール一覧</a> ／
     <a href="/privacy.html">プライバシーポリシー</a> ／
     <a href="/terms.html">利用規約</a> ／
@@ -466,6 +478,7 @@ const state = {
   outlineEnabled: false,
   outlineColor: '#ffffff',
   outlineWidth: 2,
+  tintEnabled: false,
   pattern: 'fade',
   interval: 800,
   frameCount: 12,
@@ -481,6 +494,8 @@ let previewBgColor = '#1a1a1a';
 let randomSeeds = generateSeeds(9);
 let animRaf = null;
 let animStartTime = null;
+let customImage = null;
+let tintCache = null; // { img, color, canvas }
 
 // ── ランダム位置（シード固定） ────────────────────────────
 function generateSeeds(n) {
@@ -622,8 +637,34 @@ function buildPath(ctx, shape, cx, cy, size) {
   }
 }
 
+function getTintedCanvas(img, color) {
+  if (tintCache && tintCache.img === img && tintCache.color === color) return tintCache.canvas;
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const tc = c.getContext('2d');
+  tc.drawImage(img, 0, 0);
+  tc.globalCompositeOperation = 'source-atop';
+  tc.fillStyle = color;
+  tc.fillRect(0, 0, c.width, c.height);
+  tintCache = { img, color, canvas: c };
+  return c;
+}
+
 function renderShape(ctx, shape, cx, cy, size, fillColor, strokeColor, strokeWidth, opacity) {
   if (opacity <= 0) return;
+
+  if (shape === 'custom') {
+    if (!customImage) return;
+    const src = state.tintEnabled ? getTintedCanvas(customImage, fillColor) : customImage;
+    const ratio = src.naturalWidth / src.naturalHeight || src.width / src.height;
+    const dw = ratio >= 1 ? size : size * ratio;
+    const dh = ratio >= 1 ? size / ratio : size;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.drawImage(src, cx - dw / 2, cy - dh / 2, dw, dh);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.globalAlpha = 1; // manage color alpha ourselves
 
@@ -829,7 +870,44 @@ function bindSlider(id, stateKey, suffix, transform = v => v) {
   });
 }
 
-bindGroup('shapeGroup',   'shape');
+// shapeGroup はカスタム対応のため個別処理
+document.getElementById('shapeGroup').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.shape === 'custom' && !customImage) {
+    document.getElementById('customFileInput').click();
+    return;
+  }
+  document.querySelectorAll('#shapeGroup button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  state.shape = btn.dataset.shape;
+  document.getElementById('tintRow').classList.toggle('hidden', state.shape !== 'custom');
+  restartAnim();
+});
+
+// カスタム画像ファイル読み込み
+document.getElementById('customFileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    customImage = img;
+    tintCache = null;
+    document.getElementById('customThumb').src = url;
+    document.getElementById('customFileName').textContent = file.name;
+    document.getElementById('customThumbRow').classList.remove('hidden');
+    // カスタムボタンをアクティブに
+    document.querySelectorAll('#shapeGroup button').forEach(b => b.classList.remove('active'));
+    document.getElementById('customBtn').classList.add('active');
+    state.shape = 'custom';
+    document.getElementById('tintRow').classList.remove('hidden');
+    restartAnim();
+  };
+  img.src = url;
+  e.target.value = ''; // 同じファイルを再選択できるようにリセット
+});
+
 bindGroup('patternGroup', 'pattern');
 bindGroup('layoutGroup',  'layout');
 
@@ -842,6 +920,11 @@ bindSlider('outlineWidth','outlineWidth','px');
 
 document.getElementById('mainColor').addEventListener('input', e => {
   state.color = e.target.value;
+  tintCache = null;
+});
+document.getElementById('tintEnabled').addEventListener('change', e => {
+  state.tintEnabled = e.target.checked;
+  tintCache = null;
 });
 document.getElementById('outlineColor').addEventListener('input', e => {
   state.outlineColor = e.target.value;
