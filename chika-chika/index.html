@@ -11,7 +11,10 @@
 <meta property="og:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
 <meta property="og:url"         content="https://tools.sasadokoro.online/chika-chika/">
 <meta property="og:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
-<meta name="twitter:card"       content="summary">
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
+<meta name="twitter:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
+<meta name="twitter:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
 <link rel="canonical"           href="https://tools.sasadokoro.online/chika-chika/">
 <!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
@@ -889,6 +892,11 @@ document.getElementById('shapeGroup').addEventListener('click', e => {
 document.getElementById('customFileInput').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    document.getElementById('status').textContent = '⚠ ファイルサイズは5MB以内にしてください。';
+    e.target.value = '';
+    return;
+  }
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
@@ -897,15 +905,18 @@ document.getElementById('customFileInput').addEventListener('change', e => {
     document.getElementById('customThumb').src = url;
     document.getElementById('customFileName').textContent = file.name;
     document.getElementById('customThumbRow').classList.remove('hidden');
-    // カスタムボタンをアクティブに
     document.querySelectorAll('#shapeGroup button').forEach(b => b.classList.remove('active'));
     document.getElementById('customBtn').classList.add('active');
     state.shape = 'custom';
     document.getElementById('tintRow').classList.remove('hidden');
     restartAnim();
   };
+  img.onerror = () => {
+    document.getElementById('status').textContent = '⚠ 画像の読み込みに失敗しました。';
+    URL.revokeObjectURL(url);
+  };
   img.src = url;
-  e.target.value = ''; // 同じファイルを再選択できるようにリセット
+  e.target.value = '';
 });
 
 bindGroup('patternGroup', 'pattern');
@@ -941,7 +952,6 @@ document.getElementById('outputSize').addEventListener('change', e => {
 document.getElementById('loopEnabled').addEventListener('change', e => {
   state.loop = e.target.checked;
 });
-document.getElementById('previewBg').addEventListener('input', () => {});
 
 // countが変わったときだけランダム位置を再生成
 document.getElementById('count').addEventListener('change', () => {
