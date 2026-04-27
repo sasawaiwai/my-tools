@@ -4,16 +4,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CHIKA//CHIKA | Blink Motion Assets</title>
-<meta name="description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。ハート・星など複数図形に対応、商用利用OK・完全無料。">
+<title>チカチカ点滅APNG素材メーカー | ブラウザ完結・無料</title>
+<meta name="description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。色・速度・フェード・サイズ・複数配置などをカスタマイズできます。">
 <meta property="og:type"        content="website">
-<meta property="og:title"       content="CHIKA//CHIKA | Blink Motion Assets">
-<meta property="og:description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。商用利用OK・完全無料。">
+<meta property="og:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
+<meta property="og:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
 <meta property="og:url"         content="https://tools.sasadokoro.online/chika-chika/">
 <meta property="og:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
 <meta name="twitter:card"        content="summary_large_image">
-<meta name="twitter:title"       content="CHIKA//CHIKA | Blink Motion Assets">
-<meta name="twitter:description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。商用利用OK・完全無料。">
+<meta name="twitter:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
+<meta name="twitter:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
 <meta name="twitter:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
 <link rel="canonical"           href="https://tools.sasadokoro.online/chika-chika/">
 <!-- Google Analytics -->
@@ -28,24 +28,22 @@
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5953104148824709" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/gh/photopea/UPNG.js@88f504b/UPNG.js" integrity="sha384-4QTYxnoAxW4BYAHibs6PAoFSq6jn8k7skzJ34CpbjkAiBy+S5g2z7yQu0ugATpde" crossorigin="anonymous"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+
 :root {
-  --bg:         #080808;
-  --surface:    #101010;
-  --surface2:   #181818;
-  --border:     #222;
-  --accent:     #ff2d6b;
-  --accent-dim: rgba(255, 45, 107, 0.14);
-  --accent-glow:rgba(255, 45, 107, 0.35);
-  --text:       #f2f2f2;
-  --text-dim:   #999;
-  --text-dimmer:#484848;
+  --bg: #0e0e0e;
+  --surface: #1a1a1a;
+  --surface2: #242424;
+  --border: #2e2e2e;
+  --accent: #ff5c8a;
+  --accent2: #ff8cb4;
+  --text: #e8e8e8;
+  --text-dim: #c8c8c8;
+  --text-dimmer: #888;
   --mono: 'DM Mono', monospace;
   --sans: 'Noto Sans JP', sans-serif;
-  --radius: 4px;
+  --radius: 6px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,176 +59,33 @@ body {
   flex-direction: column;
 }
 
-/* ── ブランドヒーロー ── */
-.brand-hero {
-  position: relative;
+/* ── ヘッダー ── */
+header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 36px 48px;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  overflow: hidden;
-  min-height: 200px;
-}
-
-/* ドットグリッド（右上） */
-.brand-hero::before {
-  content: '';
-  position: absolute;
-  top: 0; right: 0;
-  width: 320px; height: 200px;
-  background-image: radial-gradient(circle, rgba(255,45,107,0.25) 1px, transparent 1px);
-  background-size: 20px 20px;
-  -webkit-mask-image: radial-gradient(ellipse at top right, black 20%, transparent 70%);
-  mask-image: radial-gradient(ellipse at top right, black 20%, transparent 70%);
-  pointer-events: none;
-}
-
-/* コーナーブラケット */
-.brand-hero::after {
-  content: '';
-  position: absolute;
-  bottom: 16px; left: 48px;
-  width: 20px; height: 20px;
-  border-left: 1px solid rgba(255, 45, 107, 0.35);
-  border-bottom: 1px solid rgba(255, 45, 107, 0.35);
-  pointer-events: none;
-}
-
-.brand-content { position: relative; z-index: 1; }
-
-.brand-eyebrow {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.25em;
-  color: var(--accent);
-  margin-bottom: 12px;
-  opacity: 0.7;
-}
-
-.brand-logo {
-  font-family: 'Inter', sans-serif;
-  font-weight: 900;
-  font-size: clamp(40px, 5vw, 64px);
-  letter-spacing: -0.01em;
-  line-height: 1;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-.brand-logo .slash { color: var(--accent); }
-
-.brand-tagline {
-  font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.28em;
-  color: var(--accent);
-  margin-bottom: 14px;
-}
-
-.brand-copy {
-  font-size: 14px;
-  color: var(--text-dim);
-  margin-bottom: 22px;
-  font-weight: 400;
-}
-
-.brand-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  border: 1px solid rgba(255, 45, 107, 0.5);
-  border-radius: 2px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-
-/* ── ヒービジュアル（右側点滅ハート） ── */
-.brand-visual {
   flex-shrink: 0;
-  position: relative;
-  width: 180px;
-  height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
 }
-
-.blink-glow {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: hero-blink 1.4s ease-in-out infinite alternate;
+header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
-
-.blink-icon {
-  position: relative;
-  font-size: 80px;
-  color: var(--accent);
-  line-height: 1;
-  filter: drop-shadow(0 0 16px var(--accent-glow));
-  animation: hero-blink 1.4s ease-in-out infinite alternate;
-  display: block;
-}
-
-.blink-sparks { position: absolute; inset: 0; pointer-events: none; }
-.spark {
-  position: absolute;
-  font-size: 14px;
-  color: var(--accent);
-  opacity: 0;
-}
-.spark.s1 { top: 15%;  left: 20%;  animation: spark-pop 2.1s 0.0s ease-in-out infinite; }
-.spark.s2 { top: 10%;  right: 18%; animation: spark-pop 2.1s 0.7s ease-in-out infinite; }
-.spark.s3 { bottom: 20%; left: 30%; animation: spark-pop 2.1s 1.4s ease-in-out infinite; }
-
-@keyframes hero-blink {
-  from { opacity: 0.12; transform: scale(0.88); }
-  to   { opacity: 1;    transform: scale(1); }
-}
-@keyframes spark-pop {
-  0%   { opacity: 0; transform: scale(0.5); }
-  30%  { opacity: 0.8; transform: scale(1.1); }
-  60%  { opacity: 0; transform: scale(0.8); }
-  100% { opacity: 0; }
-}
-
-/* ── ツールバー ── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 7px 48px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+header .ver {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dimmer);
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
 }
-.toolbar-sep { color: var(--border); }
-.toolbar-motto { color: var(--text-dimmer); }
-.toolbar-back {
+header a {
   margin-left: auto;
   color: var(--text-dimmer);
   text-decoration: none;
-  transition: color 0.15s;
+  font-size: 12px;
 }
-.toolbar-back:hover { color: var(--text-dim); }
+header a:hover { color: var(--text-dim); }
 
 /* ── メインレイアウト ── */
 main {
@@ -258,14 +113,13 @@ main {
   gap: 10px;
 }
 .ctrl-section-title {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-dimmer);
   border-bottom: 1px solid var(--border);
   padding-bottom: 6px;
-  font-family: var(--mono);
 }
 
 .ctrl-row {
@@ -283,7 +137,7 @@ main {
 .ctrl-val {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--accent);
+  color: var(--accent2);
   min-width: 36px;
   text-align: right;
   flex-shrink: 0;
@@ -293,7 +147,7 @@ main {
 .btn-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
 }
 .btn-group button {
   flex: 1;
@@ -305,15 +159,15 @@ main {
   padding: 6px 4px;
   font-size: 17px;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
   font-family: inherit;
 }
 .btn-group button:hover {
-  background: #252525;
+  background: #333;
   color: var(--text);
 }
 .btn-group button.active {
-  background: var(--accent-dim);
+  background: #3a1224;
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -336,7 +190,7 @@ input[type=color] {
   width: 36px;
   height: 28px;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   padding: 2px;
   background: var(--surface2);
   cursor: pointer;
@@ -390,10 +244,8 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 11px;
-  color: var(--text-dimmer);
-  font-family: var(--mono);
-  letter-spacing: 0.03em;
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 .preview-wrap {
@@ -401,7 +253,7 @@ select {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 0 0 1px #111, 0 8px 32px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 .preview-wrap canvas {
   display: block;
@@ -422,50 +274,40 @@ select {
   color: #fff;
   border: none;
   border-radius: var(--radius);
-  padding: 11px 36px;
-  font-size: 13px;
+  padding: 11px 32px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  font-family: var(--mono);
-  letter-spacing: 0.08em;
-  transition: opacity 0.15s, box-shadow 0.15s;
-  text-transform: uppercase;
+  font-family: var(--sans);
+  transition: background 0.15s, opacity 0.15s;
+  letter-spacing: 0.04em;
 }
-#generateBtn:hover {
-  opacity: 0.88;
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-#generateBtn:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
+#generateBtn:hover { background: var(--accent2); }
+#generateBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 #status {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dimmer);
   font-family: var(--mono);
   min-height: 18px;
   text-align: center;
-  letter-spacing: 0.03em;
 }
 
 /* ── フッター ── */
 footer {
   text-align: center;
   padding: 12px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-dimmer);
   border-top: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
-  font-family: var(--mono);
-  letter-spacing: 0.04em;
 }
 footer a { color: var(--text-dimmer); text-decoration: none; }
 footer a:hover { color: var(--text-dim); }
 
 /* ── レスポンシブ ── */
 @media (max-width: 640px) {
-  .brand-hero { padding: 24px 20px; min-height: unset; }
-  .brand-visual { display: none; }
-  .toolbar { padding: 7px 20px; }
   main { flex-direction: column; overflow: visible; }
   .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); overflow-y: visible; }
   .preview-area { padding: 16px; }
@@ -474,35 +316,10 @@ footer a:hover { color: var(--text-dim); }
 </head>
 <body>
 
-<!-- ── ブランドヒーロー ── -->
 <header>
-  <div class="brand-hero">
-    <div class="brand-content">
-      <p class="brand-eyebrow">· APNG GENERATOR ·</p>
-      <h1 class="brand-logo">CHIKA<span class="slash">//</span>CHIKA</h1>
-      <p class="brand-tagline">Blink Motion Assets</p>
-      <p class="brand-copy">チカチカ点滅 APNGジェネレーター</p>
-      <div class="brand-badges">
-        <span class="badge">⬡ ブラウザ完結</span>
-        <span class="badge">♥ 商用利用OK</span>
-      </div>
-    </div>
-    <div class="brand-visual" aria-hidden="true">
-      <div class="blink-glow"></div>
-      <span class="blink-icon">♥</span>
-      <div class="blink-sparks">
-        <span class="spark s1">✦</span>
-        <span class="spark s2">✦</span>
-        <span class="spark s3">✦</span>
-      </div>
-    </div>
-  </div>
-  <div class="toolbar">
-    <span class="ver">v1.1.0</span>
-    <span class="toolbar-sep">·</span>
-    <span class="toolbar-motto">Design · Animate · Export</span>
-    <a class="toolbar-back" href="/index.html">← ツール一覧</a>
-  </div>
+  <h1>✨ チカチカ点滅APNG素材メーカー</h1>
+  <span class="ver">v1.1.0</span>
+  <a href="/index.html">← ツール一覧</a>
 </header>
 
 <main>
@@ -511,7 +328,7 @@ footer a:hover { color: var(--text-dim); }
 
     <!-- 図形 -->
     <div class="ctrl-section">
-      <div class="ctrl-section-title">Shape</div>
+      <div class="ctrl-section-title">図形</div>
       <div class="btn-group" id="shapeGroup">
         <button data-shape="heart"     class="active" title="ハート">❤</button>
         <button data-shape="star"      title="星">⭐</button>
@@ -523,7 +340,7 @@ footer a:hover { color: var(--text-dim); }
       </div>
       <input type="file" id="customFileInput" accept="image/png,image/webp,image/gif" style="display:none">
       <div id="customThumbRow" class="hidden ctrl-row" style="gap:8px;align-items:center;">
-        <img id="customThumb" style="width:36px;height:36px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:repeating-conic-gradient(#222 0% 25%,#2a2a2a 0% 50%) 0 0/8px 8px;flex-shrink:0;">
+        <img id="customThumb" style="width:36px;height:36px;object-fit:contain;border:1px solid var(--border);border-radius:4px;background:repeating-conic-gradient(#333 0% 25%,#444 0% 50%) 0 0/8px 8px;flex-shrink:0;">
         <span id="customFileName" style="font-size:11px;color:var(--text-dimmer);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <label for="customFileInput" style="margin-left:auto;font-size:11px;color:var(--accent);cursor:pointer;flex-shrink:0;">変更</label>
       </div>
@@ -531,7 +348,7 @@ footer a:hover { color: var(--text-dim); }
 
     <!-- カラー -->
     <div class="ctrl-section">
-      <div class="ctrl-section-title">Color</div>
+      <div class="ctrl-section-title">カラー</div>
       <div class="ctrl-row">
         <span class="ctrl-label">メイン色</span>
         <input type="color" id="mainColor" value="#ff6b9d">
@@ -559,7 +376,7 @@ footer a:hover { color: var(--text-dim); }
 
     <!-- アニメーション -->
     <div class="ctrl-section">
-      <div class="ctrl-section-title">Animation</div>
+      <div class="ctrl-section-title">アニメーション</div>
       <div class="ctrl-row">
         <span class="ctrl-label full">点滅パターン</span>
       </div>
@@ -586,7 +403,7 @@ footer a:hover { color: var(--text-dim); }
 
     <!-- 配置 -->
     <div class="ctrl-section">
-      <div class="ctrl-section-title">Layout</div>
+      <div class="ctrl-section-title">配置</div>
       <div class="ctrl-row">
         <span class="ctrl-label">図形の数</span>
         <input type="range" id="count" min="1" max="9" value="1" step="1">
@@ -609,7 +426,7 @@ footer a:hover { color: var(--text-dim); }
 
     <!-- 出力 -->
     <div class="ctrl-section">
-      <div class="ctrl-section-title">Export</div>
+      <div class="ctrl-section-title">出力</div>
       <div class="ctrl-row">
         <span class="ctrl-label">出力サイズ</span>
         <select id="outputSize">
@@ -630,15 +447,15 @@ footer a:hover { color: var(--text-dim); }
   <!-- ── プレビューエリア ── -->
   <div class="preview-area">
     <div class="preview-top">
-      <span>Preview BG</span>
+      <span>プレビュー背景色</span>
       <input type="color" id="previewBg" value="#1a1a1a">
-      <span style="color:var(--text-dimmer)">— 出力APNGは透過</span>
+      <span style="color:var(--text-dimmer)">（出力APNGは透過です）</span>
     </div>
     <div class="preview-wrap" id="previewWrap">
       <canvas id="previewCanvas"></canvas>
     </div>
     <div class="preview-bottom">
-      <button id="generateBtn">Generate APNG</button>
+      <button id="generateBtn">APNGを生成・ダウンロード</button>
       <div id="status"></div>
     </div>
   </div>
@@ -646,7 +463,7 @@ footer a:hover { color: var(--text-dim); }
 
 <footer>
   <p>
-    CHIKA//CHIKA v1.1.0 ／
+    チカチカ点滅APNG素材メーカー v1.1.0 ／
     <a href="/index.html">ツール一覧</a> ／
     <a href="/privacy.html">プライバシーポリシー</a> ／
     <a href="/terms.html">利用規約</a> ／
@@ -992,7 +809,7 @@ document.getElementById('generateBtn').addEventListener('click', () => {
   }
 
   btn.disabled = true;
-  status.textContent = 'generating...';
+  status.textContent = '生成中...';
 
   setTimeout(() => {
     try {
@@ -1022,12 +839,12 @@ document.getElementById('generateBtn').addEventListener('click', () => {
       const apngBuf  = patchApngLoop(UPNG.encode(rawFrames, size, size, 0, delays), numPlays);
 
       const kb       = (apngBuf.byteLength / 1024).toFixed(1);
-      const loopStr  = s.loop ? 'loop' : '1x';
-      status.textContent = `✓ done — ${fc}f / ${kb}KB / ${loopStr}`;
+      const loopStr  = s.loop ? '無限ループ' : '1回再生';
+      status.textContent = `✓ 完了 (${fc}f / ${kb}KB / ${loopStr})`;
 
       downloadApng(apngBuf, `chika-chika_${s.shape}_${size}px.png`);
     } catch(e) {
-      status.textContent = `⚠ error: ${e.message}`;
+      status.textContent = `⚠ エラー: ${e.message}`;
     }
     btn.disabled = false;
   }, 30);
