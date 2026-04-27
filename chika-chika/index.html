@@ -4,16 +4,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>チカチカ点滅APNG素材メーカー | ブラウザ完結・無料</title>
-<meta name="description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。色・速度・フェード・サイズ・複数配置などをカスタマイズできます。">
+<title>CHIKA//CHIKA | Blink Motion Assets</title>
+<meta name="description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。ハート・星など複数図形に対応、商用利用OK・完全無料。">
 <meta property="og:type"        content="website">
-<meta property="og:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
-<meta property="og:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
+<meta property="og:title"       content="CHIKA//CHIKA | Blink Motion Assets">
+<meta property="og:description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。商用利用OK・完全無料。">
 <meta property="og:url"         content="https://tools.sasadokoro.online/chika-chika/">
 <meta property="og:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
 <meta name="twitter:card"        content="summary_large_image">
-<meta name="twitter:title"       content="チカチカ点滅APNG素材メーカー | ブラウザ完結・無料">
-<meta name="twitter:description" content="ハートや星などの図形がチカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロードできる無料ツールです。">
+<meta name="twitter:title"       content="CHIKA//CHIKA | Blink Motion Assets">
+<meta name="twitter:description" content="チカチカ点滅する透過APNG素材をブラウザ上で生成・ダウンロード。商用利用OK・完全無料。">
 <meta name="twitter:image"       content="https://tools.sasadokoro.online/chika-chika/ogp.png">
 <link rel="canonical"           href="https://tools.sasadokoro.online/chika-chika/">
 <!-- Google Analytics -->
@@ -29,7 +29,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/gh/photopea/UPNG.js@88f504b/UPNG.js" integrity="sha384-4QTYxnoAxW4BYAHibs6PAoFSq6jn8k7skzJ34CpbjkAiBy+S5g2z7yQu0ugATpde" crossorigin="anonymous"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap');
 
 :root {
   --bg: #0e0e0e;
@@ -62,30 +62,75 @@ body {
 /* ── ヘッダー ── */
 header {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 20px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
 }
-header h1 {
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+.header-row1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-header .ver {
+.header-logo {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1;
+}
+.header-logo .slash { color: var(--accent); }
+.header-meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-meta .ver {
   font-family: var(--mono);
   font-size: 11px;
   color: var(--text-dimmer);
 }
-header a {
-  margin-left: auto;
+.header-meta a {
   color: var(--text-dimmer);
   text-decoration: none;
   font-size: 12px;
 }
-header a:hover { color: var(--text-dim); }
+.header-meta a:hover { color: var(--text-dim); }
+.header-row2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.header-tagline {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--text-dimmer);
+  text-transform: uppercase;
+}
+.header-sep {
+  color: var(--border);
+  font-size: 11px;
+}
+.header-copy {
+  font-size: 11px;
+  color: var(--text-dimmer);
+}
+.header-badge {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--accent);
+  border: 1px solid rgba(255, 92, 138, 0.35);
+  border-radius: 2px;
+  padding: 1px 7px;
+  letter-spacing: 0.04em;
+}
 
 /* ── メインレイアウト ── */
 main {
@@ -317,9 +362,20 @@ footer a:hover { color: var(--text-dim); }
 <body>
 
 <header>
-  <h1>✨ チカチカ点滅APNG素材メーカー</h1>
-  <span class="ver">v1.1.0</span>
-  <a href="/index.html">← ツール一覧</a>
+  <div class="header-row1">
+    <div class="header-logo">CHIKA<span class="slash">//</span>CHIKA</div>
+    <div class="header-meta">
+      <span class="ver">v1.1.0</span>
+      <a href="/index.html">← ツール一覧</a>
+    </div>
+  </div>
+  <div class="header-row2">
+    <span class="header-tagline">Blink Motion Assets</span>
+    <span class="header-sep">·</span>
+    <span class="header-copy">チカチカ点滅 APNGジェネレーター</span>
+    <span class="header-badge">ブラウザ完結</span>
+    <span class="header-badge">商用利用OK</span>
+  </div>
 </header>
 
 <main>
