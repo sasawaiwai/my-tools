@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>神格圖鑑 ／ 第三巻 ／ 狂信者適性試問 ／ RISO ED.</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --paper:#efe7d4;
+  --paper-w:#faf6ec;
+  --paper-d:#e2d8bf;
+  --ink:#1f3a2c;       /* 深緑インク */
+  --ink-l:#4d6555;
+  --ink-ll:#85947f;
+  --hanko:#b8412e;     /* 朱印 */
+  --hanko-d:#8e2c1c;
+  --yel:#d9b25a;       /* 黄ばんだ黄 */
+  --navy:#2c3a55;
+  --rule:#9b8f74;
+  --pink:#ff5e9e;      /* リソ蛍光ピンク 差し色 */
+  --pink-soft:rgba(255,94,158,.55); /* 版ズレ用 */
+}
+
+html,body{background:var(--paper);color:var(--ink)}
+body{
+  font-family:"Yu Mincho","游明朝","Hiragino Mincho ProN","ヒラギノ明朝 ProN",serif;
+  min-height:100vh;line-height:1.85;
+  /* 古紙テクスチャ＋ハーフトーン控えめにピンクを一揭し */
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(155,143,116,.10) 1px, transparent 1.5px),
+    radial-gradient(circle at 70% 70%, rgba(155,143,116,.08) 1.2px, transparent 1.6px),
+    radial-gradient(circle at 50% 50%, rgba(255,94,158,.06) 1.6px, transparent 2px);
+  background-size:24px 24px, 34px 34px, 14px 14px;
+}
+
+/* 明朝＋ゴシック使い分け */
+.gothic{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif}
+.smallcaps{letter-spacing:.22em;font-size:.7rem;color:var(--ink-l)}
+
+.screen{display:none}
+.screen.active{display:block}
+
+.wrap{max-width:680px;margin:0 auto;padding:0 18px}
+
+/* ─── 図鑑ヘッダ（共通） ─── */
+.book-head{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  padding:18px 0 8px;border-bottom:1.5px solid var(--ink);
+  font-family:"Hiragino Sans",sans-serif;
+}
+.book-head .left{font-size:.72rem;letter-spacing:.18em;color:var(--ink-l)}
+.book-head .right{font-size:.72rem;letter-spacing:.18em;color:var(--ink-l)}
+
+.book-rule{
+  border:none;border-top:1.5px solid var(--ink);
+  border-bottom:1px solid var(--ink);height:5px;margin:0;
+}
+
+.nonbri{
+  text-align:center;font-size:.68rem;letter-spacing:.4em;color:var(--ink-l);
+  font-family:"Hiragino Sans",sans-serif;
+  padding:10px 0 6px;
+}
+
+/* ─── タイトル ─── */
+.cover{
+  padding:34px 14px 24px;text-align:center;position:relative;
+}
+.cover-meta{
+  font-size:.74rem;letter-spacing:.28em;color:var(--ink-l);
+  font-family:"Hiragino Sans",sans-serif;margin-bottom:18px;
+}
+.cover-title{
+  font-size:clamp(1.9rem,7.5vw,2.6rem);font-weight:900;
+  letter-spacing:.18em;line-height:1.4;color:var(--ink);
+  position:relative;display:inline-block;
+}
+/* 版ズレ装飾：明朝の見出し背後にピンクの薄影（3pxズレ） */
+.misregister{position:relative;display:inline-block}
+.misregister::before{
+  content:attr(data-text);position:absolute;left:3px;top:3px;
+  color:var(--pink-soft);z-index:0;pointer-events:none;
+  font:inherit;letter-spacing:inherit;line-height:inherit;white-space:pre-line;
+}
+.misregister > span{position:relative;z-index:1}
+
+/* リソ風 大ナンバリング（Helvetica系の特大数字） */
+.mega-band{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:14px;
+  border-top:1.5px solid var(--ink);border-bottom:6px solid var(--ink);
+  padding:14px 4px 10px;margin:18px 0 18px;background:var(--paper-w);
+  position:relative;overflow:hidden;
+}
+.mega-band::before{
+  /* 右肩にハーフトーンドットの塁 */
+  content:"";position:absolute;right:-30px;top:-20px;width:120px;height:120px;
+  background-image:radial-gradient(circle, var(--pink) 1.4px, transparent 1.8px);
+  background-size:9px 9px;opacity:.55;
+  mix-blend-mode:multiply;pointer-events:none;
+}
+.mega-band .mega-num{
+  font-family:"Helvetica Neue","Arial Black","Hiragino Sans",sans-serif;
+  font-size:clamp(3.6rem,15vw,6.4rem);line-height:.88;
+  font-weight:900;letter-spacing:-.05em;color:var(--ink);
+  position:relative;display:inline-block;
+  font-variant-numeric:tabular-nums;z-index:2;
+}
+.mega-band .mega-num::before{
+  content:attr(data-text);position:absolute;left:4px;top:3px;
+  color:var(--pink-soft);z-index:-1;pointer-events:none;
+}
+.mega-band .mega-num .of{
+  font-size:.26em;color:var(--ink-l);letter-spacing:.18em;
+  margin-left:6px;vertical-align:1.4em;font-family:"Hiragino Sans",sans-serif;
+}
+.mega-band .label{
+  font-family:"Hiragino Sans",sans-serif;
+  font-size:.68rem;letter-spacing:.3em;color:var(--ink);font-weight:700;
+  padding-bottom:14px;text-transform:uppercase;text-align:right;z-index:2;
+}
+.mega-band .label .pink{color:var(--pink);font-weight:900;display:block;margin-top:4px}
+
+/* リソ風装飾：表紙のハーフトーンの丸 */
+.halftone-blob{
+  position:absolute;width:180px;height:180px;border-radius:50%;
+  background-image:radial-gradient(circle, var(--pink) 1.6px, transparent 2.1px);
+  background-size:10px 10px;opacity:.6;
+  mix-blend-mode:multiply;pointer-events:none;
+  right:-50px;bottom:-30px;z-index:0;
+}
+.cover-spice{
+  position:absolute;left:-6px;top:18px;
+  font-family:"Helvetica Neue","Arial Black",sans-serif;
+  font-size:.66rem;font-weight:900;letter-spacing:.32em;
+  color:var(--paper-w);background:var(--pink);
+  padding:6px 10px;text-transform:uppercase;
+  transform:rotate(-3deg);z-index:3;
+}
+.cover-title::before,.cover-title::after{
+  content:"";display:block;height:1.5px;background:var(--ink);
+  width:60%;margin:14px auto;
+}
+.cover-title::after{margin-bottom:0;width:30%;height:.5px;background:var(--ink);
+  box-shadow:0 4px 0 var(--ink)}
+.cover-sub{
+  margin-top:18px;font-size:.86rem;letter-spacing:.3em;color:var(--ink-l);
+  font-family:"Hiragino Sans",sans-serif;
+}
+
+/* 朱印 */
+.hanko{
+  display:inline-block;color:var(--hanko);
+  border:2px solid var(--hanko);
+  font-weight:900;letter-spacing:.18em;
+  padding:8px 10px;font-size:.78rem;
+  background:transparent;
+  font-family:"Hiragino Sans",sans-serif;
+  position:relative;
+  transform:rotate(-6deg);
+  /* かすれ感 */
+  filter:contrast(1.05);
+  box-shadow:inset 0 0 0 4px var(--paper);
+}
+.hanko.big{
+  font-size:1rem;padding:14px 12px;
+  border-width:3px;line-height:1.3;
+  writing-mode:vertical-rl;
+}
+.hanko::after{
+  content:"";position:absolute;inset:-3px;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(239,231,212,.5) 1px, transparent 1.5px),
+    radial-gradient(circle at 70% 60%, rgba(239,231,212,.4) 1.4px, transparent 2px);
+  background-size:8px 8px, 12px 12px;pointer-events:none;
+  mix-blend-mode:lighten;
+}
+.cover-hanko{
+  position:absolute;right:14px;top:48px;
+}
+
+.cover-body{
+  margin-top:26px;background:var(--paper-w);
+  border:1px solid var(--rule);
+  padding:22px 22px 18px;
+  font-size:.93rem;line-height:2.05;letter-spacing:.04em;
+  text-align:justify;
+  text-indent:1em;
+}
+.cover-body p+p{margin-top:6px}
+.caution-note{
+  margin-top:14px;
+  font-family:"Hiragino Sans",sans-serif;font-size:.74rem;
+  letter-spacing:.06em;color:var(--ink-l);line-height:1.9;
+  padding-top:10px;border-top:1px dashed var(--rule);
+}
+.caution-note::before{content:"※ ";color:var(--hanko);font-weight:900}
+
+/* ボタン：タブ風 */
+.btn-tab{
+  display:block;width:100%;cursor:pointer;
+  font-family:"Hiragino Sans",sans-serif;
+  background:var(--navy);color:var(--paper-w);
+  border:none;border-top:4px solid var(--ink);border-bottom:1px solid #1a2438;
+  padding:18px 16px;font-size:1.02rem;letter-spacing:.32em;font-weight:700;
+  margin-top:24px;
+  transition:transform .15s, box-shadow .15s;
+  text-indent:.32em;
+}
+.btn-tab:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
+.btn-tab:active{transform:translateY(2px);box-shadow:none}
+.btn-tab.alt{background:var(--paper-w);color:var(--ink);border-top-color:var(--hanko)}
+.btn-tab.alt:hover{box-shadow:0 6px 0 var(--hanko)}
+.btn-tab.warn{background:var(--hanko);color:var(--paper-w);border-top-color:#5a1a0a}
+.btn-tab.warn:hover{box-shadow:0 6px 0 var(--hanko-d)}
+
+.btn-link{
+  display:inline-block;background:none;border:none;cursor:pointer;
+  font-family:"Hiragino Sans",sans-serif;
+  color:var(--ink);font-size:.78rem;letter-spacing:.16em;
+  border-bottom:1px solid var(--ink);padding:2px 0;margin-top:8px;
+}
+.btn-link:hover{color:var(--hanko);border-color:var(--hanko)}
+
+/* ─── 質問画面 ─── */
+.q-header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 0;border-bottom:1.5px solid var(--ink);
+  font-family:"Hiragino Sans",sans-serif;
+}
+.q-header .data-no{font-size:.78rem;letter-spacing:.2em;font-weight:700;color:var(--ink)}
+.q-header .data-date{font-size:.72rem;letter-spacing:.18em;color:var(--ink-l)}
+
+.q-progress{
+  margin-top:6px;display:flex;align-items:center;gap:6px;
+  font-family:"Hiragino Sans",sans-serif;
+}
+.q-progress .pcells{
+  flex:1;display:grid;grid-template-columns:repeat(14,1fr);gap:3px;
+}
+.q-progress .pcell{height:8px;background:transparent;border:1px solid var(--ink)}
+.q-progress .pcell.done{background:var(--ink)}
+
+.q-body{
+  margin-top:24px;padding:0 6px;
+}
+.q-num{
+  font-size:.78rem;letter-spacing:.32em;color:var(--hanko);
+  font-family:"Hiragino Sans",sans-serif;font-weight:700;
+  margin-bottom:10px;
+}
+.q-text{
+  font-size:clamp(1.18rem,4.5vw,1.4rem);
+  line-height:1.7;letter-spacing:.06em;font-weight:600;color:var(--ink);
+  border-bottom:1px solid var(--ink);
+  padding-bottom:14px;
+}
+
+/* 選択肢：図鑑の箇条書き */
+.choices{margin-top:8px}
+.choice-btn{
+  display:flex;align-items:flex-start;width:100%;
+  background:transparent;border:none;
+  font-family:inherit;text-align:left;cursor:pointer;
+  padding:18px 4px 18px 0;
+  border-bottom:1px dashed var(--rule);
+  color:var(--ink);line-height:1.65;
+  transition:background .15s;
+}
+.choice-btn:hover{background:var(--paper-w)}
+.choice-btn:hover .ch-text{text-decoration:underline;text-decoration-color:var(--hanko);text-underline-offset:5px}
+.choice-btn .ch-letter{
+  flex:0 0 42px;text-align:center;
+  font-size:1.3rem;color:var(--hanko);font-weight:900;
+  letter-spacing:0;
+}
+.choice-btn .ch-text{font-size:1rem;font-weight:500;color:var(--ink);padding-top:3px;letter-spacing:.02em}
+
+/* ─── 結果画面 ─── */
+.r-banner{
+  background:var(--navy);color:var(--paper-w);
+  font-family:"Hiragino Sans",sans-serif;
+  font-size:.78rem;letter-spacing:.4em;
+  padding:8px 14px;margin-top:14px;
+  display:flex;justify-content:space-between;align-items:center;
+  position:relative;
+}
+.r-banner::after{
+  /* リソ風の版ズレ、ピンクを下にちょっとだけめくり出す */
+  content:"";position:absolute;left:5px;top:5px;right:-5px;bottom:-5px;
+  background:var(--pink);z-index:-1;
+  mix-blend-mode:multiply;
+}
+.r-banner span:last-child{font-size:.7rem;letter-spacing:.2em;opacity:.7}
+
+.r-spread{
+  margin-top:14px;background:var(--paper-w);
+  border:1px solid var(--ink);
+  padding:24px 22px 22px;
+  position:relative;
+}
+.r-spread::after{
+  /* 中央の綴じ線 */
+  display:none;
+}
+
+.r-top{
+  display:grid;grid-template-columns:1fr 1.4fr;gap:18px;align-items:start;
+}
+.fig-plate{
+  position:relative;background:var(--paper);
+  border:1.5px solid var(--ink);
+  height:170px;display:flex;align-items:center;justify-content:center;
+  text-align:center;
+}
+.fig-plate::before{
+  content:"";position:absolute;inset:6px;
+  border:1px dashed var(--rule);
+}
+.fig-plate .label{
+  font-family:"Hiragino Sans",sans-serif;
+  font-size:.72rem;letter-spacing:.3em;color:var(--ink-l);
+  position:relative;z-index:1;
+}
+.fig-plate .label::before{content:"※ ";color:var(--hanko)}
+.fig-plate .fig-no{
+  position:absolute;left:8px;top:8px;font-size:.62rem;
+  letter-spacing:.24em;color:var(--ink-l);font-family:"Hiragino Sans",sans-serif;
+}
+.fig-plate .silhouette{
+  position:absolute;font-size:5.5rem;opacity:.18;color:var(--ink);
+}
+
+.r-id{padding-top:4px}
+.r-class{
+  font-family:"Hiragino Sans",sans-serif;font-size:.7rem;letter-spacing:.3em;
+  color:var(--hanko);font-weight:700;
+}
+.r-deity{
+  font-size:clamp(1.55rem,5.5vw,2rem);line-height:1.4;font-weight:900;
+  letter-spacing:.08em;color:var(--ink);margin-top:6px;
+  position:relative;display:inline-block;
+}
+.r-deity::before{
+  content:attr(data-text);position:absolute;left:3px;top:2px;
+  color:var(--pink-soft);z-index:-1;pointer-events:none;
+  font:inherit;letter-spacing:inherit;line-height:inherit;
+}
+.r-typename{
+  font-family:"Hiragino Sans",sans-serif;font-size:.84rem;
+  letter-spacing:.1em;color:var(--ink-l);margin-top:6px;line-height:1.55;
+}
+.r-hanko{margin-top:12px;display:inline-block}
+
+.r-catch{
+  margin-top:20px;font-size:1.02rem;line-height:1.85;
+  border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
+  padding:24px 32px 22px;text-align:center;font-weight:600;letter-spacing:.06em;
+  position:relative;
+}
+.r-catch::before{
+  content:"“";position:absolute;left:8px;top:-12px;
+  color:var(--pink);font-size:5.5rem;line-height:1;font-family:"Yu Mincho",serif;
+  font-weight:900;pointer-events:none;
+}
+.r-catch::after{
+  content:"”";position:absolute;right:8px;bottom:-50px;
+  color:var(--hanko);font-size:5.5rem;line-height:1;font-family:"Yu Mincho",serif;
+  font-weight:900;pointer-events:none;
+}
+
+/* データシート */
+.datasheet{margin-top:22px;border:1px solid var(--ink)}
+.datasheet .row{
+  display:grid;grid-template-columns:130px 1fr;
+  border-bottom:1px solid var(--rule);
+}
+.datasheet .row:last-child{border-bottom:none}
+.datasheet .row > .k{
+  background:var(--paper);padding:10px 12px;
+  font-family:"Hiragino Sans",sans-serif;font-size:.74rem;letter-spacing:.18em;
+  color:var(--ink);font-weight:700;border-right:1px solid var(--rule);
+}
+.datasheet .row > .v{padding:10px 14px;font-size:.94rem;line-height:1.85}
+.datasheet .row > .v.ja-num::before{content:attr(data-prefix);color:var(--hanko);font-weight:700;margin-right:6px}
+
+/* 5段階ブロック表示（属性ステータス） */
+.stat-row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.stat-row:first-child{margin-top:0}
+.stat-row .name{flex:0 0 96px;font-family:"Hiragino Sans",sans-serif;font-size:.78rem;letter-spacing:.1em;color:var(--ink)}
+.stat-blocks{display:flex;gap:3px}
+.stat-blocks span{width:14px;height:14px;background:var(--paper-d);border:1px solid var(--ink)}
+.stat-blocks span.on{background:var(--ink)}
+.stat-row .num{margin-left:auto;font-family:"Hiragino Sans",sans-serif;font-size:.72rem;color:var(--ink-l);letter-spacing:.1em}
+
+/* 二段組（相性、技能・儀式） */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--ink);margin-top:14px}
+.two-col > div{padding:14px 14px}
+.two-col > div + div{border-left:1px solid var(--ink)}
+.two-col h4{
+  font-family:"Hiragino Sans",sans-serif;font-size:.72rem;letter-spacing:.2em;
+  color:var(--hanko);margin-bottom:6px;font-weight:700;
+}
+.two-col p{font-size:.92rem;line-height:1.8}
+
+/* 絵はがき風SNS枠 */
+.sns-frame{
+  margin-top:22px;padding:16px;border:2px solid var(--ink);position:relative;
+  background:var(--paper);
+}
+.sns-frame::before{
+  content:"";position:absolute;inset:5px;border:1px dashed var(--ink-l);pointer-events:none;
+}
+.sns-frame h4{
+  font-family:"Hiragino Sans",sans-serif;font-size:.74rem;letter-spacing:.22em;
+  color:var(--ink);margin-bottom:8px;font-weight:700;position:relative;
+}
+.sns-frame h4::before{content:"▣ "}
+.sns-frame p{font-size:.85rem;line-height:1.85;white-space:pre-wrap;font-family:"Hiragino Sans",sans-serif;position:relative}
+.sns-stamp{
+  position:absolute;right:10px;top:10px;color:var(--hanko);
+  border:1.5px solid var(--hanko);font-family:"Hiragino Sans",sans-serif;
+  font-size:.6rem;letter-spacing:.18em;padding:4px 6px;font-weight:700;
+  transform:rotate(-8deg);
+}
+
+.copy-msg{
+  font-family:"Hiragino Sans",sans-serif;font-size:.74rem;color:var(--ink-l);
+  letter-spacing:.1em;margin-top:6px;opacity:0;transition:opacity .25s;height:1em;
+}
+.copy-msg.show{opacity:1;color:var(--hanko)}
+
+.colophon{
+  margin-top:22px;padding-top:14px;border-top:1.5px solid var(--ink);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;
+  font-family:"Hiragino Sans",sans-serif;font-size:.72rem;
+  letter-spacing:.16em;color:var(--ink-l);
+}
+
+footer{
+  margin:36px auto 0;padding:18px 18px 32px;max-width:680px;
+  border-top:1.5px solid var(--ink);
+  font-family:"Hiragino Sans",sans-serif;font-size:.72rem;
+  color:var(--ink-l);line-height:1.95;
+  display:grid;grid-template-columns:1fr;gap:2px;
+}
+footer p+p{margin-top:2px}
+.foot-charm{margin-top:8px;color:var(--ink)}
+
+@media (max-width:520px){
+  .r-top{grid-template-columns:1fr}
+  .fig-plate{height:130px}
+  .datasheet .row{grid-template-columns:104px 1fr}
+  .two-col{grid-template-columns:1fr}
+  .two-col > div + div{border-left:none;border-top:1px solid var(--ink)}
+  .cover-hanko{position:static;display:block;margin-top:14px}
+}
+
+
+/* ─── スマホ表示の安定化パッチ ───
+   既存のリソ風・神格分類冊子デザインは維持し、
+   320〜600px幅での詰まり、装飾の干渉、タップしづらさだけを調整する。
+*/
+html{ -webkit-text-size-adjust:100%; }
+body{ overflow-x:hidden; }
+.wrap, footer{ width:min(100%,680px); }
+.r-deity, .r-typename, .datasheet .row > .v, .two-col p, .sns-frame p, footer p{
+  overflow-wrap:anywhere;
+}
+
+@media (max-width:600px){
+  .wrap{padding:0 14px}
+
+  .book-head{gap:10px;align-items:flex-start}
+  .book-head .left,.book-head .right{
+    font-size:.66rem;letter-spacing:.12em;line-height:1.5;min-width:0;
+  }
+  .book-head .right{text-align:right}
+
+  .nonbri{letter-spacing:.32em}
+
+  .cover{padding:28px 8px 22px}
+  .cover-title{
+    font-size:clamp(1.7rem,11vw,2.2rem);
+    letter-spacing:.12em;
+  }
+  .cover-meta,.cover-sub{letter-spacing:.18em}
+  .cover-body{
+    padding:18px 16px;font-size:.9rem;line-height:2;text-align:left;
+  }
+  .cover-spice{
+    left:0;top:12px;font-size:.58rem;letter-spacing:.18em;
+    padding:5px 8px;transform:rotate(-2deg);
+  }
+  .halftone-blob{width:130px;height:130px;right:-42px;bottom:-18px;opacity:.45}
+  .hanko.big{font-size:.88rem;padding:12px 10px}
+
+  .btn-tab{
+    padding:16px 12px;font-size:.94rem;
+    letter-spacing:.18em;text-indent:.18em;
+  }
+
+  .mega-band{
+    gap:8px;padding:12px 2px 9px;margin:14px 0;border-bottom-width:5px;
+  }
+  .mega-band::before{right:-42px;top:-26px;width:100px;height:100px;opacity:.4}
+  .mega-band .mega-num{font-size:clamp(3rem,18vw,4.7rem)}
+  .mega-band .mega-num .of{
+    font-size:.22em;margin-left:2px;letter-spacing:.08em;vertical-align:1.3em;
+  }
+  .mega-band .label{font-size:.6rem;letter-spacing:.16em;padding-bottom:10px}
+
+  .q-progress .pcells{gap:2px}
+  .q-progress .pcell{height:7px}
+  .q-body{padding:0 2px;margin-top:20px}
+  .q-text{
+    font-size:clamp(1.08rem,5.2vw,1.3rem);
+    letter-spacing:.03em;line-height:1.65;
+  }
+  .choice-btn{padding:16px 4px 16px 0;min-height:52px}
+  .choice-btn .ch-letter{flex:0 0 38px;font-size:1.15rem}
+  .choice-btn .ch-text{font-size:.96rem}
+
+  .r-banner{
+    font-size:.68rem;letter-spacing:.22em;padding:8px 10px;gap:10px;
+  }
+  .r-banner span{min-width:0}
+  .r-banner span:last-child{white-space:nowrap}
+  .r-spread{padding:20px 16px 18px;margin-top:13px}
+  .r-deity{
+    font-size:clamp(1.45rem,7vw,1.85rem);
+    letter-spacing:.05em;
+  }
+  .r-class{letter-spacing:.18em;line-height:1.4}
+  .r-typename{font-size:.82rem;letter-spacing:.05em}
+
+  .r-catch{
+    margin-top:18px;padding:18px 22px 18px;
+    font-size:.96rem;line-height:1.75;
+  }
+  .r-catch::before,.r-catch::after{font-size:3.4rem}
+  .r-catch::before{left:3px;top:-6px}
+  .r-catch::after{right:3px;bottom:-26px}
+
+  .datasheet .row > .k{
+    font-size:.68rem;letter-spacing:.12em;padding:9px 10px;
+  }
+  .datasheet .row > .v{font-size:.9rem;padding:10px 12px}
+
+  .stat-row{gap:8px;flex-wrap:wrap;align-items:center}
+  .stat-row .name{flex:0 0 88px;font-size:.74rem}
+  .stat-blocks span{width:12px;height:12px}
+  .stat-row .num{margin-left:0;font-size:.7rem;min-width:34px}
+
+  .two-col > div{padding:12px}
+  .sns-frame{padding:14px 12px}
+  .sns-frame h4{padding-right:72px;line-height:1.5;letter-spacing:.14em}
+  .sns-frame p{font-size:.8rem}
+  .sns-stamp{right:8px;top:8px;font-size:.54rem;padding:3px 5px}
+
+  .colophon{font-size:.68rem;letter-spacing:.1em;line-height:1.6}
+  footer{
+    font-size:.68rem;line-height:1.9;padding:16px 14px 28px;
+    overflow-wrap:anywhere;
+  }
+}
+
+@media (max-width:380px){
+  .wrap{padding:0 12px}
+  .book-head .left,.book-head .right{font-size:.62rem;letter-spacing:.08em}
+  .nonbri{letter-spacing:.25em}
+
+  .cover{padding:26px 4px 20px}
+  .cover-title{font-size:clamp(1.55rem,12vw,1.95rem);letter-spacing:.1em}
+  .cover-sub{font-size:.78rem;letter-spacing:.14em}
+  .cover-body{padding:16px 14px;font-size:.86rem;line-height:1.95}
+  .cover-spice{font-size:.54rem;letter-spacing:.12em;left:2px}
+
+  .mega-band{align-items:center;gap:6px}
+  .mega-band .mega-num{font-size:clamp(2.8rem,17vw,3.6rem)}
+  .mega-band .mega-num .of{font-size:.2em;vertical-align:1.3em}
+  .mega-band .label{font-size:.54rem;letter-spacing:.1em;padding-bottom:6px}
+
+  .q-text{font-size:1.04rem}
+  .choice-btn .ch-letter{flex-basis:34px}
+
+  .datasheet .row{display:block}
+  .datasheet .row > .k{
+    border-right:none;border-bottom:1px solid var(--rule);padding:8px 10px;
+  }
+  .datasheet .row > .v{padding:10px 12px 12px}
+
+  .stat-row{
+    display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:4px 0;
+  }
+  .stat-row .name{flex:auto;font-size:.72rem}
+  .stat-blocks{grid-column:1 / 2}
+  .stat-blocks span{width:13px;height:13px}
+  .stat-row .num{grid-column:2 / 3;grid-row:1 / 3;align-self:center;min-width:38px}
+
+  .r-spread{padding:18px 12px 16px}
+  .r-banner{letter-spacing:.12em;font-size:.62rem}
+  .r-catch{padding:16px 18px;font-size:.92rem}
+  .fig-plate .silhouette{font-size:4.8rem}
+
+  .btn-tab{font-size:.88rem;letter-spacing:.12em;text-indent:.12em}
+  .sns-frame h4{padding-right:62px;letter-spacing:.1em}
+  .colophon{font-size:.65rem;letter-spacing:.08em}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- タイトル -->
+  <div id="screen-title" class="screen active">
+    <div class="wrap">
+      <div class="book-head">
+        <div class="left">神格圖鑑 ／ 第三巻</div>
+        <div class="right">No. 七拾参</div>
+      </div>
+      <hr class="book-rule">
+      <div class="nonbri">⛬ ⛬ ⛬</div>
+
+      <div class="cover">
+        <span class="cover-spice">RISO ED. ◉ VOL.Ⅲ</span>
+        <span class="halftone-blob"></span>
+        <div class="cover-meta gothic">非公式 ／ 神話分類試問</div>
+        <h1 class="cover-title misregister" data-text="狂信者適性
+診断書"><span>狂信者適性<br>診断書</span></h1>
+        <div class="cover-sub gothic">あなたはどの神に魅入られるか</div>
+        <div class="cover-hanko">
+          <span class="hanko big">神格認定<br>試問</span>
+        </div>
+      </div>
+
+      <div class="cover-body">
+        <p>本書は、十四問の試問を通じ、回答者が如何なるクトゥルフ神話の神格に魅入られやすき性向を有するかを判じる、非公式の手引なり。</p>
+        <p>動物占ひの如き軽き娯楽として、卓を囲む際の余興にも、独り深夜の卓上にても、之を用ひられたし。但し、深海に飛び込む事は固く禁ず。</p>
+        <div class="caution-note">本書はジョーク内容に基づく架空の手引なり。実在の宗教・信仰・団体とは一切関係を有さず。</div>
+      </div>
+
+      <button class="btn-tab" onclick="startDiagnosis()">閲覧を開始する</button>
+    </div>
+  </div>
+
+  <!-- 質問 -->
+  <div id="screen-question" class="screen">
+    <div class="wrap">
+      <div class="book-head">
+        <div class="left">DATA <span id="data-num">No. 01</span> ／ 14</div>
+        <div class="right">採集 ／ 神格適性</div>
+      </div>
+      <div class="mega-band">
+        <div class="mega-num" id="mega-num" data-text="01"><span>01</span><span class="of">／ 14</span></div>
+        <div class="label">DATA NO.<span class="pink" id="mega-label">QUESTION 01</span></div>
+      </div>
+      <div class="q-progress">
+        <div class="pcells" id="pcells"></div>
+      </div>
+
+      <div class="q-body">
+        <div class="q-num" id="q-num">問 01</div>
+        <div class="q-text" id="q-text"></div>
+        <div class="choices" id="choices"></div>
+      </div>
+      <div class="nonbri">— DATA SHEET / vol.iii —</div>
+    </div>
+  </div>
+
+  <!-- 結果 -->
+  <div id="screen-result" class="screen">
+    <div class="wrap">
+      <div class="r-banner gothic">
+        <span>採 集 結 果 ／ RESULT</span>
+        <span id="r-banner-no">No. ◆◆◆</span>
+      </div>
+      <div class="r-spread">
+        <div class="r-top">
+          <div class="fig-plate">
+            <span class="fig-no">FIG. 1</span>
+            <span class="silhouette" id="r-silhouette">⌬</span>
+            <span class="label">※ 図版省略</span>
+          </div>
+          <div class="r-id">
+            <div class="r-class">CLASS ／ <span id="r-class">GREAT OLD ONE</span></div>
+            <div class="r-deity misregister" id="r-deity"></div>
+            <div class="r-typename" id="r-typename"></div>
+            <div class="r-hanko"><span class="hanko">適性認定</span></div>
+          </div>
+        </div>
+
+        <div class="r-catch" id="r-catch"></div>
+
+        <div class="datasheet">
+          <div class="row"><div class="k">信仰傾向</div><div class="v ja-num" data-prefix="甲" id="r-tendency"></div></div>
+          <div class="row"><div class="k">役割</div><div class="v ja-num" data-prefix="乙" id="r-role"></div></div>
+          <div class="row"><div class="k">破滅ポイント</div><div class="v ja-num" data-prefix="丙" id="r-doom"></div></div>
+          <div class="row">
+            <div class="k">属性ステータス</div>
+            <div class="v">
+              <div class="stat-row"><span class="name">信仰の深さ</span><span class="stat-blocks" data-val="0"></span><span class="num">/5</span></div>
+              <div class="stat-row"><span class="name">混沌親和</span><span class="stat-blocks" data-val="0"></span><span class="num">/5</span></div>
+              <div class="stat-row"><span class="name">破滅傾向</span><span class="stat-blocks" data-val="0"></span><span class="num">/5</span></div>
+              <div class="stat-row"><span class="name">孤独耐性</span><span class="stat-blocks" data-val="0"></span><span class="num">/5</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div><h4>相性のいい神格</h4><p id="r-good"></p></div>
+          <div><h4>相性の悪い神格</h4><p id="r-bad"></p></div>
+        </div>
+        <div class="two-col">
+          <div><h4>おすすめ技能</h4><p id="r-skills"></p></div>
+          <div><h4>あなたに似合う儀式</h4><p id="r-ritual"></p></div>
+        </div>
+
+        <div class="sns-frame">
+          <span class="sns-stamp">CHECKED</span>
+          <h4>絵はがき用文面 ／ SHARE</h4>
+          <p id="r-sns"></p>
+          <button class="btn-link" onclick="copySNS()">この文をコピーする</button>
+          <div class="copy-msg" id="msg-sns">複写完了</div>
+        </div>
+
+        <div class="colophon">
+          <span>採集者：匿名 ／ Reader</span>
+          <span>発行：CULT FIELD GUIDE</span>
+        </div>
+      </div>
+
+      <button class="btn-tab alt" onclick="copyFullResult()">全データを複写する</button>
+      <div class="copy-msg" id="msg-full">複写完了</div>
+      <button class="btn-tab warn" onclick="restart()">再度 試問を行う</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>本書は非公式ファンコンテンツです。クトゥルフ神話TRPGの公式製品・Chaosium Inc.・KADOKAWA等とは一切関係ありません。</p>
+  <p>実在の宗教・団体・信仰とは関係ありません。</p>
+  <p>診断結果はジョークです。ルールブック本文・既存書籍の解説文を引用・転載するものではありません。</p>
+  <p class="foot-charm">神話はあなたを待っている。でも急がなくていい。</p>
+</footer>
+
+<script src="core.js"></script>
+<script>
+  // ─── 案B 拡張 ─────────────────────────────
+  // 質問画面：DATAナンバー、進捗セル
+  function renderQuestionExtra(q, idx, total){
+    const dn = document.getElementById('data-num');
+    if (dn) dn.textContent = 'No. ' + String(idx+1).padStart(2,'0');
+    // リソ風大ナンバー
+    const mn = document.getElementById('mega-num');
+    const num = String(idx+1).padStart(2,'0');
+    if (mn){
+      mn.setAttribute('data-text', num);
+      mn.querySelector('span').textContent = num;
+    }
+    const ml = document.getElementById('mega-label');
+    if (ml) ml.textContent = 'QUESTION ' + num;
+    const cells = document.getElementById('pcells');
+    if (cells){
+      let html = '';
+      for (let i=0; i<total; i++){
+        html += `<div class="pcell ${i<=idx?'done':''}"></div>`;
+      }
+      cells.innerHTML = html;
+    }
+  }
+  // 案B：選択肢を「甲乙丙丁」記号で
+  function renderChoice(text, i, onClick){
+    const labels = ['甲','乙','丙','丁'];
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="ch-letter">${labels[i]}</span><span class="ch-text">${text}</span>`;
+    btn.onclick = onClick;
+    return btn;
+  }
+  // 結果：分類・ステータス・No.
+  function onResultRendered(god, idx){
+    // 神格名の版ズレ表示用に data-text を付与
+    const d = document.getElementById('r-deity');
+    if (d) d.setAttribute('data-text', god.name);
+    const no = document.getElementById('r-banner-no');
+    if (no) no.textContent = 'No. ' + String(idx+1).padStart(3,'0').replace(/\d/g, d => '〇一二三四五六七八九'[+d]);
+    // シルエット文字をインデックスごとに変える（占い感）
+    const sils = ['🐙','🐟','👁','⌬','✿','🐍','💤','📕','👑','🌑','🌊','📚','⚖','🗿','❄','✦'];
+    const s = document.getElementById('r-silhouette');
+    if (s) s.textContent = sils[idx % sils.length];
+    // クラス（同じ神格群でも統一）
+    const klass = ['GREAT OLD ONE','DEEP ONE','OUTER GOD','OUTER GOD','OUTER GOD','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','GREAT OLD ONE','ELDER GOD'];
+    const kEl = document.getElementById('r-class');
+    if (kEl) kEl.textContent = klass[idx] || 'GREAT OLD ONE';
+
+    // 属性ステータス（神格ごとに固定の値）— 演出
+    // 簡易ハッシュで4つの値を出す
+    function statValues(seed){
+      const out = [];
+      let h = seed*9301 + 49297;
+      for (let i=0;i<4;i++){ h = (h*9301 + 49297) % 233280; out.push((h % 5) + 1); }
+      return out;
+    }
+    const vals = statValues(idx + 1);
+    document.querySelectorAll('.stat-blocks').forEach((el,i)=>{
+      const v = vals[i] || 3;
+      let html='';
+      for (let k=1;k<=5;k++) html += `<span class="${k<=v?'on':''}"></span>`;
+      el.innerHTML = html;
+      el.parentElement.querySelector('.num').textContent = v + ' / 5';
+    });
+  }
+</script>
+</body>
+</html>
