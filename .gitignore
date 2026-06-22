@@ -1,4 +1,14 @@
-apng-transition/
+apng-transition/トランジョン白と透明/
+apng-transition/トランジョン黒と透明/
+apng-transition/販売用ZIP/
+apng-transition/販売用ZIP_黒/
+apng-transition/MP4に変換/
+apng-transition/*.py
+apng-transition/*.txt
+apng-transition/*.jpg
+apng-transition/index-dev.html
+apng-transition/index-pro-ver2_5.html
+apng-transition/*.bak*
 ccfolia-notify/.DS_Store
 *.ini
 *.xlsx
