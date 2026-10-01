@@ -581,6 +581,7 @@
         <div class="shape-btn" data-shape="hex" data-tip="六角形">⬡</div>
         <div class="shape-btn" data-shape="triangle" data-tip="三角">▲</div>
         <div class="shape-btn" data-shape="rect" data-tip="長方形（ブラインド）">▬</div>
+        <div class="shape-btn" data-shape="fade" data-tip="フェード（図形を使わず全体の濃さが変わる）">◐</div>
         <div class="shape-btn" id="customShapeBtn" data-shape="custom" data-tip="透過PNG/SVGを読み込む">＋</div>
         <input type="file" id="customShapeInput" accept="image/png,image/svg+xml" style="display:none">
       </div>
@@ -709,7 +710,7 @@
   </main>
 </div>
 
-<footer>APNG Transition Generator v2.2.6　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
+<footer>APNG Transition Generator v2.2.7　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
 
 <script>
 // ── 状態 ──
@@ -785,8 +786,10 @@ bindRange('cols', 'cols', 'colsVal', Math.round);
 bindRange('rows', 'rows', 'rowsVal', Math.round);
 
 function updateDirButtons() {
-  const hDisabled = state.cols === 1;
-  const vDisabled = state.rows === 1;
+  // フェードはグリッドを使わないので全方向を有効にする
+  const isFade = state.shape === 'fade';
+  const hDisabled = !isFade && state.cols === 1;
+  const vDisabled = !isFade && state.rows === 1;
   document.querySelectorAll('.dir-btn[data-dir]').forEach(btn => {
     const dir = btn.dataset.dir;
     const disable = (hDisabled && (dir === 'left_to_right' || dir === 'right_to_left'))
@@ -839,6 +842,7 @@ function bindSelector(selector, key, dataAttr, transform = v => v, withRedraw = 
 }
 
 bindSelector('.shape-btn',        'shape',    'shape');
+document.querySelectorAll('.shape-btn').forEach(btn => btn.addEventListener('click', updateDirButtons));
 bindSelector('.dir-btn[data-dir]','direction','dir');
 bindSelector('.ease-btn[data-ease]','easing', 'ease');
 bindSelector('[data-loop]',       'loopNum',  'loop', parseInt, false);
@@ -1020,6 +1024,7 @@ function renderFrame(ctx, t, w, h, s) {
   const bgRgba    = hexToRgba(s.bgColor, s.bgAlpha);
 
   function drawCells() {
+    if (s.shape === 'fade') { drawFade(ctx, t, w, h, s); return; }
     for (let row = 0; row < s.rows; row++) {
       for (let col = 0; col < s.cols; col++) {
         const weight = getWeight(col, row, colsM1, rowsM1, s.direction);
@@ -1064,6 +1069,32 @@ function renderFrame(ctx, t, w, h, s) {
       if (t >= 1.0) { ctx.fillStyle = bgRgba; ctx.fillRect(0, 0, w, h); }
       break;
   }
+}
+
+// ── フェード描画 ──
+// ピクセルごとの不透明度マスクを作り、現在のfillStyleで塗って合成する
+const fadeMaskCanvas = document.createElement('canvas');
+function drawFade(ctx, t, w, h, s) {
+  fadeMaskCanvas.width = w;
+  fadeMaskCanvas.height = h;
+  const mctx = fadeMaskCanvas.getContext('2d');
+  const img = mctx.createImageData(w, h);
+  const d = img.data;
+  const wM1 = Math.max(w - 1, 1);
+  const hM1 = Math.max(h - 1, 1);
+  const uniform = s.direction === 'uniform';
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      // 全体フェードはDuration全体を使う。方向ありはWave Spreadがぼかし幅になる
+      const localT = uniform ? t : (t - getWeight(x, y, wM1, hM1, s.direction) * (1 - s.spread)) / s.spread;
+      d[(y * w + x) * 4 + 3] = Math.round(applyEasing(localT, s.easing) * 255);
+    }
+  }
+  mctx.putImageData(img, 0, 0);
+  mctx.globalCompositeOperation = 'source-in';
+  mctx.fillStyle = ctx.fillStyle;
+  mctx.fillRect(0, 0, w, h);
+  ctx.drawImage(fadeMaskCanvas, 0, 0);
 }
 
 // セル中心座標ヘルパー
