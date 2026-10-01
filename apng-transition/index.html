@@ -572,6 +572,7 @@
     <div class="section">
       <div class="section-title" data-tip="トランジションに使う図形の種類">Shape</div>
       <div class="shape-grid">
+        <div class="shape-btn" data-shape="fade" data-tip="フェード（図形を使わず全体の濃さが変わる）">◐</div>
         <div class="shape-btn active" data-shape="circle" data-tip="円">●</div>
         <div class="shape-btn" data-shape="square" data-tip="四角">■</div>
         <div class="shape-btn" data-shape="heart" data-tip="ハート">♥</div>
@@ -581,7 +582,6 @@
         <div class="shape-btn" data-shape="hex" data-tip="六角形">⬡</div>
         <div class="shape-btn" data-shape="triangle" data-tip="三角">▲</div>
         <div class="shape-btn" data-shape="rect" data-tip="長方形（ブラインド）">▬</div>
-        <div class="shape-btn" data-shape="fade" data-tip="フェード（図形を使わず全体の濃さが変わる）">◐</div>
         <div class="shape-btn" id="customShapeBtn" data-shape="custom" data-tip="透過PNG/SVGを読み込む">＋</div>
         <input type="file" id="customShapeInput" accept="image/png,image/svg+xml" style="display:none">
       </div>
@@ -640,6 +640,10 @@
         <div class="dir-btn" data-dir="center_out" data-tip="中央から放射">◎</div>
         <div class="dir-btn" data-dir="outside_in" data-tip="周りから中央へ">◉</div>
         <div class="dir-btn active" data-dir="uniform" data-tip="全体を均等に拡大">⊞</div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label data-tip="進む向きを角度で指定（0°=左→右、90°=上→下、180°=右→左、270°=下→上）">Angle（角度）</label>
+        <input type="number" id="angle" value="0" min="0" max="359" step="1">
       </div>
     </div>
 
@@ -710,7 +714,7 @@
   </main>
 </div>
 
-<footer>APNG Transition Generator v2.2.7　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
+<footer>APNG Transition Generator v2.2.8　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
 
 <script>
 // ── 状態 ──
@@ -726,6 +730,7 @@ const state = {
   duration: 1.0, fps: 12,
   spread: 0.6,
   direction: 'uniform',
+  angle: 0,
   easing: 'ease_in',
   loopNum: 0,  // 0=無限, 1=1回
   mode: 'transparent_to_shape',
@@ -844,6 +849,37 @@ function bindSelector(selector, key, dataAttr, transform = v => v, withRedraw = 
 bindSelector('.shape-btn',        'shape',    'shape');
 document.querySelectorAll('.shape-btn').forEach(btn => btn.addEventListener('click', updateDirButtons));
 bindSelector('.dir-btn[data-dir]','direction','dir');
+
+// 角度入力（上下左右ボタンと連動。それ以外の角度は direction='angle'）
+const DIR_ANGLES = { left_to_right: 0, top_to_bottom: 90, right_to_left: 180, bottom_to_top: 270 };
+const angleInput = document.getElementById('angle');
+document.querySelectorAll('.dir-btn[data-dir]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const a = DIR_ANGLES[btn.dataset.dir];
+    if (a !== undefined) { state.angle = a; angleInput.value = a; }
+  });
+});
+angleInput.addEventListener('change', () => {
+  const val = parseInt(angleInput.value);
+  if (isNaN(val)) { angleInput.value = state.angle; return; }
+  state.angle = ((val % 360) + 360) % 360;
+  angleInput.value = state.angle;
+  const named = Object.keys(DIR_ANGLES).find(k => DIR_ANGLES[k] === state.angle);
+  const btn = named && document.querySelector(`.dir-btn[data-dir="${named}"]`);
+  document.querySelectorAll('.dir-btn[data-dir]').forEach(b => b.classList.remove('active'));
+  if (btn && !btn.classList.contains('disabled')) {
+    btn.classList.add('active');
+    state.direction = named;
+  } else {
+    state.direction = 'angle';
+  }
+  redraw();
+});
+
+// 書き出しファイル名用の方向名
+function dirName() {
+  return state.direction === 'angle' ? `angle${state.angle}` : state.direction;
+}
 bindSelector('.ease-btn[data-ease]','easing', 'ease');
 bindSelector('[data-loop]',       'loopNum',  'loop', parseInt, false);
 // modeボタンはbindSelectorを使わず手動でバインド（BG表示切り替えを同時に行うため）
@@ -904,7 +940,7 @@ function applyEasing(t, type) {
 }
 
 // ── 重みマップ（方向） ──
-function getWeight(c, r, colsM1, rowsM1, dir) {
+function getWeight(c, r, colsM1, rowsM1, dir, angle = 0, aspect = 1) {
   const nx = c / colsM1;
   const ny = r / rowsM1;
   switch(dir) {
@@ -912,6 +948,13 @@ function getWeight(c, r, colsM1, rowsM1, dir) {
     case 'right_to_left': return 1 - nx;
     case 'top_to_bottom': return ny;
     case 'bottom_to_top': return 1 - ny;
+    case 'angle': {
+      // 画面の縦横比を考慮して、指定角度の向きに 0→1 となる値を返す
+      const rad = angle * Math.PI / 180;
+      const cos = Math.cos(rad), sin = Math.sin(rad);
+      const half = (Math.abs(cos) * aspect + Math.abs(sin)) / 2;
+      return ((nx - 0.5) * aspect * cos + (ny - 0.5) * sin) / (2 * half) + 0.5;
+    }
     case 'center_out': {
       const dx = nx - 0.5, dy = ny - 0.5;
       return Math.sqrt(dx*dx + dy*dy) / (Math.sqrt(0.5*0.5 + 0.5*0.5));
@@ -1027,7 +1070,7 @@ function renderFrame(ctx, t, w, h, s) {
     if (s.shape === 'fade') { drawFade(ctx, t, w, h, s); return; }
     for (let row = 0; row < s.rows; row++) {
       for (let col = 0; col < s.cols; col++) {
-        const weight = getWeight(col, row, colsM1, rowsM1, s.direction);
+        const weight = getWeight(col, row, colsM1, rowsM1, s.direction, s.angle, w / h);
         const start = weight * (1 - spread);
         const localT = Math.max(0, Math.min(1, (t - start) / spread));
         const easedT = applyEasing(localT, s.easing);
@@ -1083,11 +1126,17 @@ function drawFade(ctx, t, w, h, s) {
   const wM1 = Math.max(w - 1, 1);
   const hM1 = Math.max(h - 1, 1);
   const uniform = s.direction === 'uniform';
+  // イージングは進む速さにだけかける（ピクセルごとにかけると境目に折れ目が出るため）
+  const p = applyEasing(t, s.easing);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       // 全体フェードはDuration全体を使う。方向ありはWave Spreadがぼかし幅になる
-      const localT = uniform ? t : (t - getWeight(x, y, wM1, hM1, s.direction) * (1 - s.spread)) / s.spread;
-      d[(y * w + x) * 4 + 3] = Math.round(applyEasing(localT, s.easing) * 255);
+      let a = p;
+      if (!uniform) {
+        const l = Math.max(0, Math.min(1, (p - getWeight(x, y, wM1, hM1, s.direction, s.angle, w / h) * (1 - s.spread)) / s.spread));
+        a = l * l * (3 - 2 * l); // 両端がなめらかなS字カーブ
+      }
+      d[(y * w + x) * 4 + 3] = Math.round(a * 255);
     }
   }
   mctx.putImageData(img, 0, 0);
@@ -1204,7 +1253,7 @@ document.getElementById('exportZipBtn').addEventListener('click', async () => {
     const url = URL.createObjectURL(zipBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `transition_${state.shape}_${state.direction}.zip`;
+    a.download = `transition_${state.shape}_${dirName()}.zip`;
     a.click();
     URL.revokeObjectURL(url);
 
@@ -1304,7 +1353,7 @@ document.getElementById('exportApngBtn').addEventListener('click', async () => {
     await new Promise(r => setTimeout(r, 10));
 
     const apngBuf = framesToApng(frames, state);
-    downloadApng(apngBuf, `transition_${state.shape}_${state.direction}.png`);
+    downloadApng(apngBuf, `transition_${state.shape}_${dirName()}.png`);
 
     const kb = (apngBuf.byteLength / 1024).toFixed(1);
     const loopLabel = state.loopNum === 0 ? '無限ループ' : '1回再生';
@@ -1333,7 +1382,7 @@ document.getElementById('exportBothBtn').addEventListener('click', async () => {
       throw new Error('UPNG.jsの読み込みに失敗しました。ネット接続を確認してください。');
     }
 
-    const base = `transition_${state.shape}_${state.direction}`;
+    const base = `transition_${state.shape}_${dirName()}`;
 
     const reverseMode = {
       transparent_to_shape: 'shape_to_transparent',
