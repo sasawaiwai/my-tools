@@ -572,8 +572,8 @@
     <div class="section">
       <div class="section-title" data-tip="トランジションに使う図形の種類">Shape</div>
       <div class="shape-grid">
-        <div class="shape-btn" data-shape="fade" data-tip="フェード（図形を使わず全体の濃さが変わる）">◐</div>
-        <div class="shape-btn active" data-shape="circle" data-tip="円">●</div>
+        <div class="shape-btn active" data-shape="fade" data-tip="フェード（図形を使わず全体の濃さが変わる）">◐</div>
+        <div class="shape-btn" data-shape="circle" data-tip="円">●</div>
         <div class="shape-btn" data-shape="square" data-tip="四角">■</div>
         <div class="shape-btn" data-shape="heart" data-tip="ハート">♥</div>
         <div class="shape-btn" data-shape="star" data-tip="星">★</div>
@@ -620,8 +620,8 @@
         <input type="range" id="duration" min="2" max="50" value="10" step="1">
       </div>
       <div class="field">
-        <label data-tip="1秒あたりのフレーム数（多いほど滑らか・容量大）">FPS<span class="val" id="fpsVal">12</span></label>
-        <input type="range" id="fps" min="6" max="30" value="12">
+        <label data-tip="1秒あたりのフレーム数（多いほど滑らか・容量大）">FPS<span class="val" id="fpsVal">30</span></label>
+        <input type="range" id="fps" min="6" max="30" value="30">
       </div>
       <div class="field">
         <label data-tip="図形が広がるタイミングの広がり幅（小さいほど波が鋭い）">Wave Spread<span class="val" id="spreadVal">60%</span></label>
@@ -651,8 +651,8 @@
     <div class="section">
       <div class="section-title" data-tip="拡大の加速・減速カーブ">Easing</div>
       <div class="easing-row">
-        <div class="ease-btn active" data-ease="ease_in" data-tip="最初ゆっくり・最後速い">In</div>
-        <div class="ease-btn" data-ease="linear" data-tip="一定速度">Linear</div>
+        <div class="ease-btn" data-ease="ease_in" data-tip="最初ゆっくり・最後速い">In</div>
+        <div class="ease-btn active" data-ease="linear" data-tip="一定速度">Linear</div>
         <div class="ease-btn" data-ease="ease_out" data-tip="最初速い・最後ゆっくり">Out</div>
       </div>
     </div>
@@ -714,7 +714,7 @@
   </main>
 </div>
 
-<footer>APNG Transition Generator v2.2.8　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
+<footer>APNG Transition Generator v2.2.9　|　© ササドコロ / 笹塚　|　<a href="/">ツール一覧</a>　|　<a href="/privacy.html">プライバシーポリシー</a>　|　<a href="/terms.html">利用規約</a>　|　※ PCブラウザ推奨（スマホ非対応）</footer>
 
 <script>
 // ── 状態 ──
@@ -722,16 +722,16 @@ const state = {
   canvasW: 800, canvasH: 600,
   bgColor: '#ffffff', shapeColor: '#000000',
   bgAlpha: 1.0, shapeAlpha: 1.0,
-  shape: 'circle',
+  shape: 'fade',
   cols: 12, rows: 8,
   maxSz: 100,   // % of diagonal half
   rotation: 0,
   blur: 0,
-  duration: 1.0, fps: 12,
+  duration: 1.0, fps: 30,
   spread: 0.6,
   direction: 'uniform',
   angle: 0,
-  easing: 'ease_in',
+  easing: 'linear',
   loopNum: 0,  // 0=無限, 1=1回
   mode: 'transparent_to_shape',
   customShapeImg: null,
@@ -848,6 +848,13 @@ function bindSelector(selector, key, dataAttr, transform = v => v, withRedraw = 
 
 bindSelector('.shape-btn',        'shape',    'shape');
 document.querySelectorAll('.shape-btn').forEach(btn => btn.addEventListener('click', updateDirButtons));
+// フェード選択時は縞が出にくい FPS30・Linear に切り替える
+document.querySelector('.shape-btn[data-shape="fade"]').addEventListener('click', () => {
+  state.fps = 30;
+  document.getElementById('fps').value = 30;
+  document.getElementById('fpsVal').textContent = 30;
+  document.querySelector('.ease-btn[data-ease="linear"]').click();
+});
 bindSelector('.dir-btn[data-dir]','direction','dir');
 
 // 角度入力（上下左右ボタンと連動。それ以外の角度は direction='angle'）
