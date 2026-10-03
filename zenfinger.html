@@ -31,7 +31,7 @@
 <body>
   <canvas id="canvas"></canvas>
   <div id="title">ZENfinger</div>
-  <button id="clear-btn">Clear</button>
+  <button id="clear-btn">無にする</button>
 
   <script>
     const canvas = document.getElementById('canvas');
@@ -54,8 +54,12 @@
     const TINES        = 7;
     const SP_SLOW      = 7;   // px between tines at low speed
     const SP_FAST      = 15;  // px between tines at high speed
-    const TINE_HL      = 16;  // half-length of each tine segment (along motion)
+    const TINE_HL      = 8;   // half-length of each tine segment (along motion)
     const STAMP_DIST   = 7;   // px between stamps
+
+    // ── Scatter (無にする) ───────────────────────────────────────
+    const SCATTER_TILE = 40;  // px per fragment
+    const SCATTER_MS   = 900; // animation duration
 
     // ── Speed / direction ────────────────────────────────────────
     const SPEED_LO     = 0.12; // px/ms
@@ -65,6 +69,7 @@
     // ─────────────────────────────────────────────────────────────
 
     let active      = false;
+    let scattering  = false;
     let prevX = 0,  prevY = 0, prevTime = 0, distAcc = 0;
     let smoothUx    = 1, smoothUy = 0;
     let tineSpacing = SP_SLOW;
@@ -183,6 +188,7 @@
     }
 
     function onStart(x, y) {
+      if (scattering) return;
       active   = true;
       prevX    = x;  prevY = y;
       distAcc  = 0;  prevTime = performance.now();
@@ -206,7 +212,60 @@
     canvas.addEventListener('touchend',    e => { e.preventDefault(); onEnd(); }, { passive: false });
     canvas.addEventListener('touchcancel', e => { e.preventDefault(); onEnd(); }, { passive: false });
 
-    document.getElementById('clear-btn').addEventListener('click', fill);
+    // ── 無にする: current sand breaks into fragments that fly outward and fade ──
+
+    function scatter() {
+      if (scattering) return;
+      scattering = true;
+      active     = false;
+
+      const W = canvas.width, H = canvas.height;
+      const T = Math.round(SCATTER_TILE * (window.devicePixelRatio || 1));
+
+      // Snapshot of the drawn pattern, then fresh sand underneath
+      const snap = document.createElement('canvas');
+      snap.width = W;  snap.height = H;
+      snap.getContext('2d').drawImage(canvas, 0, 0);
+      fill();
+      const fresh = document.createElement('canvas');
+      fresh.width = W;  fresh.height = H;
+      fresh.getContext('2d').drawImage(canvas, 0, 0);
+
+      const tiles = [];
+      for (let y = 0; y < H; y += T) {
+        for (let x = 0; x < W; x += T) {
+          const w = Math.min(T, W - x), h = Math.min(T, H - y);
+          const a = Math.atan2(y + h / 2 - H / 2, x + w / 2 - W / 2) + (Math.random() - 0.5) * 0.8;
+          const d = (0.3 + Math.random() * 0.7) * Math.max(W, H);
+          tiles.push({ x, y, w, h, dx: Math.cos(a) * d, dy: Math.sin(a) * d, r: (Math.random() - 0.5) * 3 });
+        }
+      }
+
+      const t0 = performance.now();
+      function frame(now) {
+        const p = Math.min(1, (now - t0) / SCATTER_MS);
+        const e = 1 - Math.pow(1 - p, 3);  // ease-out
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(fresh, 0, 0);
+        ctx.globalAlpha = 1 - p;
+        for (const t of tiles) {
+          ctx.save();
+          ctx.translate(t.x + t.w / 2 + t.dx * e, t.y + t.h / 2 + t.dy * e);
+          ctx.rotate(t.r * e);
+          ctx.drawImage(snap, t.x, t.y, t.w, t.h, -t.w / 2, -t.h / 2, t.w, t.h);
+          ctx.restore();
+        }
+        ctx.restore();
+
+        if (p < 1) requestAnimationFrame(frame);
+        else scattering = false;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    document.getElementById('clear-btn').addEventListener('click', scatter);
 
     // ── Init ─────────────────────────────────────────────────────
     resize();
