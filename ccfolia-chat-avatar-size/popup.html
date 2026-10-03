@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>チャットアイコンサイズ</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main>
+    <h1>チャットアイコン</h1>
+    <div id="current" class="current">現在：80px</div>
+
+    <button id="quickToggle" class="quick">標準 ⇄ 80px</button>
+
+    <div class="sizes" role="group" aria-label="アイコンサイズ">
+      <button data-size="0">標準</button>
+      <button data-size="64">64</button>
+      <button data-size="80">80</button>
+      <button data-size="100">100</button>
+      <button data-size="120">120</button>
+      <button data-size="160">160</button>
+      <button data-size="200">200</button>
+    </div>
+
+    <p class="note">ココフォリアのルームチャットだけに適用されます。</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
