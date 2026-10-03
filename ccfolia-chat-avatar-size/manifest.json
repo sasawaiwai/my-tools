@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "ココフォリア チャットアイコン拡大",
+  "version": "1.1.0",
+  "description": "ココフォリアのルームチャットに表示される発言者アイコンを、標準・64・80・100・120・160・200pxで切り替えます。",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://ccfolia.com/*"
+  ],
+  "action": {
+    "default_title": "チャットアイコンサイズ",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://ccfolia.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
