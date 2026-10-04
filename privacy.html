@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>プライバシーポリシー — sasadokoro my-tools</title>
-  <meta name="description" content="sasadokoro my-tools のプライバシーポリシー">
+  <title>プライバシーポリシー — sasadokoro tools</title>
+  <meta name="description" content="tools.sasadokoro.online で提供するWebツールおよびChrome拡張機能（ココフォリア向け拡張など）に共通するプライバシーポリシーです。">
   <meta property="og:type"        content="website">
-  <meta property="og:title"       content="プライバシーポリシー — sasadokoro my-tools">
-  <meta property="og:description" content="sasadokoro my-tools のプライバシーポリシー">
+  <meta property="og:title"       content="プライバシーポリシー — sasadokoro tools">
+  <meta property="og:description" content="tools.sasadokoro.online で提供するWebツールおよびChrome拡張機能（ココフォリア向け拡張など）に共通するプライバシーポリシーです。">
   <meta property="og:url"         content="https://tools.sasadokoro.online/privacy.html">
   <meta name="twitter:card"       content="summary">
   <link rel="canonical"           href="https://tools.sasadokoro.online/privacy.html">
@@ -131,6 +131,15 @@
       letter-spacing: 0.08em;
     }
 
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 28px 0 10px;
+      padding-left: 10px;
+      border-left: 3px solid var(--border);
+    }
+
     a { color: var(--accent); }
     a:hover { text-decoration: underline; }
 
@@ -155,20 +164,77 @@
 
 <main>
   <h1>プライバシーポリシー</h1>
-  <p class="page-meta">制定日：2026年3月25日　最終更新：2026年3月25日　運営：ササドコロ / 笹塚</p>
+  <p class="page-meta">制定日：2026年3月25日　最終更新：2026年10月4日　運営：ササドコロ / 笹塚</p>
 
   <section class="section">
     <h2>01 サービス概要</h2>
-    <p>本サイト（tools.sasadokoro.online、以下「本サービス」）は、ブラウザ上で動作する無料ツール集です。</p>
+    <p>ササドコロ / 笹塚（sasadokoro_tools、以下「運営者」）は、以下のサービスを無料で提供しています（以下あわせて「本サービス」）。</p>
+    <ul>
+      <li>Webサイト「tools.sasadokoro.online」（以下「本サイト」）上で、Webブラウザで動作する各種ツール（以下「Webツール」）</li>
+      <li>運営者が公開するGoogle Chrome向けの拡張機能（以下「Chrome拡張機能」）</li>
+    </ul>
+    <p>本ポリシーは、WebツールとChrome拡張機能の両方に共通して適用されます。ただし、情報の取り扱いはWebサイトとChrome拡張機能とで異なるため、それぞれ分けて記載しています。</p>
     <div class="highlight-box">
-      <strong>データについて</strong>
-      各ツールで扱うファイル・データはすべてお使いのブラウザ内でのみ処理されます。外部サーバーへの送信・保存は一切行いません。
+      <strong>Webツールで扱うデータについて</strong>
+      各Webツールで扱うファイル・入力データは、原則としてお使いのブラウザ内で処理され、運営者のサーバーへ送信・保存することはありません。<br>
+      なお、本サイトではアクセス解析（Google Analytics）および広告配信（Google AdSense）のため、閲覧状況等の情報がGoogleへ送信されます。詳しくは「03 WebサイトにおけるCookie等の使用」をご覧ください。
     </div>
   </section>
 
   <section class="section">
-    <h2>02 収集する情報（Cookie の使用）</h2>
-    <p>本サービスでは、以下の目的で Cookie および類似技術を使用しています。</p>
+    <h2>02 Chrome拡張機能におけるデータの取り扱い</h2>
+    <p>各Chrome拡張機能に共通する取り扱いは以下のとおりです。</p>
+    <ul>
+      <li>Chrome拡張機能は、その機能を提供するために必要な範囲で、対象Webページ上の情報をブラウザ内で一時的に参照・変更する場合があります。</li>
+      <li>拡張機能が参照したチャット本文、画像、ページ内容等を、運営者の外部サーバーへ送信することはありません。</li>
+      <li>扱う情報を、広告目的、ユーザーのプロファイリング、信用評価、融資判断等に使用することはありません。</li>
+      <li>ユーザーデータを第三者へ販売することはありません。</li>
+      <li>各拡張機能の設定値は、ChromeのStorage APIを使用してブラウザ内に保存する場合があります。</li>
+      <li>Chrome拡張機能にはGoogle AnalyticsやGoogle AdSenseは組み込まれていません。</li>
+      <li>各拡張機能は、ココフォリアの運営とは無関係の非公式ツールです。</li>
+    </ul>
+
+    <h3>ココフォリア チャットパレット追記</h3>
+    <p>ココフォリアで「@」から始まるチャットパレット項目をクリックした際、入力中の文章を消さずに、文末へラベルを追記または置換するChrome拡張機能です。</p>
+    <p><strong>扱う情報</strong></p>
+    <ul>
+      <li>チャット入力欄に入力中のテキスト</li>
+      <li>クリックされたチャットパレット項目の表示文字列</li>
+    </ul>
+    <p>これらの情報は、機能の実行時にブラウザ内で一時的に参照するだけであり、外部サーバーへ送信せず、保存せず、第三者へ提供することもありません。</p>
+    <p><strong>保存する情報</strong></p>
+    <ul>
+      <li>拡張機能のON／OFF状態</li>
+    </ul>
+    <p>この設定はChromeのStorage APIを使用して、お使いのブラウザ内に保存されます。</p>
+
+    <h3>ココフォリア チャットアイコン拡大</h3>
+    <p>ココフォリアのルームチャットに表示される発言者アイコンを、見やすいサイズへ変更するChrome拡張機能です。</p>
+    <p>本拡張機能は、主にページ上の表示要素や発言者アイコンの表示スタイルを変更するものです。チャット本文、画像データ、ユーザー情報を外部サーバーへ送信・保存することはありません。</p>
+    <p><strong>保存する情報</strong></p>
+    <ul>
+      <li>ユーザーが選択したアイコンサイズ等の設定</li>
+    </ul>
+    <p>この設定はChromeのStorage APIを使用して、お使いのブラウザ内に保存されます。</p>
+
+    <h3>ココフォリア チャット通知</h3>
+    <p>ココフォリアのチャットに新しい発言が追加されたことを検出し、ブラウザ上で通知音を鳴らすChrome拡張機能です。</p>
+    <p>新着発言を検出するため、ココフォリア上のチャット表示をブラウザ内で一時的に参照します。チャット本文そのものを運営者のサーバーへ送信・保存することはありません。</p>
+    <p><strong>保存する情報</strong></p>
+    <ul>
+      <li>通知のON／OFF</li>
+      <li>通知対象のタブ</li>
+      <li>通知音</li>
+      <li>音量</li>
+      <li>自分の発言を通知しない設定</li>
+      <li>必要に応じてユーザー自身が入力したキャラクター名</li>
+    </ul>
+    <p>これらの設定はChromeのStorage APIを使用して保存されます。このうち chrome.storage.sync を使用する設定は、Chromeの同期設定に応じてGoogleアカウント経由で他の端末と同期される場合がありますが、運営者がその設定内容を受信・閲覧することはありません。</p>
+  </section>
+
+  <section class="section">
+    <h2>03 WebサイトにおけるCookie等の使用</h2>
+    <p>本サイト（tools.sasadokoro.online）では、以下の目的でCookieおよび類似技術を使用しています。これらは本サイト上でのみ使用しているものであり、Chrome拡張機能には組み込まれていません。</p>
 
     <p><strong>● アクセス解析（Google Analytics）</strong></p>
     <p>Google LLC が提供する Google Analytics を使用しています。Cookie を通じて以下の情報を収集します。</p>
@@ -180,7 +246,7 @@
     <p>Cookie による情報収集を無効にしたい場合は、<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google アナリティクス オプトアウト アドオン</a>をご利用ください。</p>
 
     <p><strong>● 広告配信（Google AdSense）</strong></p>
-    <p>本サービスでは、Google LLC が提供する Google AdSense を使用して広告を表示しています。Google AdSense は Cookie を使用して、ユーザーの興味・関心に基づくパーソナライズ広告を配信することがあります。</p>
+    <p>本サイトでは、Google LLC が提供する Google AdSense を使用して広告を表示しています。Google AdSense は Cookie を使用して、ユーザーの興味・関心に基づくパーソナライズ広告を配信することがあります。</p>
     <ul>
       <li>サイトの閲覧履歴・行動情報</li>
       <li>広告のクリック・表示に関するデータ</li>
@@ -194,22 +260,34 @@
   </section>
 
   <section class="section">
-    <h2>03 免責事項</h2>
+    <h2>04 第三者への提供</h2>
+    <p>運営者は、Chrome拡張機能が扱うユーザーデータについて、以下のとおり取り扱います。</p>
+    <ul>
+      <li>ユーザーデータを販売しません。</li>
+      <li>拡張機能本来の目的と無関係な用途に使用・転送しません。</li>
+      <li>信用評価、融資、保険等の判断を目的として使用しません。</li>
+      <li>法令に基づく場合を除き、第三者へ提供しません。</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>05 免責事項</h2>
     <p>本サービスは現状有姿で提供されます。運営者は以下について一切の責任を負いません。</p>
     <ul>
       <li>本サービスの利用・利用不能により生じた損害</li>
       <li>サービスの中断・変更・終了</li>
       <li>ブラウザ・OS の環境差異による動作の違い</li>
+      <li>ココフォリア等の対象サービス側の仕様変更により、Chrome拡張機能が動作しなくなること</li>
     </ul>
   </section>
 
   <section class="section">
-    <h2>04 ポリシーの変更</h2>
+    <h2>06 ポリシーの変更</h2>
     <p>本ポリシーは予告なく変更される場合があります。変更後のポリシーはこのページに掲載した時点で効力を生じます。</p>
   </section>
 
   <section class="section">
-    <h2>05 お問い合わせ</h2>
+    <h2>07 お問い合わせ</h2>
     <p>ご質問・ご意見がございましたら、下記までお気軽にお問い合わせください。</p>
     <p>Twitter / X：<a href="https://x.com/sasa_dokoro" target="_blank" rel="noopener">@sasa_dokoro</a></p>
   </section>
