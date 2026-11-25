@@ -20,3 +20,7 @@ ccfolia-notify/.DS_Store
 *.bak
 .env*
 same.*
+
+# AI作業用の指示書・設定（公開しない）
+CLAUDE.md
+.claude/
