@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ココフォリアログ整形｜タブ横並べ</title>
+<meta name="description" content="ココフォリアのログを、タブごとの列に分けて時系列で横に並べたHTMLに変換します。ファイルはサーバーに送信されず、すべてブラウザ内で処理されます。">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="ココフォリアログ整形｜タブ横並べ">
+<meta property="og:description" content="ココフォリアのログを、タブごとの列に分けて時系列で横に並べたHTMLに変換します。ファイルはサーバーに送信されず、すべてブラウザ内で処理されます。">
+<meta property="og:url"         content="https://tools.sasadokoro.online/ccfolia-log-tabs/">
+<meta property="og:image"       content="https://tools.sasadokoro.online/ogp.png">
+<meta name="twitter:card"       content="summary">
+<link rel="canonical"           href="https://tools.sasadokoro.online/ccfolia-log-tabs/">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZGC2WBJQTP"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-ZGC2WBJQTP');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #f5f3ef;
+    --surface:  #ffffff;
+    --border:   #dedad3;
+    --accent:   #b8862a;
+    --accent2:  #5f7a42;
+    --text:     #1e1c19;
+    --muted:    #9a9590;
+    --danger:   #c0574a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Zen Kaku Gothic New', sans-serif;
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* ── ヘッダー ── */
+  header {
+    border-bottom: 1px solid var(--border); padding: 20px 32px;
+    display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+  }
+  .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.02em; color: var(--accent); }
+  .logo span { color: var(--text); }
+  .tagline {
+    font-size: 11px; color: var(--muted); letter-spacing: 0.08em;
+    border-left: 1px solid var(--border); padding-left: 16px; line-height: 1.4;
+  }
+  .privacy-badge {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--accent2); border: 1px solid var(--accent2); padding: 4px 10px; letter-spacing: 0.06em;
+  }
+
+  /* ── メイン ── */
+  main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 40px 32px 56px; }
+  .lead { font-size: 14px; line-height: 1.9; margin-bottom: 24px; }
+
+  /* ── ドロップゾーン ── */
+  .drop-zone {
+    border: 1.5px dashed var(--border); padding: 56px 32px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s; position: relative; overflow: hidden;
+  }
+  .drop-zone::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,.018) 20px, rgba(0,0,0,.018) 21px);
+  }
+  .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: rgba(212,168,67,.04); }
+  .drop-icon { font-size: 40px; margin-bottom: 16px; opacity: .6; }
+  .drop-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .drop-sub { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .drop-sub strong { color: var(--accent2); }
+  #file-input { display: none; }
+
+  /* ── 結果 ── */
+  .result {
+    margin-top: 24px; background: var(--surface); border: 1px solid var(--border); padding: 20px;
+  }
+  .result[hidden], .dice[hidden] { display: none; }
+  .file-name {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent);
+    overflow-wrap: anywhere; margin-bottom: 6px;
+  }
+  .summary { font-size: 13px; line-height: 1.8; }
+  .summary .muted { color: var(--muted); }
+  .result.error .summary { color: var(--danger); }
+  .dl-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
+  .dl-btn {
+    background: var(--accent); color: #0e0e0e; border: none; padding: 10px 28px;
+    font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 14px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s, transform .1s;
+  }
+  .dl-btn:hover { opacity: .85; }
+  .dl-btn:active { transform: scale(.98); }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  /* ── 見出し ── */
+  .section-header {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin: 48px 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .section-title { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; }
+  .sub-btn {
+    margin-left: auto; background: none; border: 1px solid var(--accent); color: var(--accent);
+    padding: 6px 16px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em; transition: background .15s;
+  }
+  .sub-btn:hover { background: rgba(212,168,67,.1); }
+  .sub-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── ダイス結果 ── */
+  .dice-note { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 16px; }
+  .dice-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .dice-name { font-weight: 700; font-size: 14px; }
+  .dice-head .sub-btn { margin-left: 0; padding: 4px 12px; }
+  .dice-list pre {
+    white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 13px; line-height: 1.6;
+    background: var(--surface); border: 1px solid var(--border); padding: 10px 12px; margin: 6px 0 18px;
+    max-height: 320px; overflow: auto;
+  }
+
+  /* ── できること ── */
+  table.features { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+  .features th, .features td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
+  .features thead th { font-size: 12px; color: var(--muted); font-weight: 700; }
+  .features td.mark { text-align: center; width: 120px; }
+  .features td.no { color: var(--muted); }
+  .notes { margin-top: 16px; font-size: 12px; color: var(--muted); line-height: 1.8; padding-left: 1.2em; }
+
+  /* ── フッター ── */
+  footer {
+    border-top: 1px solid var(--border); padding: 16px 32px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px 16px; flex-wrap: wrap;
+    font-size: 11px; color: var(--muted); letter-spacing: 0.04em;
+  }
+  footer a { color: var(--muted); }
+  .footer-note { display: flex; align-items: center; gap: 8px; }
+  .footer-note::before { content: '🔒'; font-size: 12px; }
+
+  @media (max-width: 600px) {
+    header, footer { padding-left: 16px; padding-right: 16px; }
+    main { padding: 28px 16px 40px; }
+    .privacy-badge { margin-left: 0; }
+    .drop-zone { padding: 40px 16px; }
+    .features td.mark { width: 72px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="logo">ココフォリアログ整形<span>｜タブ横並べ</span></h1>
+  <div class="tagline">ココフォリアのログを、タブごとの列で横並びに</div>
+  <div class="privacy-badge">NO UPLOAD · LOCAL ONLY</div>
+</header>
+
+<main>
+  <p class="lead">
+    ココフォリアで出力したログを、タブごとの列に分けて、時間の順に横に並べたHTMLファイルに変換します。<br>
+    メインとサブのやりとりを、同じ時間の流れの中で読み返せます。
+  </p>
+
+  <div class="drop-zone" id="drop-zone">
+    <input type="file" id="file-input" accept=".html,.htm,.json">
+    <div class="drop-icon">📜</div>
+    <div class="drop-title">ログファイルをここにドロップ</div>
+    <div class="drop-sub">
+      またはクリックしてファイルを選択（全ログ .html ／ JSON .json）<br>
+      <strong>ファイルはサーバーに送信されません。すべてブラウザ内で処理します。</strong>
+    </div>
+  </div>
+
+  <div class="result" id="result" hidden>
+    <div class="file-name" id="file-name"></div>
+    <div class="summary" id="summary"></div>
+    <div class="dl-row" id="dl-row">
+      <button type="button" class="dl-btn" id="dl-btn">整形したHTMLをダウンロード</button>
+      <span class="hint">ダウンロードしたファイルは、ブラウザで開いて読めます。</span>
+    </div>
+  </div>
+
+  <section class="dice" id="dice" hidden>
+    <div class="section-header">
+      <h2 class="section-title">ダイス結果</h2>
+      <button type="button" class="sub-btn" id="copy-all">全部コピー</button>
+    </div>
+    <p class="dice-note">
+      クトゥルフ神話TRPG（6版・7版）の判定ロールだけを数えます。成功率は、スペシャル・決定的成功（クリティカル）も成功に数えます。<br>
+      ダウンロードしたHTMLの「ダイス結果」ボタンからも見られます。
+    </p>
+    <div class="dice-list" id="dice-list"></div>
+  </section>
+
+  <div class="section-header">
+    <h2 class="section-title">できること</h2>
+  </div>
+  <table class="features">
+    <thead><tr><th></th><th>全ログ（.html）</th><th>JSON（.json）</th></tr></thead>
+    <tbody>
+      <tr><td>タブごとの列で、時間の順に並べる</td><td class="mark">○</td><td class="mark">○</td></tr>
+      <tr><td>列の表示・非表示、ドラッグで並べ替え、幅の変更</td><td class="mark">○</td><td class="mark">○</td></tr>
+      <tr><td>ライトモード・ダークモードの切り替え</td><td class="mark">○</td><td class="mark">○</td></tr>
+      <tr><td>ダイス結果（クトゥルフ神話TRPG 6版・7版）</td><td class="mark">○</td><td class="mark">○</td></tr>
+      <tr><td>キャラクターのアイコン（大きさは小・中・大から選べる）</td><td class="mark no">―</td><td class="mark">○</td></tr>
+      <tr><td>発言の時刻・日付の区切り・日付へ移動</td><td class="mark no">―</td><td class="mark">○</td></tr>
+    </tbody>
+  </table>
+  <ul class="notes">
+    <li>列の並びや幅は、ファイルを閉じると元に戻ります。</li>
+    <li>ダイス結果は、クトゥルフ神話TRPG（6版・7版）のみに対応しています。</li>
+    <li>ココフォリア公式とは関係のない、個人制作の非公式ツールです。</li>
+  </ul>
+</main>
+
+<footer>
+  <div class="footer-note">アップロード不要・ログはブラウザ内だけで処理されます</div>
+  <div>ココフォリアログ整形｜タブ横並べ v0.1.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
+</footer>
+
+<script src="/ccfolia-log-tabs/dice.js"></script>
+<script src="/ccfolia-log-tabs/convert.js"></script>
+<script>
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const resultBox = document.getElementById('result');
+const fileNameEl = document.getElementById('file-name');
+const summaryEl = document.getElementById('summary');
+const dlRow = document.getElementById('dl-row');
+const dlBtn = document.getElementById('dl-btn');
+const diceSec = document.getElementById('dice');
+const diceList = document.getElementById('dice-list');
+const copyAllBtn = document.getElementById('copy-all');
+
+let output = null;     // { url, name }
+let diceText = '';
+
+// 表示用HTMLのひな形とダイス処理は、最初に1回だけ読み込む
+let partsPromise = null;
+function loadParts() {
+  if (!partsPromise) {
+    const get = f => fetch(f).then(r => { if (!r.ok) throw new Error(f); return r.text(); });
+    partsPromise = Promise.all([get('/ccfolia-log-tabs/viewer.html'), get('/ccfolia-log-tabs/dice.js')]);
+    partsPromise.catch(() => { partsPromise = null; });
+  }
+  return partsPromise;
+}
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function showMessage(name, text, isError) {
+  resultBox.hidden = false;
+  resultBox.classList.toggle('error', isError);
+  fileNameEl.textContent = name;
+  summaryEl.textContent = text;
+  dlRow.hidden = true;
+  diceSec.hidden = true;
+}
+
+async function handleFile(file) {
+  if (output) { URL.revokeObjectURL(output.url); output = null; }
+  fileInput.value = '';
+  if (!/\.(html?|json)$/i.test(file.name)) {
+    showMessage(file.name, 'ココフォリアの全ログ（.html）か、JSON（.json）のファイルを選んでください。', true);
+    return;
+  }
+  showMessage(file.name, '変換しています…', false);
+  try {
+    const [[template, diceCode], src] = await Promise.all([loadParts(), file.text()]);
+    let data;
+    try { data = buildData(file.name, src); } catch (e) { data = null; }
+    if (!data || !data.msgs.length) {
+      showMessage(file.name, 'ココフォリアのログとして読み取れませんでした。ルームから出力した全ログ（.html）か、JSON（.json）を選んでください。', true);
+      return;
+    }
+    const html = makeViewer(template, diceCode, data);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    output = { url: URL.createObjectURL(blob), name: `${data.title}_整形済み.html` };
+
+    summaryEl.replaceChildren();
+    const line1 = document.createElement('div');
+    line1.textContent = `${data.kind === 'json' ? 'JSON' : '全ログ'}・${data.total.toLocaleString()}件・タブ${data.tabs.length}個（${data.tabs.join('、')}）`;
+    summaryEl.append(line1);
+    if (data.kind !== 'json') {
+      const line2 = document.createElement('div'); line2.className = 'muted';
+      line2.textContent = 'JSONから変換すると、アイコン・時刻・日付の区切りも入ります。';
+      summaryEl.append(line2);
+    }
+    dlRow.hidden = false;
+    showDice(data.msgs);
+  } catch (e) {
+    showMessage(file.name, '変換できませんでした。時間をおいて、もう一度お試しください。', true);
+  }
+}
+
+dlBtn.addEventListener('click', () => {
+  if (!output) return;
+  const a = document.createElement('a');
+  a.href = output.url; a.download = output.name;
+  document.body.append(a); a.click(); a.remove();
+});
+
+function showDice(msgs) {
+  const { chars, anyV7 } = collectDice(msgs);
+  const blocks = chars.map(c => diceBlock(c, anyV7));
+  diceText = blocks.join('\n\n');
+  diceList.replaceChildren();
+  copyAllBtn.disabled = !blocks.length;
+  if (!blocks.length) diceList.textContent = '判定ロールの記録はありません。';
+  chars.forEach((c, i) => {
+    const head = document.createElement('div'); head.className = 'dice-head';
+    const name = document.createElement('span'); name.className = 'dice-name';
+    name.textContent = c.name; name.style.color = c.color;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sub-btn'; btn.textContent = 'コピー';
+    btn.addEventListener('click', () => copyText(blocks[i], btn));
+    head.append(name, btn);
+    const pre = document.createElement('pre'); pre.textContent = blocks[i];
+    diceList.append(head, pre);
+  });
+  diceSec.hidden = false;
+}
+copyAllBtn.addEventListener('click', () => copyText(diceText, copyAllBtn));
+</script>
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ココフォリアログ整形｜タブ横並べ</title>
+<style>
+  /* 色の設定：ダーク */
+  :root {
+    --bg: #1e1e1e;
+    --panel: #2a2a2a;
+    --card: #333333;
+    --line: #3d3d3d;
+    --rowline: #262626;
+    --text: #e8e8e8;
+    --muted: #9a9a9a;
+    --accent: #4a7bd0;
+    --ok: #6fcf8a; --ok-bg: rgba(111, 207, 138, .15);
+    --ng: #f08080; --ng-bg: rgba(240, 128, 128, .15);
+    --no: 52px;
+    color-scheme: dark;
+  }
+  /* 色の設定：ライト（端末がライト設定のとき、またはボタンでライトにしたとき） */
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f3f3f1; --panel: #ffffff; --card: #ffffff; --line: #d6d6d2; --rowline: #e6e6e2;
+      --text: #222222; --muted: #777777; --accent: #3a6bc0; color-scheme: light;
+      --ok: #1e8a43; --ok-bg: rgba(30, 138, 67, .12); --ng: #c0392b; --ng-bg: rgba(192, 57, 43, .12);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f3f3f1; --panel: #ffffff; --card: #ffffff; --line: #d6d6d2; --rowline: #e6e6e2;
+    --text: #222222; --muted: #777777; --accent: #3a6bc0; color-scheme: light;
+      --ok: #1e8a43; --ok-bg: rgba(30, 138, 67, .12); --ng: #c0392b; --ng-bg: rgba(192, 57, 43, .12);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif; }
+  header { background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  h1 { font-size: 14px; margin: 0 0 6px; font-weight: 600; }
+  .info { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .reset { background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .reset:hover { border-color: var(--accent); }
+  .toggles { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
+  .toggles label { cursor: pointer; white-space: nowrap; }
+  .wrap { overflow: auto; height: calc(100vh - var(--head, 90px)); }
+  .grid { position: relative; width: calc(var(--no) + var(--total)); }
+  .hrow { position: sticky; top: 0; z-index: 2; display: flex; background: var(--panel);
+    border-bottom: 1px solid var(--line); user-select: none; -webkit-user-select: none; }
+  .hrow .no { width: var(--no); flex: none; border-right: 1px solid var(--line);
+    font-size: 13px; font-weight: 700; text-align: center; padding: 6px 0; }
+  .th { position: relative; flex: none; font-size: 13px; font-weight: 700; text-align: center;
+    padding: 6px 12px; border-right: 1px solid var(--line); cursor: grab; touch-action: none;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .th.moving { background: var(--accent); color: #fff; cursor: grabbing; }
+  /* 見出しの右端：ここを引っぱると幅が変わる */
+  .rz { position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: col-resize; }
+  .rz:hover, .rz.on { background: var(--accent); }
+  /* 列の縦線（列ごとの幅に合わせて引く） */
+  .lines { position: absolute; inset: 0; pointer-events: none; }
+  .lines div { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .row { position: relative; display: flex; border-top: 1px solid var(--rowline);
+    content-visibility: auto; contain-intrinsic-size: auto 80px; }
+  .row .no { width: var(--no); flex: none; color: var(--muted); font-size: 11px; text-align: right;
+    padding: 10px 6px 0 0; border-right: 1px solid var(--line); background: var(--bg); }
+  .cell { flex: none; padding: 4px 6px; }
+  .card { background: var(--card); border: 1px solid var(--rowline); border-radius: 6px; padding: 6px 9px; }
+  .card.has-icon { display: flex; gap: 8px; }
+  .icon { width: var(--icon, 40px); height: var(--icon, 40px); border-radius: 6px; object-fit: cover; flex: none; }
+  /* アイコン「大」：アイコンを上、名前と本文を下に積む（列が狭いときは列の幅に合わせて縮む） */
+  :root[data-icon-stack] .card.has-icon { flex-direction: column; }
+  :root[data-icon-stack] .icon { width: 100%; max-width: var(--icon); height: auto; aspect-ratio: 1; }
+  /* 列を広げて横に並ぶ余裕ができたら、アイコンを横に戻す */
+  .cell { container-type: inline-size; }
+  @container (min-width: 440px) {
+    :root[data-icon-stack] .card.has-icon { flex-direction: row; }
+    :root[data-icon-stack] .icon { width: var(--icon); height: var(--icon); }
+  }
+  .cbody { flex: 1; min-width: 0; }
+  .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-bottom: 2px; }
+  .name { font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
+  .time { color: var(--muted); font-size: 11px; }
+  .text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+  /* ダイス結果 */
+  .roll { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 4px; font-size: 12px;
+    background: var(--rowline); color: var(--text); }
+  .roll.success { background: var(--ok-bg); color: var(--ok); }
+  .roll.failure { background: var(--ng-bg); color: var(--ng); }
+  .roll.critical { background: var(--ok); color: var(--card); font-weight: 700; }
+  .roll.fumble { background: var(--ng); color: var(--card); font-weight: 700; }
+  /* 日付の区切り */
+  .dayrow { background: var(--panel); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 8px 0; font-size: 13px; font-weight: 700; scroll-margin-top: 34px; position: relative; }
+  .dayrow span { position: sticky; left: 12px; padding-left: 12px; }
+  .tool:disabled, select:disabled { opacity: .45; cursor: not-allowed; }
+  select.tool { background: var(--panel); }
+  .note { font-size: 12px; color: var(--muted); }
+  /* ダイス結果 */
+  dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 20px; width: min(760px, calc(100vw - 32px)); }
+  dialog::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog h2 { font-size: 15px; margin: 0 0 6px; }
+  .dice-tools { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+  .dice-list { max-height: 65vh; overflow: auto; }
+  .dice-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .dice-name { font-weight: 700; font-size: 14px; }
+  .dice-list pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 13px;
+    line-height: 1.6; background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin: 6px 0 14px; }
+  dialog form { text-align: right; margin-top: 12px; }
+</style>
+</head>
+<body>
+<header id="head">
+  <h1 id="title"></h1>
+  <div class="info" id="info"></div>
+  <div class="bar">
+    <button type="button" class="reset" id="reset">表示を初期設定に戻す</button>
+    <button type="button" class="reset" id="theme"></button>
+    <button type="button" class="reset tool" id="diceBtn">ダイス結果</button>
+    <select class="reset tool" id="days"><option value="">日付へ移動</option></select>
+    <select class="reset tool" id="iconSize" title="アイコンの大きさ">
+      <option value="40">アイコン：小</option><option value="100">アイコン：中</option><option value="200">アイコン：大</option>
+    </select>
+    <div class="toggles" id="toggles"></div>
+  </div>
+  <div class="note" id="note"></div>
+</header>
+<dialog id="diceDlg">
+  <h2>ダイス結果</h2>
+  <div class="note">クトゥルフ神話TRPG（6版・7版）の判定ロールだけを数えます。成功率は、スペシャル・決定的成功（クリティカル）も成功に数えます。</div>
+  <div class="dice-tools"><button type="button" class="reset" id="copyAll">全部コピー</button></div>
+  <div class="dice-list" id="diceList"></div>
+  <form method="dialog"><button class="reset">閉じる</button></form>
+</dialog>
+<div class="wrap" id="wrap">
+  <div class="grid" id="grid">
+    <div class="lines" id="lines"></div>
+    <div class="hrow" id="hrow"></div>
+    <div class="body" id="body"></div>
+  </div>
+</div>
+<script>
+const DATA = /*__DATA__*/null;
+
+const tabs = DATA.tabs;
+const DEFAULT_W = 260, MIN_W = 120, MAX_W = 900;
+let order, widths, shown;
+function initState() {
+  order = tabs.map((_, k) => k);          // 列の並び（tabs の番号）
+  widths = tabs.map(() => DEFAULT_W);     // 列ごとの幅
+  shown = new Set(order);                 // 表示する列
+}
+initState();
+
+document.getElementById('title').textContent = DATA.title;
+const first = DATA.msgs.length ? DATA.msgs[0].n : 0;
+const last = DATA.msgs.length ? DATA.msgs[DATA.msgs.length - 1].n : 0;
+document.getElementById('info').textContent =
+  `全${DATA.total}件中 ${first}〜${last}件目を表示（左の数字は元ログでの通し番号）`;
+
+// 列の表示切り替え
+const toggles = document.getElementById('toggles');
+const checks = tabs.map((t, k) => {
+  const lab = document.createElement('label');
+  const cb = document.createElement('input');
+  cb.type = 'checkbox'; cb.checked = true;
+  cb.addEventListener('change', () => { cb.checked ? shown.add(k) : shown.delete(k); renderRows(); layout(); });
+  lab.append(cb, ' ' + t);
+  toggles.append(lab);
+  return cb;
+});
+
+// ライト／ダークの切り替え（最初は端末の設定に合わせる）
+const themeBtn = document.getElementById('theme');
+const sysDark = window.matchMedia('(prefers-color-scheme: dark)');
+function isDark() {
+  const t = document.documentElement.dataset.theme;
+  return t ? t === 'dark' : sysDark.matches;
+}
+function updateThemeBtn() { themeBtn.textContent = isDark() ? '☀ ライトモードにする' : '☾ ダークモードにする'; }
+themeBtn.addEventListener('click', () => {
+  document.documentElement.dataset.theme = isDark() ? 'light' : 'dark';
+  updateThemeBtn();
+});
+sysDark.addEventListener('change', updateThemeBtn);
+updateThemeBtn();
+
+document.getElementById('reset').addEventListener('click', () => {
+  initState();
+  checks.forEach(cb => { cb.checked = true; });
+  setIcon(ICON_DEFAULT);
+  renderRows(); layout();
+});
+
+// アイコンの大きさ（小・中・大）。「表示を初期設定に戻す」で小に戻る
+const iconSel = document.getElementById('iconSize');
+const ICON_DEFAULT = '40';
+function setIcon(v) {
+  iconSel.value = v;
+  document.documentElement.style.setProperty('--icon', v + 'px');
+  document.documentElement.toggleAttribute('data-icon-stack', v === '200');
+}
+iconSel.addEventListener('change', () => setIcon(iconSel.value));
+
+const isJson = DATA.kind === 'json';
+const daySel = document.getElementById('days');
+if (!isJson) {
+  // 全ログから作ったときは、JSONだけの機能をグレーで見せておく
+  daySel.disabled = true;
+  daySel.title = 'JSONファイルから変換すると使えます';
+  iconSel.disabled = true;
+  iconSel.title = 'JSONファイルから変換すると使えます';
+  document.getElementById('note').textContent =
+    '※JSONファイルから変換すると、アイコン・時刻・日付の区切りも表示できます';
+}
+
+// アイコン画像：同じ画像を何度も持たないよう、1枚ごとに短いURLへ置き換える
+const iconUrl = {};
+Object.entries(DATA.images || {}).forEach(([key, uri]) => {
+  const [head, b64] = uri.split(',');
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  iconUrl[key] = URL.createObjectURL(new Blob([bytes], { type: head.slice(5).split(';')[0] }));
+});
+
+const fmtTime = new Intl.DateTimeFormat('ja-JP', { hour: '2-digit', minute: '2-digit' });
+const fmtDate = new Intl.DateTimeFormat('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+const DAY_GAP = 6 * 60 * 60 * 1000; // 6時間以上あいたら、次の日（次の回）とみなす
+
+function makeCard(m) {
+  const card = document.createElement('div'); card.className = 'card';
+  const body = document.createElement('div'); body.className = 'cbody';
+  if (m.icon && iconUrl[m.icon]) {
+    card.classList.add('has-icon');
+    const img = document.createElement('img'); img.className = 'icon'; img.alt = '';
+    img.src = iconUrl[m.icon];
+    card.append(img);
+  }
+  const head = document.createElement('div'); head.className = 'head';
+  const name = document.createElement('span'); name.className = 'name';
+  name.textContent = m.name; name.style.color = m.color;
+  head.append(name);
+  if (m.t) {
+    const time = document.createElement('span'); time.className = 'time';
+    time.textContent = fmtTime.format(m.t);
+    head.append(time);
+  }
+  const text = document.createElement('div'); text.className = 'text';
+  text.textContent = m.text;
+  body.append(head, text);
+  if (m.roll) {
+    const roll = document.createElement('div'); roll.className = 'roll ' + m.roll.kind;
+    roll.textContent = m.roll.result;
+    body.append(roll);
+  }
+  card.append(body);
+  return card;
+}
+
+// 行は一度だけ作る。位置と幅は列ごとの変数（--x番号 / --w番号）で決まるので、
+// 並べ替えや幅変更のときに行を作り直さなくて済む。
+// 日付の区切りの行は k = -1 で、どの列を隠しても表示する。
+const tabIndex = new Map(tabs.map((t, k) => [t, k]));
+const rows = [];
+let prevT = null, dayNo = 0;
+DATA.msgs.forEach(m => {
+  if (isJson && m.t && (prevT === null || m.t - prevT >= DAY_GAP)) {
+    dayNo++;
+    const row = document.createElement('div'); row.className = 'dayrow';
+    const label = document.createElement('span');
+    label.textContent = `${dayNo}日目　${fmtDate.format(m.t)} ${fmtTime.format(m.t)}〜`;
+    row.append(label);
+    rows.push({ k: -1, row });
+    const opt = document.createElement('option');
+    opt.value = rows.length - 1; opt.textContent = label.textContent;
+    daySel.append(opt);
+  }
+  if (m.t) prevT = m.t;
+  const k = tabIndex.get(m.tab);
+  const row = document.createElement('div'); row.className = 'row';
+  const no = document.createElement('div'); no.className = 'no'; no.textContent = m.n;
+  const cell = document.createElement('div'); cell.className = 'cell';
+  cell.style.marginLeft = `var(--x${k})`;
+  cell.style.width = `var(--w${k})`;
+  cell.append(makeCard(m)); row.append(no, cell);
+  rows.push({ k, row });
+});
+
+// 日付へ移動
+daySel.addEventListener('change', () => {
+  if (daySel.value === '') return;
+  // 表示前の行は高さが仮の値なので、動かすと位置がずれる。ずれがなくなるまで数回合わせ直す
+  const target = rows[Number(daySel.value)].row;
+  const wrap = document.getElementById('wrap');
+  const hrow = document.getElementById('hrow');
+  let tries = 0;
+  (function step() {
+    const d = target.getBoundingClientRect().top - hrow.getBoundingClientRect().bottom;
+    if (Math.abs(d) > 2 && tries++ < 10) { wrap.scrollTop += d; setTimeout(step, 30); }
+  })();
+  daySel.value = '';
+});
+
+// ===== ダイス結果（dice.js の中身がここに入る） =====
+/*__DICE__*/
+
+const { chars: diceChars, anyV7 } = collectDice(DATA.msgs);
+
+const diceList = document.getElementById('diceList');
+const blocks = diceChars.map(c => diceBlock(c, anyV7));
+if (!blocks.length) {
+  diceList.textContent = '判定ロールの記録はありません';
+  document.getElementById('copyAll').disabled = true;
+}
+diceChars.forEach((c, i) => {
+  const head = document.createElement('div'); head.className = 'dice-head';
+  const name = document.createElement('span'); name.className = 'dice-name';
+  name.textContent = c.name; name.style.color = c.color;
+  const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'reset'; btn.textContent = 'コピー';
+  btn.addEventListener('click', () => copyText(blocks[i], btn));
+  head.append(name, btn);
+  const pre = document.createElement('pre'); pre.textContent = blocks[i];
+  diceList.append(head, pre);
+});
+document.getElementById('copyAll').addEventListener('click', e => copyText(blocks.join('\n\n'), e.currentTarget));
+document.getElementById('diceBtn').addEventListener('click', () => document.getElementById('diceDlg').showModal());
+
+function visible() { return order.filter(k => shown.has(k)); }
+
+// 表示する行（隠した列の発言は行ごと詰める）
+function renderRows() {
+  const frag = document.createDocumentFragment();
+  rows.forEach(r => { if (r.k === -1 || shown.has(r.k)) frag.append(r.row); });
+  document.getElementById('body').replaceChildren(frag);
+}
+
+// 列の位置・幅・見出し・縦線を整える
+function layout() {
+  const grid = document.getElementById('grid');
+  const noW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--no'));
+  const hrow = document.getElementById('hrow');
+  const lines = document.getElementById('lines');
+  hrow.replaceChildren();
+  lines.replaceChildren();
+  const hNo = document.createElement('div'); hNo.className = 'no'; hNo.textContent = '#';
+  hrow.append(hNo);
+  let x = 0;
+  visible().forEach(k => {
+    grid.style.setProperty(`--x${k}`, x + 'px');
+    grid.style.setProperty(`--w${k}`, widths[k] + 'px');
+    const th = document.createElement('div'); th.className = 'th'; th.dataset.k = k;
+    th.style.width = widths[k] + 'px';
+    th.textContent = tabs[k];
+    if (drag && drag.type === 'move' && drag.k === k) th.classList.add('moving');
+    const rz = document.createElement('div'); rz.className = 'rz'; rz.dataset.k = k;
+    if (drag && drag.type === 'resize' && drag.k === k) rz.classList.add('on');
+    th.append(rz);
+    hrow.append(th);
+    x += widths[k];
+    const ln = document.createElement('div'); ln.style.left = (noW + x - 1) + 'px';
+    lines.append(ln);
+  });
+  grid.style.setProperty('--total', x + 'px');
+  setHead();
+}
+
+// 見出しのドラッグ：右端なら幅を変える、それ以外なら列を左右に移動する
+let drag = null;
+const hrowEl = document.getElementById('hrow');
+hrowEl.addEventListener('pointerdown', e => {
+  const rz = e.target.closest('.rz');
+  const th = e.target.closest('.th');
+  if (!th) return;
+  const k = Number(th.dataset.k);
+  drag = rz ? { type: 'resize', k, startX: e.clientX, startW: widths[k] }
+            : { type: 'move', k };
+  hrowEl.setPointerCapture(e.pointerId);
+  e.preventDefault();
+  layout();
+});
+hrowEl.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (drag.type === 'resize') {
+    widths[drag.k] = Math.min(MAX_W, Math.max(MIN_W, drag.startW + e.clientX - drag.startX));
+    layout();
+    return;
+  }
+  // 指（マウス）がほかの列の真ん中を越えたら、その向こう側へ移す
+  const vis = visible();
+  const others = [...hrowEl.querySelectorAll('.th')].filter(th => Number(th.dataset.k) !== drag.k);
+  const pos = others.filter(th => {
+    const r = th.getBoundingClientRect();
+    return r.left + r.width / 2 < e.clientX;
+  }).length;
+  const next = others.map(th => Number(th.dataset.k));
+  next.splice(pos, 0, drag.k);
+  if (next.every((k, i) => k === vis[i])) return;
+  // 隠している列の位置はそのままにして、表示中の列だけ並びを入れ替える
+  let j = 0;
+  order = order.map(k => (shown.has(k) ? next[j++] : k));
+  layout();
+});
+function endDrag() { if (drag) { drag = null; layout(); } }
+hrowEl.addEventListener('pointerup', endDrag);
+hrowEl.addEventListener('pointercancel', endDrag);
+
+function setHead() {
+  document.documentElement.style.setProperty('--head', document.getElementById('head').offsetHeight + 'px');
+}
+renderRows();
+layout();
+window.addEventListener('resize', setHead);
+</script>
+</body>
+</html>
