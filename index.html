@@ -156,6 +156,31 @@ h1 {
   background: #ffe8e8;
 }
 
+/* 公開停止中のカード（少し薄いグレー・ホバーで浮かない） */
+.card.is-paused {
+  background: #f2f2f2;
+  border-color: #e3e3e3;
+}
+
+.card.is-paused:hover {
+  box-shadow: none;
+  border-color: #e3e3e3;
+}
+
+.card.is-paused .card-thumb {
+  opacity: 0.6;
+}
+
+.card-badge.paused {
+  background: #e4e4e4;
+  color: #666;
+}
+
+.paused-note {
+  margin-top: 8px;
+  color: #888;
+}
+
 footer {
   margin-top: 48px;
   padding-top: 20px;
@@ -235,36 +260,6 @@ footer a:hover {
   <div class="section">
     <div class="section-title">ココフォリア用ツール</div>
     <div class="cards">
-      <div class="card">
-        <div class="card-thumb" style="display:flex;align-items:center;justify-content:center;font-size:5rem;line-height:1;">🔔</div>
-        <div class="card-badge">Chrome拡張</div>
-        <div class="card-title">ココフォリア チャット通知</div>
-        <div class="card-desc">チャットに新しい発言が届いたとき、通知音でお知らせするChrome拡張機能です。タブ・音・音量を設定できます。</div>
-        <div class="card-links">
-          <a class="card-link" href="https://chromewebstore.google.com/detail/kfbhnjjobpbpckkobiofobkbmlgibjho" target="_blank" rel="noopener">Chromeウェブストア</a>
-          <a class="card-link booth" href="https://sasafukan.booth.pm/items/8966911" target="_blank" rel="noopener">BOOTHで見る</a>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-thumb" style="display:flex;align-items:center;justify-content:center;font-size:5rem;line-height:1;">🔍</div>
-        <div class="card-badge">Chrome拡張</div>
-        <div class="card-title">ココフォリア チャットアイコン拡大</div>
-        <div class="card-desc">ルームチャットの発言者アイコンを、標準・64〜200pxの7段階で大きく表示できるChrome拡張機能です。表情差分が見やすくなります。</div>
-        <div class="card-desc">※Chromeウェブストア未掲載です。GitHubでソースコードを公開しており、Chromeのデベロッパーモードで手動インストールして使います。</div>
-        <div class="card-links">
-          <a class="card-link" href="https://github.com/sasawaiwai/my-tools/tree/main/ccfolia-chat-avatar-size" target="_blank" rel="noopener">GitHubでソースコードを見る</a>
-        </div>
-      </div>
-      <div class="card">
-        <img class="card-thumb" src="/ccfolia-palette-append/thumb.png" alt="CCFOLIA チャットパレット追記" style="object-fit:none;">
-        <div class="card-badge">Chrome拡張</div>
-        <div class="card-title">CCFOLIA チャットパレット追記</div>
-        <div class="card-desc">チャットパレットの「@」から始まる項目を、入力中の文の末尾に追記できるChrome拡張機能です。ツールバーからON/OFFを切り替えられます。</div>
-        <div class="card-links">
-          <a class="card-link" href="https://chromewebstore.google.com/detail/beomomnlgnfkpcbdkppcdfjadodgbefe" target="_blank" rel="noopener">Chromeウェブストア</a>
-          <a class="card-link booth" href="https://sasafukan.booth.pm/items/8945035" target="_blank" rel="noopener">BOOTHで見る</a>
-        </div>
-      </div>
       <a class="card" href="/ccfolia-log-tabs/">
         <div class="card-thumb" style="display:flex;align-items:center;justify-content:center;font-size:5rem;line-height:1;">🗂️</div>
         <div class="card-title">ココフォリアログ整形｜タブ横並べ</div>
@@ -285,6 +280,30 @@ footer a:hover {
         <div class="card-title">APNGトランジションジェネレーター</div>
         <div class="card-desc">グリッド・スライド・フェードなどのトランジションAPNG素材をブラウザ上で生成できるツール。サイズ・秒数・色などを自由にカスタマイズできます。</div>
       </a>
+      <div class="card is-paused">
+        <img class="card-thumb" src="/thumbs/ccfolia-chat-notify.png" alt="ココフォリア チャット通知" style="object-fit:none;">
+        <div class="card-badge">Chrome拡張</div>
+        <div class="card-badge paused">公開停止中</div>
+        <div class="card-title">ココフォリア チャット通知</div>
+        <div class="card-desc">チャットに新しい発言が届いたとき、通知音でお知らせするChrome拡張機能です。タブ・音・音量を設定できます。</div>
+        <div class="card-desc paused-note">現在、配布を停止しています。</div>
+      </div>
+      <div class="card is-paused">
+        <img class="card-thumb" src="/thumbs/ccfolia-chat-avatar-size.png" alt="ココフォリア チャットアイコン拡大" style="object-fit:none;">
+        <div class="card-badge">Chrome拡張</div>
+        <div class="card-badge paused">公開停止中</div>
+        <div class="card-title">ココフォリア チャットアイコン拡大</div>
+        <div class="card-desc">ルームチャットの発言者アイコンを、標準・64〜200pxの7段階で大きく表示できるChrome拡張機能です。表情差分が見やすくなります。</div>
+        <div class="card-desc paused-note">現在、配布を停止しています。</div>
+      </div>
+      <div class="card is-paused">
+        <img class="card-thumb" src="/ccfolia-palette-append/thumb.png" alt="CCFOLIA チャットパレット追記" style="object-fit:none;">
+        <div class="card-badge">Chrome拡張</div>
+        <div class="card-badge paused">公開停止中</div>
+        <div class="card-title">CCFOLIA チャットパレット追記</div>
+        <div class="card-desc">チャットパレットの「@」から始まる項目を、入力中の文の末尾に追記できるChrome拡張機能です。ツールバーからON/OFFを切り替えられます。</div>
+        <div class="card-desc paused-note">現在、配布を停止しています。</div>
+      </div>
     </div>
   </div>
 
