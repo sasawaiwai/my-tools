@@ -58,6 +58,10 @@
   /* 見出しの右端：ここを引っぱると幅が変わる */
   .rz { position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: col-resize; }
   .rz:hover, .rz.on { background: var(--accent); }
+  /* 縦1列・字下げのときの見出し：タブ名を小さな札で並べる（ドラッグで順番を入れ替え） */
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 6px; flex: none; }
+  .th.chip { border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; }
+  .hrow > .rz { right: auto; }
   /* 列の縦線（列ごとの幅に合わせて引く） */
   .lines { position: absolute; inset: 0; pointer-events: none; }
   .lines div { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
@@ -82,6 +86,9 @@
   .head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-bottom: 2px; }
   .name { font-weight: 700; font-size: 13px; overflow-wrap: anywhere; }
   .time { color: var(--muted); font-size: 11px; }
+  /* 発言のタブ名（縦1列・字下げのときだけ出す） */
+  .tabname { display: none; color: var(--muted); font-size: 11px; }
+  :root:not([data-mode="cols"]) .tabname { display: inline; }
   .text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* ダイス結果 */
   .roll { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 4px; font-size: 12px;
@@ -119,6 +126,9 @@
   <div class="bar">
     <button type="button" class="reset" id="reset">表示を初期設定に戻す</button>
     <button type="button" class="reset" id="theme"></button>
+    <select class="reset tool" id="mode" title="並べ方">
+      <option value="cols">並べ方：横並び</option><option value="flat">並べ方：縦1列</option><option value="indent">並べ方：字下げ</option>
+    </select>
     <button type="button" class="reset tool" id="diceBtn">ダイス結果</button>
     <select class="reset tool" id="days"><option value="">日付へ移動</option></select>
     <select class="reset tool" id="iconSize" title="アイコンの大きさ">
@@ -147,13 +157,26 @@ const DATA = /*__DATA__*/null;
 
 const tabs = DATA.tabs;
 const DEFAULT_W = 260, MIN_W = 120, MAX_W = 900;
-let order, widths, shown;
+// 縦1列・字下げのときの幅と、字下げ1段の量（本文14pxの全角3.5字分）
+const DEFAULT_ONE = 640, MAX_ONE = 1600, INDENT = 49;
+let order, widths, shown, mode, oneW;
 function initState() {
   order = tabs.map((_, k) => k);          // 列の並び（tabs の番号）
   widths = tabs.map(() => DEFAULT_W);     // 列ごとの幅
   shown = new Set(order);                 // 表示する列
+  mode = 'cols';                          // 並べ方：cols＝横並び / flat＝縦1列 / indent＝字下げ
+  oneW = DEFAULT_ONE;                     // 縦1列・字下げのときの幅
 }
 initState();
+
+// 並べ方の切り替え
+const modeSel = document.getElementById('mode');
+function applyMode() {
+  modeSel.value = mode;
+  document.documentElement.dataset.mode = mode;
+}
+applyMode();
+modeSel.addEventListener('change', () => { mode = modeSel.value; applyMode(); layout(); });
 
 document.getElementById('title').textContent = DATA.title;
 const first = DATA.msgs.length ? DATA.msgs[0].n : 0;
@@ -191,6 +214,7 @@ updateThemeBtn();
 document.getElementById('reset').addEventListener('click', () => {
   initState();
   checks.forEach(cb => { cb.checked = true; });
+  applyMode();
   setIcon(ICON_DEFAULT);
   renderRows(); layout();
 });
@@ -243,7 +267,9 @@ function makeCard(m) {
   const head = document.createElement('div'); head.className = 'head';
   const name = document.createElement('span'); name.className = 'name';
   name.textContent = m.name; name.style.color = m.color;
-  head.append(name);
+  const tabname = document.createElement('span'); tabname.className = 'tabname';
+  tabname.textContent = `［${m.tab}］`;
+  head.append(name, tabname);
   if (m.t) {
     const time = document.createElement('span'); time.className = 'time';
     time.textContent = fmtTime.format(m.t);
@@ -348,22 +374,51 @@ function layout() {
   lines.replaceChildren();
   const hNo = document.createElement('div'); hNo.className = 'no'; hNo.textContent = '#';
   hrow.append(hNo);
-  let x = 0;
-  visible().forEach(k => {
-    grid.style.setProperty(`--x${k}`, x + 'px');
-    grid.style.setProperty(`--w${k}`, widths[k] + 'px');
+  const vis = visible();
+  function makeTh(k) {
     const th = document.createElement('div'); th.className = 'th'; th.dataset.k = k;
-    th.style.width = widths[k] + 'px';
     th.textContent = tabs[k];
     if (drag && drag.type === 'move' && drag.k === k) th.classList.add('moving');
+    return th;
+  }
+  function makeRz(k) {
     const rz = document.createElement('div'); rz.className = 'rz'; rz.dataset.k = k;
-    if (drag && drag.type === 'resize' && drag.k === k) rz.classList.add('on');
-    th.append(rz);
-    hrow.append(th);
-    x += widths[k];
+    if (drag && drag.type === 'resize' && String(drag.k) === String(k)) rz.classList.add('on');
+    return rz;
+  }
+  function addLine(x) {
     const ln = document.createElement('div'); ln.style.left = (noW + x - 1) + 'px';
     lines.append(ln);
-  });
+  }
+  let x = 0;
+  if (mode === 'cols') {
+    // 横並び：タブごとの列
+    vis.forEach(k => {
+      grid.style.setProperty(`--x${k}`, x + 'px');
+      grid.style.setProperty(`--w${k}`, widths[k] + 'px');
+      const th = makeTh(k);
+      th.style.width = widths[k] + 'px';
+      th.append(makeRz(k));
+      hrow.append(th);
+      x += widths[k];
+      addLine(x);
+    });
+  } else {
+    // 縦1列・字下げ：全部の発言を1列に。字下げは、見出しの札の順に1段ずつずらす
+    vis.forEach((k, i) => {
+      grid.style.setProperty(`--x${k}`, (mode === 'indent' ? i * INDENT : 0) + 'px');
+      grid.style.setProperty(`--w${k}`, oneW + 'px');
+    });
+    x = oneW + (mode === 'indent' ? Math.max(0, vis.length - 1) * INDENT : 0);
+    const chips = document.createElement('div'); chips.className = 'chips';
+    chips.style.width = x + 'px';
+    vis.forEach(k => { const th = makeTh(k); th.classList.add('chip'); chips.append(th); });
+    hrow.append(chips);
+    const rz = makeRz('all');
+    rz.style.left = (noW + x - 10) + 'px';
+    hrow.append(rz);
+    addLine(x);
+  }
   grid.style.setProperty('--total', x + 'px');
   setHead();
 }
@@ -374,10 +429,13 @@ const hrowEl = document.getElementById('hrow');
 hrowEl.addEventListener('pointerdown', e => {
   const rz = e.target.closest('.rz');
   const th = e.target.closest('.th');
-  if (!th) return;
-  const k = Number(th.dataset.k);
-  drag = rz ? { type: 'resize', k, startX: e.clientX, startW: widths[k] }
-            : { type: 'move', k };
+  if (rz && rz.dataset.k === 'all') {
+    drag = { type: 'resize', k: 'all', startX: e.clientX, startW: oneW };
+  } else if (th) {
+    const k = Number(th.dataset.k);
+    drag = rz ? { type: 'resize', k, startX: e.clientX, startW: widths[k] }
+              : { type: 'move', k };
+  } else return;
   hrowEl.setPointerCapture(e.pointerId);
   e.preventDefault();
   layout();
@@ -385,7 +443,9 @@ hrowEl.addEventListener('pointerdown', e => {
 hrowEl.addEventListener('pointermove', e => {
   if (!drag) return;
   if (drag.type === 'resize') {
-    widths[drag.k] = Math.min(MAX_W, Math.max(MIN_W, drag.startW + e.clientX - drag.startX));
+    const w = drag.startW + e.clientX - drag.startX;
+    if (drag.k === 'all') oneW = Math.min(MAX_ONE, Math.max(MIN_W, w));
+    else widths[drag.k] = Math.min(MAX_W, Math.max(MIN_W, w));
     layout();
     return;
   }
