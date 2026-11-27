@@ -80,8 +80,14 @@
   .lines div { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
   .row { position: relative; display: flex; border-top: 1px solid var(--rowline);
     content-visibility: auto; contain-intrinsic-size: auto 80px; }
-  .row .no { width: var(--no); flex: none; color: var(--muted); font-size: 11px; text-align: right;
+  .row .no, .pseg .no { width: var(--no); flex: none; color: var(--muted); font-size: 11px; text-align: right;
     padding: 10px 6px 0 0; border-right: 1px solid var(--line); background: var(--bg); }
+  /* 横並び（詰める）：列ごとに上から積む。日付の区切りごとにまとまりを分ける */
+  .pseg { display: flex; align-items: stretch; border-top: 1px solid var(--rowline); }
+  .pcol { flex: none; }
+  .pcol > .cell { margin-left: 0 !important; content-visibility: auto; contain-intrinsic-size: auto 80px; }
+  .mno { display: none; color: var(--muted); font-size: 11px; }
+  :root[data-mode="pack"] .mno { display: inline; }
   .cell { flex: none; padding: 4px 6px; }
   .card { background: var(--card); border: 1px solid var(--rowline); border-radius: 6px; padding: 6px 9px; }
   .card[data-c] { background: var(--tc); }
@@ -102,7 +108,7 @@
   .time { color: var(--muted); font-size: 11px; }
   /* 発言のタブ名（縦1列・字下げのときだけ出す） */
   .tabname { display: none; color: var(--muted); font-size: 11px; }
-  :root:not([data-mode="cols"]) .tabname { display: inline; }
+  :root[data-mode="flat"] .tabname, :root[data-mode="indent"] .tabname { display: inline; }
   .text { font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
   /* ダイス結果 */
   .roll { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 4px; font-size: 12px;
@@ -141,7 +147,7 @@
     <button type="button" class="reset" id="reset">表示を初期設定に戻す</button>
     <button type="button" class="reset" id="theme"></button>
     <select class="reset tool" id="mode" title="並べ方">
-      <option value="cols">並べ方：横並び</option><option value="flat">並べ方：縦1列</option><option value="indent">並べ方：字下げ</option>
+      <option value="cols">並べ方：横並び</option><option value="pack">並べ方：横並び（詰める）</option><option value="flat">並べ方：縦1列</option><option value="indent">並べ方：字下げ</option>
     </select>
     <button type="button" class="reset tool" id="diceBtn">ダイス結果</button>
     <select class="reset tool" id="days"><option value="">日付へ移動</option></select>
@@ -184,7 +190,7 @@ function initState() {
   order = tabs.map((_, k) => k);          // 列の並び（tabs の番号）
   widths = tabs.map(() => DEFAULT_W);     // 列ごとの幅
   shown = new Set(order);                 // 表示する列
-  mode = 'cols';                          // 並べ方：cols＝横並び / flat＝縦1列 / indent＝字下げ
+  mode = 'cols';                          // 並べ方：cols＝横並び / pack＝横並び（詰める） / flat＝縦1列 / indent＝字下げ
   oneW = DEFAULT_ONE;                     // 縦1列・字下げのときの幅
 }
 initState();
@@ -196,7 +202,7 @@ function applyMode() {
   document.documentElement.dataset.mode = mode;
 }
 applyMode();
-modeSel.addEventListener('change', () => { mode = modeSel.value; applyMode(); layout(); });
+modeSel.addEventListener('change', () => { mode = modeSel.value; applyMode(); renderRows(); layout(); });
 
 document.getElementById('title').textContent = DATA.title;
 const first = DATA.msgs.length ? DATA.msgs[0].n : 0;
@@ -296,6 +302,9 @@ function makeCard(m) {
     time.textContent = fmtTime.format(m.t);
     head.append(time);
   }
+  const mno = document.createElement('span'); mno.className = 'mno';
+  mno.textContent = `#${m.n}`;
+  head.append(mno);
   const text = document.createElement('div'); text.className = 'text';
   text.textContent = m.text;
   body.append(head, text);
@@ -334,8 +343,40 @@ DATA.msgs.forEach(m => {
   cell.style.marginLeft = `var(--x${k})`;
   cell.style.width = `var(--w${k})`;
   cell.append(makeCard(m)); row.append(no, cell);
-  rows.push({ k, row });
+  rows.push({ k, row, cell });
 });
+
+// 横並び（詰める）用のまとまり：日付の区切りごとに、列ごとの発言（cell）を集めておく。
+// cell は横並びの行と共用で、並べ方を切り替えるときに付け替える
+const segs = [];
+rows.forEach(r => {
+  if (r.k === -1 || !segs.length) {
+    const box = document.createElement('div'); box.className = 'pseg';
+    const no = document.createElement('div'); no.className = 'no';
+    segs.push({ day: r.k === -1 ? r.row : null, box, no, cols: new Map() });
+    if (r.k === -1) return;
+  }
+  const cols = segs[segs.length - 1].cols;
+  if (!cols.has(r.k)) {
+    const col = document.createElement('div'); col.className = 'pcol';
+    col.style.width = `var(--w${r.k})`;
+    cols.set(r.k, { col, cells: [] });
+  }
+  cols.get(r.k).cells.push(r.cell);
+});
+function emptyCol(seg, k) {
+  const col = document.createElement('div'); col.className = 'pcol';
+  col.style.width = `var(--w${k})`;
+  seg.cols.set(k, { col, cells: [] });
+  return seg.cols.get(k);
+}
+// 見出しの順に列を並べる（隠した列は出さない）
+function arrangePack() {
+  const vis = visible();
+  segs.forEach(seg => {
+    seg.box.replaceChildren(seg.no, ...vis.map(k => (seg.cols.get(k) || emptyCol(seg, k)).col));
+  });
+}
 
 // 日付へ移動
 daySel.addEventListener('change', () => {
@@ -381,7 +422,20 @@ function visible() { return order.filter(k => shown.has(k)); }
 // 表示する行（隠した列の発言は行ごと詰める）
 function renderRows() {
   const frag = document.createDocumentFragment();
-  rows.forEach(r => { if (r.k === -1 || shown.has(r.k)) frag.append(r.row); });
+  if (mode === 'pack') {
+    segs.forEach(seg => {
+      if (seg.day) frag.append(seg.day);
+      seg.cols.forEach(c => c.col.append(...c.cells));
+      frag.append(seg.box);
+    });
+    arrangePack();
+    document.getElementById('body').replaceChildren(frag);
+    return;
+  }
+  rows.forEach(r => {
+    if (r.cell && r.cell.parentNode !== r.row) r.row.append(r.cell);
+    if (r.k === -1 || shown.has(r.k)) frag.append(r.row);
+  });
   document.getElementById('body').replaceChildren(frag);
 }
 
@@ -413,8 +467,9 @@ function layout() {
     lines.append(ln);
   }
   let x = 0;
-  if (mode === 'cols') {
-    // 横並び：タブごとの列
+  if (mode === 'cols' || mode === 'pack') {
+    // 横並び：タブごとの列（詰めるときも、列の見出し・幅・縦線は同じ）
+    if (mode === 'pack') arrangePack();
     vis.forEach(k => {
       grid.style.setProperty(`--x${k}`, x + 'px');
       grid.style.setProperty(`--w${k}`, widths[k] + 'px');
