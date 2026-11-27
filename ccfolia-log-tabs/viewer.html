@@ -19,6 +19,9 @@
     --ng: #f08080; --ng-bg: rgba(240, 128, 128, .15);
     --no: 52px;
     color-scheme: dark;
+    /* タブの色分け（変換するときに選んだ色）：ダーク */
+    --c-red: #4a3333; --c-orange: #4a3d2e; --c-yellow: #46432c; --c-green: #2f4433;
+    --c-teal: #2c4444; --c-blue: #2f3a4d; --c-purple: #3e3449; --c-gray: #444444;
   }
   /* 色の設定：ライト（端末がライト設定のとき、またはボタンでライトにしたとき） */
   @media (prefers-color-scheme: light) {
@@ -26,12 +29,16 @@
       --bg: #f3f3f1; --panel: #ffffff; --card: #ffffff; --line: #d6d6d2; --rowline: #e6e6e2;
       --text: #222222; --muted: #777777; --accent: #3a6bc0; color-scheme: light;
       --ok: #1e8a43; --ok-bg: rgba(30, 138, 67, .12); --ng: #c0392b; --ng-bg: rgba(192, 57, 43, .12);
+      --c-red: #fde8e8; --c-orange: #fdeedd; --c-yellow: #fbf5d0; --c-green: #e3f3e1;
+      --c-teal: #ddf2f2; --c-blue: #e2ebfa; --c-purple: #ece5f7; --c-gray: #ebebea;
     }
   }
   :root[data-theme="light"] {
     --bg: #f3f3f1; --panel: #ffffff; --card: #ffffff; --line: #d6d6d2; --rowline: #e6e6e2;
     --text: #222222; --muted: #777777; --accent: #3a6bc0; color-scheme: light;
       --ok: #1e8a43; --ok-bg: rgba(30, 138, 67, .12); --ng: #c0392b; --ng-bg: rgba(192, 57, 43, .12);
+    --c-red: #fde8e8; --c-orange: #fdeedd; --c-yellow: #fbf5d0; --c-green: #e3f3e1;
+    --c-teal: #ddf2f2; --c-blue: #e2ebfa; --c-purple: #ece5f7; --c-gray: #ebebea;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
@@ -54,6 +61,12 @@
   .th { position: relative; flex: none; font-size: 13px; font-weight: 700; text-align: center;
     padding: 6px 12px; border-right: 1px solid var(--line); cursor: grab; touch-action: none;
     overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  /* タブの色分け：発言の背景と、見出し（列名・札）に同じ色を付ける */
+  [data-c="red"] { --tc: var(--c-red); } [data-c="orange"] { --tc: var(--c-orange); }
+  [data-c="yellow"] { --tc: var(--c-yellow); } [data-c="green"] { --tc: var(--c-green); }
+  [data-c="teal"] { --tc: var(--c-teal); } [data-c="blue"] { --tc: var(--c-blue); }
+  [data-c="purple"] { --tc: var(--c-purple); } [data-c="gray"] { --tc: var(--c-gray); }
+  .th[data-c] { background: var(--tc); }
   .th.moving { background: var(--accent); color: #fff; cursor: grabbing; }
   /* 見出しの右端：ここを引っぱると幅が変わる */
   .rz { position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: col-resize; }
@@ -71,6 +84,7 @@
     padding: 10px 6px 0 0; border-right: 1px solid var(--line); background: var(--bg); }
   .cell { flex: none; padding: 4px 6px; }
   .card { background: var(--card); border: 1px solid var(--rowline); border-radius: 6px; padding: 6px 9px; }
+  .card[data-c] { background: var(--tc); }
   .card.has-icon { display: flex; gap: 8px; }
   .icon { width: var(--icon, 40px); height: var(--icon, 40px); border-radius: 6px; object-fit: cover; flex: none; }
   /* アイコン「大」：アイコンを上、名前と本文を下に積む（列が狭いときは列の幅に合わせて縮む） */
@@ -156,6 +170,12 @@
 const DATA = /*__DATA__*/null;
 
 const tabs = DATA.tabs;
+const COLOR_KEYS = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple', 'gray'];
+const tabColors = DATA.tabColors || {};   // タブ名 → 色（変換するときに選んだもの。無ければ色分けなし）
+function setTabColor(el, tab) {
+  const c = tabColors[tab];
+  if (COLOR_KEYS.includes(c)) el.dataset.c = c;
+}
 const DEFAULT_W = 260, MIN_W = 120, MAX_W = 900;
 // 縦1列・字下げのときの幅と、字下げ1段の量（本文14pxの全角3.5字分）
 const DEFAULT_ONE = 640, MAX_ONE = 1600, INDENT = 49;
@@ -257,6 +277,7 @@ const DAY_GAP = 6 * 60 * 60 * 1000; // 6時間以上あいたら、次の日（�
 
 function makeCard(m) {
   const card = document.createElement('div'); card.className = 'card';
+  setTabColor(card, m.tab);
   const body = document.createElement('div'); body.className = 'cbody';
   if (m.icon && iconUrl[m.icon]) {
     card.classList.add('has-icon');
@@ -378,6 +399,7 @@ function layout() {
   function makeTh(k) {
     const th = document.createElement('div'); th.className = 'th'; th.dataset.k = k;
     th.textContent = tabs[k];
+    setTabColor(th, tabs[k]);
     if (drag && drag.type === 'move' && drag.k === k) th.classList.add('moving');
     return th;
   }

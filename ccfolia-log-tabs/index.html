@@ -80,7 +80,7 @@
   .result {
     margin-top: 24px; background: var(--surface); border: 1px solid var(--border); padding: 20px;
   }
-  .result[hidden], .dice[hidden] { display: none; }
+  .result[hidden], .dice[hidden], .adv[hidden] { display: none; }
   .file-name {
     font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent);
     overflow-wrap: anywhere; margin-bottom: 6px;
@@ -97,6 +97,21 @@
   .dl-btn:hover { opacity: .85; }
   .dl-btn:active { transform: scale(.98); }
   .hint { font-size: 12px; color: var(--muted); line-height: 1.7; }
+
+  /* ── 高度な設定（タブの色分け） ── */
+  .adv { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+  .adv summary { cursor: pointer; font-size: 13px; font-weight: 700; color: var(--accent); }
+  .adv .hint { margin: 8px 0 10px; }
+  .tc-row { display: flex; align-items: center; gap: 6px 12px; flex-wrap: wrap; padding: 6px 0;
+    border-bottom: 1px dashed var(--border); }
+  .tc-name { font-size: 13px; font-weight: 700; min-width: 9em; overflow-wrap: anywhere; }
+  .tc-sws { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sw { position: relative; cursor: pointer; }
+  .sw input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .sw span { display: block; min-width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 11px; line-height: 26px; text-align: center; padding: 0 4px; color: var(--muted); background: var(--surface); }
+  .sw input:checked + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sw input:focus-visible + span { outline: 2px solid var(--accent2); outline-offset: 1px; }
 
   /* ── 見出し ── */
   .section-header {
@@ -177,6 +192,12 @@
   <div class="result" id="result" hidden>
     <div class="file-name" id="file-name"></div>
     <div class="summary" id="summary"></div>
+    <details class="adv" id="adv" hidden>
+      <summary>高度な設定（タブの色分け）</summary>
+      <p class="hint">タブごとに、発言の背景色を選べます。選ばなければ色分けなしです。<br>
+        ダウンロードしたHTMLでは、ライトモード・ダークモードのどちらでも読みやすい濃さで色が付きます。</p>
+      <div id="tab-colors"></div>
+    </details>
     <div class="dl-row" id="dl-row">
       <button type="button" class="dl-btn" id="dl-btn">整形したHTMLをダウンロード</button>
       <span class="hint">ダウンロードしたファイルは、ブラウザで開いて読めます。</span>
@@ -204,6 +225,7 @@
       <tr><td>タブごとの列で、時間の順に並べる</td><td class="mark">○</td><td class="mark">○</td></tr>
       <tr><td>列の表示・非表示、ドラッグで並べ替え、幅の変更</td><td class="mark">○</td><td class="mark">○</td></tr>
       <tr><td>並べ方の切り替え（横並び・縦1列・タブごとの字下げ）</td><td class="mark">○</td><td class="mark">○</td></tr>
+      <tr><td>タブごとの背景色（変換するときに「高度な設定」から選ぶ）</td><td class="mark">○</td><td class="mark">○</td></tr>
       <tr><td>ライトモード・ダークモードの切り替え</td><td class="mark">○</td><td class="mark">○</td></tr>
       <tr><td>ダイス結果（クトゥルフ神話TRPG 6版・7版）</td><td class="mark">○</td><td class="mark">○</td></tr>
       <tr><td>キャラクターのアイコン（大きさは小・中・大から選べる）</td><td class="mark no">―</td><td class="mark">○</td></tr>
@@ -219,7 +241,7 @@
 
 <footer>
   <div class="footer-note">アップロード不要・ログはブラウザ内だけで処理されます</div>
-  <div>ココフォリアログ整形｜タブ横並べ v0.2.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
+  <div>ココフォリアログ整形｜タブ横並べ v0.3.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
 </footer>
 
 <script src="/ccfolia-log-tabs/dice.js"></script>
@@ -236,8 +258,43 @@ const diceSec = document.getElementById('dice');
 const diceList = document.getElementById('dice-list');
 const copyAllBtn = document.getElementById('copy-all');
 
-let output = null;     // { url, name }
+const adv = document.getElementById('adv');
+const tabColorsEl = document.getElementById('tab-colors');
+
+let current = null;    // { data, template, diceCode }（ダウンロードを押したときにHTMLを作る）
 let diceText = '';
+
+// タブの色の見本（ここではライトモードの色を見せる。ダウンロードするHTML側にライト・ダーク両方の色がある）
+const PALETTE = [
+  ['red', '赤', '#fde8e8'], ['orange', '橙', '#fdeedd'], ['yellow', '黄', '#fbf5d0'], ['green', '緑', '#e3f3e1'],
+  ['teal', '水', '#ddf2f2'], ['blue', '青', '#e2ebfa'], ['purple', '紫', '#ece5f7'], ['gray', '灰', '#ebebea'],
+];
+function makeTabColors(tabs) {
+  tabColorsEl.replaceChildren();
+  tabs.forEach((tab, i) => {
+    const row = document.createElement('div'); row.className = 'tc-row';
+    const name = document.createElement('div'); name.className = 'tc-name'; name.textContent = tab;
+    const sws = document.createElement('div'); sws.className = 'tc-sws';
+    [['', 'なし', '']].concat(PALETTE).forEach(([key, label, color]) => {
+      const lab = document.createElement('label'); lab.className = 'sw'; lab.title = label;
+      const input = document.createElement('input');
+      input.type = 'radio'; input.name = 'tc' + i; input.value = key; input.checked = key === '';
+      input.dataset.tab = tab;
+      input.setAttribute('aria-label', `${tab}：${label}`);
+      const span = document.createElement('span');
+      if (color) span.style.background = color; else span.textContent = 'なし';
+      lab.append(input, span);
+      sws.append(lab);
+    });
+    row.append(name, sws);
+    tabColorsEl.append(row);
+  });
+}
+function chosenColors() {
+  const out = {};
+  tabColorsEl.querySelectorAll('input:checked').forEach(r => { if (r.value) out[r.dataset.tab] = r.value; });
+  return out;
+}
 
 // 表示用HTMLのひな形とダイス処理は、最初に1回だけ読み込む
 let partsPromise = null;
@@ -266,11 +323,12 @@ function showMessage(name, text, isError) {
   fileNameEl.textContent = name;
   summaryEl.textContent = text;
   dlRow.hidden = true;
+  adv.hidden = true;
   diceSec.hidden = true;
 }
 
 async function handleFile(file) {
-  if (output) { URL.revokeObjectURL(output.url); output = null; }
+  current = null;
   fileInput.value = '';
   if (!/\.(html?|json)$/i.test(file.name)) {
     showMessage(file.name, 'ココフォリアの全ログ（.html）か、JSON（.json）のファイルを選んでください。', true);
@@ -285,9 +343,7 @@ async function handleFile(file) {
       showMessage(file.name, 'ココフォリアのログとして読み取れませんでした。ルームから出力した全ログ（.html）か、JSON（.json）を選んでください。', true);
       return;
     }
-    const html = makeViewer(template, diceCode, data);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    output = { url: URL.createObjectURL(blob), name: `${data.title}_整形済み.html` };
+    current = { data, template, diceCode };
 
     summaryEl.replaceChildren();
     const line1 = document.createElement('div');
@@ -298,6 +354,9 @@ async function handleFile(file) {
       line2.textContent = 'JSONから変換すると、アイコン・時刻・日付の区切りも入ります。';
       summaryEl.append(line2);
     }
+    makeTabColors(data.tabs);
+    adv.open = false;
+    adv.hidden = false;
     dlRow.hidden = false;
     showDice(data.msgs);
   } catch (e) {
@@ -306,10 +365,14 @@ async function handleFile(file) {
 }
 
 dlBtn.addEventListener('click', () => {
-  if (!output) return;
+  if (!current) return;
+  const { data, template, diceCode } = current;
+  const html = makeViewer(template, diceCode, { ...data, tabColors: chosenColors() });
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
   const a = document.createElement('a');
-  a.href = output.url; a.download = output.name;
+  a.href = url; a.download = `${data.title}_整形済み.html`;
   document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 });
 
 function showDice(msgs) {
