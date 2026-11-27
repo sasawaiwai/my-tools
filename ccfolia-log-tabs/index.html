@@ -27,7 +27,7 @@
     --bg:       #f5f3ef;
     --surface:  #ffffff;
     --border:   #dedad3;
-    --accent:   #b8862a;
+    --accent:   #2f6db5;
     --accent2:  #5f7a42;
     --text:     #1e1c19;
     --muted:    #9a9590;
@@ -69,7 +69,7 @@
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(45deg, transparent, transparent 20px, rgba(0,0,0,.018) 20px, rgba(0,0,0,.018) 21px);
   }
-  .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: rgba(212,168,67,.04); }
+  .drop-zone:hover, .drop-zone.over { border-color: var(--accent); background: rgba(47,109,181,.05); }
   .drop-icon { font-size: 40px; margin-bottom: 16px; opacity: .6; }
   .drop-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
   .drop-sub { font-size: 13px; color: var(--muted); line-height: 1.7; }
@@ -90,7 +90,7 @@
   .result.error .summary { color: var(--danger); }
   .dl-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; }
   .dl-btn {
-    background: var(--accent); color: #0e0e0e; border: none; padding: 10px 28px;
+    background: var(--accent); color: #ffffff; border: none; padding: 10px 28px;
     font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 14px; font-weight: 700;
     cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s, transform .1s;
   }
@@ -124,7 +124,7 @@
     padding: 6px 16px; font-family: 'Zen Kaku Gothic New', sans-serif; font-size: 12px; font-weight: 700;
     cursor: pointer; letter-spacing: 0.04em; transition: background .15s;
   }
-  .sub-btn:hover { background: rgba(212,168,67,.1); }
+  .sub-btn:hover { background: rgba(47,109,181,.1); }
   .sub-btn:disabled { opacity: .4; cursor: not-allowed; }
 
   /* ── ダイス結果 ── */
@@ -176,7 +176,7 @@
 <main>
   <p class="lead">
     ココフォリアで出力したログを、タブごとの列に分けて、時間の順に横に並べたHTMLファイルに変換します。<br>
-    メインとサブのやりとりを、同じ時間の流れの中で読み返せます。
+    メインとサブのやりとりを、同じ時間の流れの中で読み返せます。ダイス結果も表示されます。
   </p>
 
   <div class="drop-zone" id="drop-zone">
@@ -241,7 +241,7 @@
 
 <footer>
   <div class="footer-note">アップロード不要・ログはブラウザ内だけで処理されます</div>
-  <div>ココフォリアログ整形｜タブ横並べ v0.3.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
+  <div>ココフォリアログ整形｜タブ横並べ v0.3.1 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
 </footer>
 
 <script src="/ccfolia-log-tabs/dice.js"></script>
