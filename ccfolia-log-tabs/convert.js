@@ -80,10 +80,19 @@ function buildData(fileName, src) {
 }
 
 // 表示用HTMLのひな形に、ダイス処理とデータを埋め込む（置き換えは関数で行い、$ などの記号をそのまま入れる）
+// 作り手用のメモ（コメント）は、出力するHTMLには入れない。埋め込み位置の目印（/*__…__*/）は残す
+function stripComments(code) {
+  return code
+    .replace(/^[ \t]*\/\*(?!__)[\s\S]*?\*\/[ \t]*\n/gm, '') // 1行まるごとの /* … */
+    .replace(/\/\*(?!__)[\s\S]*?\*\//g, '')                // 行の途中の /* … */
+    .replace(/^[ \t]*\/\/.*\n/gm, '')                      // 1行まるごとの // …
+    .replace(/[ \t]+\/\/ .*$/gm, '');                      // 行の後ろの // …
+}
+
 function makeViewer(template, diceCode, data) {
   const payload = JSON.stringify(data).replace(/<\//g, '<\\/');
-  return template
-    .replace('/*__DICE__*/', () => diceCode)
+  return stripComments(template)
+    .replace('/*__DICE__*/', () => stripComments(diceCode))
     .replace('/*__DATA__*/null', () => payload);
 }
 
