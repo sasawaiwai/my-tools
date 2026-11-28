@@ -149,6 +149,14 @@
   /* ── 紹介画像：幅に合わせて、入るだけ横に並べる（スマホでは1枚ずつ） ── */
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
   .cards img { display: block; width: 100%; height: auto; border: 1px solid var(--border); }
+  /* マウスのある端末だけ：乗せると縁取り、押すと大きく表示（スマホは指で拡大できるので何もしない） */
+  @media (hover: hover) and (pointer: fine) {
+    .cards img { cursor: zoom-in; outline: 3px solid transparent; outline-offset: 2px; transition: outline-color .15s; }
+    .cards img:hover { outline-color: var(--accent); }
+  }
+  .zoom { margin: auto; padding: 0; border: none; outline: none; background: transparent; max-width: none; max-height: none; cursor: zoom-out; }
+  .zoom::backdrop { background: rgba(0, 0, 0, .75); }
+  .zoom img { display: block; width: min(92vw, 92vh, 1200px); height: auto; }
 
   /* ── フッター ── */
   footer {
@@ -254,11 +262,12 @@
     <img src="/ccfolia-log-tabs/cards/ccfolia_card_06.png" width="1200" height="1200" loading="lazy" decoding="async" alt="タブの幅もそれぞれ変更OK。見たいタブを見やすい幅に">
     <img src="/ccfolia-log-tabs/cards/ccfolia_card_07.png" width="1200" height="1200" loading="lazy" decoding="async" alt="ダークモードとライトモードの切り替えOK。見やすい表示を好きなほうで">
   </div>
+  <dialog class="zoom" id="zoom"><img id="zoom-img" alt=""></dialog>
 </main>
 
 <footer>
   <div class="footer-note">アップロード不要・ログはブラウザ内だけで処理されます</div>
-  <div>ココフォリアログ整形｜タブ横並べ＆縦並べ v0.4.1 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
+  <div>ココフォリアログ整形｜タブ横並べ＆縦並べ v0.4.2 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
 </footer>
 
 <script src="/ccfolia-log-tabs/dice.js"></script>
@@ -412,6 +421,19 @@ function showDice(msgs) {
   diceSec.hidden = false;
 }
 copyAllBtn.addEventListener('click', () => copyText(diceText, copyAllBtn));
+
+// 紹介画像：マウスのある端末では、押すと大きく表示する（どこを押しても、Escでも閉じる）
+const zoomDlg = document.getElementById('zoom');
+const zoomImg = document.getElementById('zoom-img');
+if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  document.querySelector('.cards').addEventListener('click', e => {
+    const img = e.target.closest('img');
+    if (!img) return;
+    zoomImg.src = img.src; zoomImg.alt = img.alt;
+    zoomDlg.showModal();
+  });
+}
+zoomDlg.addEventListener('click', () => zoomDlg.close());
 </script>
 </body>
 </html>
