@@ -146,6 +146,10 @@
   .features td.no { color: var(--muted); }
   .notes { margin-top: 16px; font-size: 12px; color: var(--muted); line-height: 1.8; padding-left: 1.2em; }
 
+  /* ── 紹介画像：幅に合わせて、入るだけ横に並べる（スマホでは1枚ずつ） ── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .cards img { display: block; width: 100%; height: auto; border: 1px solid var(--border); }
+
   /* ── フッター ── */
   footer {
     border-top: 1px solid var(--border); padding: 16px 32px;
@@ -237,11 +241,24 @@
     <li>ダイス結果は、クトゥルフ神話TRPG（6版・7版）のみに対応しています。</li>
     <li>ココフォリア公式とは関係のない、個人制作の非公式ツールです。</li>
   </ul>
+
+  <div class="section-header">
+    <h2 class="section-title">画像で紹介</h2>
+  </div>
+  <div class="cards">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_01.png" width="1200" height="1200" loading="lazy" decoding="async" alt="ログを読むのがもっと楽しくなる。複数のタブが横にずらっと一度に見られる">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_02.png" width="1200" height="1200" loading="lazy" decoding="async" alt="あの卓のログ、横から見るか、縦から見るか。横並び・縦1列・字下げの並べ方と、ダークモード・ライトモードの切り替え">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_03.png" width="1200" height="1200" loading="lazy" decoding="async" alt="CoC 6版・7版対応。ダイス結果も出る。アップロード不要・ブラウザ内で処理">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_04.png" width="1200" height="1200" loading="lazy" decoding="async" alt="JSONログならアイコンを小・中・大に拡大して見られる。日付を指定してその日のログへすぐ移動できる">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_05.png" width="1200" height="1200" loading="lazy" decoding="async" alt="タブの順番をドラッグで入れ替えOK。タブの見出しをつかんで好きな場所へ">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_06.png" width="1200" height="1200" loading="lazy" decoding="async" alt="タブの幅もそれぞれ変更OK。見たいタブを見やすい幅に">
+    <img src="/ccfolia-log-tabs/cards/ccfolia_card_07.png" width="1200" height="1200" loading="lazy" decoding="async" alt="ダークモードとライトモードの切り替えOK。見やすい表示を好きなほうで">
+  </div>
 </main>
 
 <footer>
   <div class="footer-note">アップロード不要・ログはブラウザ内だけで処理されます</div>
-  <div>ココフォリアログ整形｜タブ横並べ＆縦並べ v0.4.0 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
+  <div>ココフォリアログ整形｜タブ横並べ＆縦並べ v0.4.1 ｜ © ササドコロ / 笹塚 ｜ <a href="/">ツール一覧</a> ｜ <a href="/privacy.html">プライバシーポリシー</a> ｜ <a href="/terms.html">利用規約</a></div>
 </footer>
 
 <script src="/ccfolia-log-tabs/dice.js"></script>
